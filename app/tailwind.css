@@ -1,0 +1,59 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  @apply bg-white dark:bg-gray-950 max-xs:text-[0.5vw] max-sm:text-[5px] max-md:text-[7px] max-xl:text-[10px] 2xl:text-[0.5vw];
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  }
+}
+
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  }
+}
+script {
+  width: 0 !important;
+  height: 0 !important;
+}
+
+@layer base {
+  :root {
+    --bg-color: 248 248 248;
+    --canvas-color: 254 253 253;
+    --accent-color: 217 70 239;
+    --icon-tab-bg: 248 248 248;
+    --secondary-text-color: 68 68 68;
+    --active-tab-color: 232 232 232;
+    --active-tab-bg: 64 64 64;
+    --outline-1: 217 217 217;
+    --outline-2: 217 217 217;
+
+    /* LIBRARY COLORS */
+    --muted-foreground-color: 100 116 139;
+    --foreground-color: 2 6 23;
+  }
+}
+
+@layer components {
+  .centered-absolute {
+    @apply absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%];
+  }
+  .y-centered-absolute {
+    @apply absolute top-[50%] translate-y-[-50%];
+  }
+  .x-centered-absolute {
+    @apply absolute left-[50%] translate-x-[-50%];
+  }
+}

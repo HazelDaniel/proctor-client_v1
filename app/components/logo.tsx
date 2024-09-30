@@ -1,0 +1,51 @@
+import { Link } from "@remix-run/react";
+
+export const Logo: React.FC = () => {
+  return (
+    <div className="w-10 h-10 rounded-sm cursor-pointer">
+      <svg
+        className="h-full w-full"
+        viewBox="0 0 100 100"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          d="M53.3639 42.6578L38.7234 16.38L0 83.614H31.4796C32.5406 83.614 33.5226 83.0536 34.0624 82.1402L53.2754 49.6259C54.5411 47.4839 54.5748 44.8312 53.3639 42.6578Z"
+          fill="url(#paint0_linear_5_41195)"
+        />
+        <path
+          d="M66.0369 44.3029L51.0637 16.38L82.4983 16.783C83.5834 16.7969 84.5763 17.3957 85.095 18.3489L98.092 42.2353C99.2745 44.4086 99.2219 47.0448 97.9536 49.1692L83.8516 72.7902C83.3102 73.697 82.3318 74.2523 81.2757 74.2523H51.0637L66.0192 47.1709C66.5112 46.2798 66.5179 45.2 66.0369 44.3029Z"
+          fill="url(#paint1_linear_5_41195)"
+        />
+        <defs>
+          <linearGradient
+            id="paint0_linear_5_41195"
+            x1="27.6596"
+            y1="16.38"
+            x2="27.6596"
+            y2="83.614"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stopColor="#442E3F" />
+            <stop offset="0.560674" stopColor="#67567D" />
+            <stop offset="1" stopColor="#AA749E" />
+          </linearGradient>
+          <linearGradient
+            id="paint1_linear_5_41195"
+            x1="75.7446"
+            y1="15.1034"
+            x2="-32.5154"
+            y2="103.701"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop stopColor="#3C0B31" />
+            <stop offset="0.158854" stopColor="#400F4C" />
+            <stop offset="0.41746" stopColor="#67567D" />
+            <stop offset="1" stopColor="#A21F85" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <Link to={"/"} />
+    </div>
+  );
+};
