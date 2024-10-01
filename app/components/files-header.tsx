@@ -2,7 +2,7 @@ import { Logo } from "./logo";
 
 export const FilesHeader: React.FC = () => {
   return (
-    <header className="flex items-center content-start w-full h-32 md:h-20 px-4 bg-gradient-to-b from-bg from-80% backdrop-blur-sm">
+    <header className="files-header flex items-center content-start w-full h-32 md:h-20 px-4 bg-gradient-to-b from-bg from-80% backdrop-blur-sm">
       <div className="relative flex-row justify-start w-1/4 pr-4 h-3/4">
         <div className="flex items-center justify-start h-full p-3 rounded-2xl drop-shadow-sm bg-canvas w-max min-w-20">
           <img
@@ -11,12 +11,12 @@ export const FilesHeader: React.FC = () => {
             className="w-10 h-10 drop-shadow-md"
           />
           <p className="flex-grow m-4">James B.</p>
-          <div className="flex-col items-center justify-center w-10 h-full bg-blue-800">
-            <span>
+          <div className="flex flex-col items-center justify-center w-10 h-full">
+            <span className="absolute">
               <span></span>
             </span>
 
-            <span className="w-[80%] h-max flex justify-center items-center cursor-pointer hover:rotate-[-15deg] duration-150 ease-linear">
+            <span className="w-[80%] h-8 flex justify-center items-center cursor-pointer hover:rotate-[-15deg] duration-150 ease-linear my-auto">
               <svg className="w-8 h-8">
                 <use xlinkHref="#bell"></use>
               </svg>
