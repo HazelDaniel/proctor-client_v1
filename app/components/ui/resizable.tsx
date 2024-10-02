@@ -33,8 +33,8 @@ const ResizableHandle = ({
     {...props}
   >
     {withHandle && (
-      <div className="z-10 flex h-4 w-3 items-center justify-center rounded-sm bg-border">
-        <span className="w-1 h-8 bg-accent"></span>
+      <div className="z-10 flex items-center justify-center w-3 h-4 rounded-sm bg-border">
+        <span className="w-1 h-8 rounded bg-accent"></span>
       </div>
     )}
   </ResizablePrimitive.PanelResizeHandle>

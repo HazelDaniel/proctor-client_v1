@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 html {
-  @apply bg-white dark:bg-gray-950 max-xs:text-[0.5vw] max-sm:text-[5px] max-md:text-[7px] max-xl:text-[10px] 2xl:text-[0.5vw];
+  @apply bg-white dark:bg-gray-950 max-xs:text-[2.8vw] max-sm:text-[5px] max-md:text-[8px] max-xl:text-[10px] 2xl:text-[0.5vw];
 
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
@@ -39,6 +39,7 @@ script {
     --active-tab-color: 232 232 232;
     --active-tab-bg: 64 64 64;
     --outline-1: 217 217 217;
+    --outline-1d: 67, 69, 64;
     --outline-2: 217 217 217;
 
     /* LIBRARY COLORS */
@@ -108,11 +109,15 @@ script {
   .x-centered-absolute {
     @apply absolute left-[50%] translate-x-[-50%];
   }
+  .shadow-input {
+    @apply outline-none ring-1 ring-offset-1 ring-offset-outline1 ring-outline1 focus:ring-1;
+    box-shadow: 0.5px 0.5px 8px rgb(var(--outline-1));
+  }
 }
 
 @layer base {
   body {
-    @apply bg-background text-foreground flex flex-col justify-start items-center w-full;
+    @apply flex flex-col items-center justify-start w-full bg-background text-foreground;
     height: max-content;
     overflow: auto;
     overflow-x: hidden;

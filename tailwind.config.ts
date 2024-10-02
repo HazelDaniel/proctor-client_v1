@@ -25,15 +25,24 @@ export default {
   			'xl': '1280px',
   			'2xl': '1536px'
   		},
+			// fontSize: {
+      //   xs: '12px',
+      //   sm: '14px',
+      //   base: '16px', // Default
+      //   lg: '18px',
+      //   xl: '20px',
+      // },
   		colors: {
   			'bg': 'rgb(var(--bg-color))',
   			'canvas': 'rgb(var(--canvas-color))',
   			'iconTabBG': 'rgb(var(--icon-tab-bg))',
   			'activeTab': 'rgb(var(--active-tab-color))',
+  			'secondaryText': 'rgb(var(--secondary-text-color))',
   			'activeTabBG': 'rgb(var(--active-tab-bg))',
   			'mutedFG': 'rgb(var(--muted-foreground-color))',
   			'fg': 'rgb(var(--foreground-color))',
   			'outline1': 'rgb(var(--outline-1))',
+  			'outline1d': 'rgb(var(--outline-1d))',
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {

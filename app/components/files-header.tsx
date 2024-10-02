@@ -2,9 +2,9 @@ import { Logo } from "./logo";
 
 export const FilesHeader: React.FC = () => {
   return (
-    <header className="files-header flex items-center content-start w-full h-32 md:h-20 px-4 bg-gradient-to-b from-bg from-80% backdrop-blur-sm">
-      <div className="relative flex-row justify-start w-1/4 pr-4 h-3/4">
-        <div className="flex items-center justify-start h-full p-3 rounded-2xl drop-shadow-sm bg-canvas w-max min-w-20">
+    <header className="files-header flex items-center content-start w-full h-32 md:h-20 px-4 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-10">
+      <div className="relative flex-row justify-start md:w-1/4 pr-4 h-3/4">
+        <div className="flex items-center justify-start h-[95%] p-3 rounded-2xl drop-shadow-sm bg-canvas w-max min-w-20">
           <img
             src="/images/emoji_student_1.png"
             alt="the profile picture of the current user on the files page"
@@ -23,7 +23,7 @@ export const FilesHeader: React.FC = () => {
             </span>
           </div>
         </div>
-        <span className="h-[80%] w-[3px] bg-outline1 y-centered-absolute right-0 rounded"></span>
+        <span className="h-[60%] md:h-[80%] w-[3px] bg-outline1 y-centered-absolute right-0 rounded"></span>
       </div>
       <div className="flex items-center justify-between flex-1 h-full pl-4">
         <h2>All Projects</h2>
