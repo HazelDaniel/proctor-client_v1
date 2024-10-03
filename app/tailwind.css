@@ -109,6 +109,12 @@ script {
   .x-centered-absolute {
     @apply absolute left-[50%] translate-x-[-50%];
   }
+  .y-right-absolute-full {
+    @apply absolute top-0 right-0 h-full;
+  }
+  .y-left-absolute-full {
+    @apply absolute top-0 left-0 h-full;
+  }
   .shadow-input {
     @apply outline-none ring-1 ring-offset-1 ring-offset-outline1 ring-outline1 focus:ring-1;
     box-shadow: 0.5px 0.5px 8px rgb(var(--outline-1));

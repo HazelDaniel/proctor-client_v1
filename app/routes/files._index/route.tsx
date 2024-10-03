@@ -9,6 +9,7 @@ import {
 import { FilesSearchBox } from "~/components/files-search-box";
 import { useState } from "react";
 import useEventListener from "~/hooks/useevent";
+import { Link } from "@remix-run/react";
 
 export const meta: MetaFunction = () => {
   return [
@@ -58,7 +59,7 @@ export const StarredProjectsArea: React.FC = () => {
           </button>
         </li>
       </ul>
-      <div className="w-[95%] p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly">
+      <div className="w-[95%] p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly mt-4">
         <button className="flex items-center justify-center w-4 h-4">
           <svg className="w-full scale-75 md:scale-50">
             <use xlinkHref="#double-caret"></use>
@@ -75,13 +76,83 @@ export const StarredProjectsArea: React.FC = () => {
   );
 };
 
+export const FileListView: React.FC = () => {
+  return (
+    <ul className="flex md:grid flex-col md:grid-cols-2 justify-start items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw]">
+      <li className="h-48 group/list-view-item1 flex justify-start items-center w-full md:w-max relative overflow-visible">
+        <span className="y-right-absolute-full w-2 group-hover/list-view-item1:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
+        <div className="flex-1 flex md:flex-col  py-4 h-max">
+          <div className="w-[5rem] mr-[10%] h-[5rem] flex">
+            <img
+              src="/public/icons/big-colored-folder.png"
+              alt="the icon image representing a big colored folder"
+              className="w-full h-full aspect-square drop-shadow-lg"
+            />
+          </div>
+
+          <div className="flex-1 flex flex-col items-start justify-center">
+            <h2 className="font-semibold text-lg">Work_in_progress_1</h2>
+            <p className="font-medium text-outline1d">
+              last saved 2 minutes ago
+            </p>
+          </div>
+        </div>
+
+        <div className="h-full ml-auto justify-self-end flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
+          <img
+            src="/images/emoji_student_1.png"
+            alt="the image representing the author of a file"
+            className="h-[4rem] w-[4rem] aspect-square"
+          />
+        </div>
+      </li>
+
+      <li className="h-48 group/list-view-item2 overflow-visible flex justify-start items-center w-full md:w-max relative">
+        <span className="y-right-absolute-full w-2 group-hover/list-view-item2:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
+        <div className="flex-1 flex md:flex-col  py-4 h-max">
+          <div className="w-[5rem] mr-[10%] h-[5rem] flex">
+            <img
+              src="/public/icons/big-colored-folder.png"
+              alt="the icon image representing a big colored folder"
+              className="w-full h-full aspect-square drop-shadow-lg"
+            />
+          </div>
+
+          <div className="flex-1 flex flex-col items-start justify-center">
+            <h2 className="font-semibold text-lg">Work_in_progress_1</h2>
+            <p className="font-medium text-outline1d">
+              last saved 2 minutes ago
+            </p>
+          </div>
+        </div>
+
+        <div className="h-full ml-auto justify-self-end flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
+          <img
+            src="/images/emoji_student_1.png"
+            alt="the image representing the author of a file"
+            className="h-[4rem] w-[4rem] aspect-square"
+          />
+        </div>
+      </li>
+    </ul>
+  );
+};
+
 export const ProjectTabLinks: React.FC = () => {
   return (
-    <nav className="w-full h-12">
-      <ul className="flex items-center justify-center h-full gap-4 mx-auto w-max">
-        <li>recently viewed</li>
-        <li>recently viewed</li>
-        <li>recently viewed</li>
+    <nav className="w-full h-12 mt-20">
+      <ul className="flex items-center justify-center h-full gap-4 mx-auto w-max basis-16">
+        <li className="w-[10rem] p-2 px-4 rounded-md hover:bg-[conic-gradient(at_20%_30%,purple_20%,rgb(var(--accent-color))_60%,rgb(var(--accent-color)))] bg-[conic-gradient(at_center,purple_30%,rgb(var(--accent-color)),purple)] text-center ring-2 ring-offset-2 cursor-pointer transition-colors duration-700 ease-linear">
+          <Link to={""} className="text-canvas">
+            recently viewed
+          </Link>
+        </li>
+        <li className="w-[10rem] p-2 px-4 rounded-md bg-outline1/20 text-center hover:bg-outline1/50 transition-colors duration-500 cursor-pointer">
+          <Link to={""}>shared</Link>
+        </li>
+        <li className="w-[10rem] p-1 px-4 rounded-md bg-outline1/20 text-center hover:bg-outline1/50 transition-colors duration-500 cursor-pointer">
+          <Link to={""}>all files</Link>
+        </li>
       </ul>
     </nav>
   );
@@ -204,6 +275,7 @@ export const FilesPage: React.FC = () => {
             <div className="flex flex-col items-center justify-start h-full p-6">
               <ProjectOptionsArea />
               <ProjectTabLinks />
+              <FileListView />
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>

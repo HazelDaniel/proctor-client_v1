@@ -5,6 +5,9 @@ export default {
     content: ["./app/**/{**,.client,.server}/**/*.{js,jsx,ts,tsx}"],
   theme: {
   	extend: {
+			backgroundImage: {
+				'conic-gradient': 'conic-gradient(var(--tw-gradient-stops))',
+			},
   		fontFamily: {
   			sans: [
           '"Inter"',
@@ -25,13 +28,6 @@ export default {
   			'xl': '1280px',
   			'2xl': '1536px'
   		},
-			// fontSize: {
-      //   xs: '12px',
-      //   sm: '14px',
-      //   base: '16px', // Default
-      //   lg: '18px',
-      //   xl: '20px',
-      // },
   		colors: {
   			'bg': 'rgb(var(--bg-color))',
   			'canvas': 'rgb(var(--canvas-color))',
