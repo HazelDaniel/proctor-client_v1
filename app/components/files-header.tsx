@@ -1,4 +1,12 @@
 import { Logo } from "./logo";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export const FilesHeader: React.FC = () => {
   return (
@@ -16,11 +24,28 @@ export const FilesHeader: React.FC = () => {
               <span></span>
             </span>
 
-            <span className="w-[80%] h-8 flex justify-center items-center cursor-pointer hover:rotate-[-15deg] duration-150 ease-linear my-auto">
-              <svg className="w-8 h-8">
-                <use xlinkHref="#bell"></use>
-              </svg>
-            </span>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none">
+                <span className="w-[80%] h-8 flex justify-center items-center cursor-pointer hover:rotate-[-15deg] origin-top duration-150 ease-linear my-auto">
+                  <svg className="w-8 h-8">
+                    <use xlinkHref="#bell"></use>
+                  </svg>
+                </span>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>Notification</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="hover:bg-accent/90 hover:text-canvas focus:bg-accent/90 focus:text-canvas">
+                  a notification on your last project
+                </DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-accent/90 hover:text-canvas focus:bg-accent/90 focus:text-canvas">
+                  another notification on your last project
+                </DropdownMenuItem>
+                <DropdownMenuItem className="hover:bg-accent/90 hover:text-canvas focus:bg-accent/90 focus:text-canvas">
+                  a third notification on your last project
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
         <span className="h-[60%] md:h-[80%] w-[3px] bg-outline1 y-centered-absolute right-0 rounded"></span>

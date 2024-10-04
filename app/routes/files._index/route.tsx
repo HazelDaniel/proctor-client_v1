@@ -10,6 +10,14 @@ import { FilesSearchBox } from "~/components/files-search-box";
 import { useState } from "react";
 import useEventListener from "~/hooks/useevent";
 import { Link } from "@remix-run/react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@radix-ui/react-dropdown-menu";
 
 export const meta: MetaFunction = () => {
   return [
@@ -28,7 +36,7 @@ export const StarredProjectsArea: React.FC = () => {
       <h2 className="w-full mb-10 capitalize text-fg">starred projects</h2>
 
       <ul className="flex flex-col items-start justify-start flex-1 w-full list-none border-l-8 border-l-accent h-max">
-        <li className="group-file1 flex justify-start w-[95%] h-12 has-[button:focus]:before:w-full  has-[button:focus]:before:h-0.5  has-[button:focus]:before:bg-accent/25  has-[button:focus]:before:absolute has-[button:focus]:before:bottom-0 relative">
+        <li className="group-file1 flex justify-start w-[95%] h-12 relative">
           <span className="flex items-center justify-center w-12 h-full">
             <svg className="w-full h-full scale-75">
               <use xlinkHref="#folder"></use>
@@ -37,13 +45,31 @@ export const StarredProjectsArea: React.FC = () => {
           <p className="w-[20rem] h-[2rem] text-ellipsis self-center text-sm px-4 truncate">
             new_file_title_1_on_the_first_longest_line.pct
           </p>
-          <button className="flex items-center justify-center w-12 h-full">
-            <svg className="w-full h-full scale-50 cursor-pointer">
-              <use xlinkHref="#kebab"></use>
-            </svg>
-          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none">
+              <button className="flex items-center justify-center w-12 h-full">
+                <svg className="h-4 h-inherit scale-50 cursor-pointer">
+                  <use xlinkHref="#kebab"></use>
+                </svg>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="z-10 h-max w-max rounded-sm p-4 ring-1 ring-outline1 bg-canvas">
+              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
+                rename file
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
+                add to favorites
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
+                delete file
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </li>
-        <li className="group-file1 flex justify-start w-[95%] h-12 has-[button:focus]:before:w-full  has-[button:focus]:before:h-0.5  has-[button:focus]:before:bg-accent/25  has-[button:focus]:before:absolute has-[button:focus]:before:bottom-0 relative">
+        <li className="group-file1 flex justify-start w-[95%] h-12 relative">
           <span className="flex items-center justify-center w-12 h-full">
             <svg className="w-full h-full scale-75">
               <use xlinkHref="#folder"></use>
@@ -52,25 +78,57 @@ export const StarredProjectsArea: React.FC = () => {
           <p className="w-[20rem] h-[2rem] text-ellipsis inline-flex flex-col justify-center self-center text-sm px-4">
             new_file_title_2.pct
           </p>
-          <button className="flex items-center justify-center w-12 h-full">
-            <svg className="w-full h-full scale-50 cursor-pointer">
-              <use xlinkHref="#kebab"></use>
-            </svg>
-          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none">
+              <button className="flex items-center justify-center w-12 h-full">
+                <svg className="h-4 h-inherit scale-50 cursor-pointer">
+                  <use xlinkHref="#kebab"></use>
+                </svg>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="z-10 h-max w-max rounded-sm p-4 ring-1 ring-outline1 bg-canvas">
+              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
+                rename file
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
+                add to favorites
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
+                delete file
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </li>
       </ul>
-      <div className="w-[95%] p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly mt-4">
-        <button className="flex items-center justify-center w-4 h-4">
-          <svg className="w-full scale-75 md:scale-50">
-            <use xlinkHref="#double-caret"></use>
-          </svg>
-        </button>
-        <p className="flex-1 mx-8 text-center"> General settings </p>
-        <button className="flex items-center justify-center w-4 h-4">
-          <svg className="w-full">
-            <use xlinkHref="#gear"></use>
-          </svg>
-        </button>
+
+      <div className="w-[95%] h-max overflow-visible flex relative">
+        <div className="w-full peer/settings-bar p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly mt-4">
+          <button className="toggle flex items-center justify-center w-4 h-4 focus:outline-none">
+            <svg className="w-full scale-75 md:scale-50">
+              <use xlinkHref="#double-caret"></use>
+            </svg>
+          </button>
+          <p className="flex-1 mx-8 text-center"> General settings </p>
+          <button className="flex items-center justify-center w-4 h-4">
+            <svg className="w-full">
+              <use xlinkHref="#moon"></use>
+            </svg>
+          </button>
+        </div>
+
+        <div className="absolute w-full ring-1 ring-outline1 h-[20rem] bottom-[100%] z-9 block bg-canvas rounded-tr-md rounded-tl-md py-4 px-8 scale-y-0 origin-bottom peer-has-[button.toggle:focus]/settings-bar:scale-y-100 transition-all duration-300 focus-within:scale-y-100 focus-visible:scale-y-100">
+          <ul className="w-full h-full flex flex-col ring">
+            <button className="w-full h-16 ring flex items-center justify-center">
+              hello
+            </button>
+            <button className="w-full h-16 ring flex items-center justify-center">
+              hello
+            </button>
+          </ul>
+        </div>
       </div>
     </aside>
   );
@@ -78,15 +136,15 @@ export const StarredProjectsArea: React.FC = () => {
 
 export const FileListView: React.FC = () => {
   return (
-    <ul className="flex md:grid flex-col md:grid-cols-2 justify-start items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw]">
-      <li className="h-48 group/list-view-item1 flex justify-start items-center w-full md:w-max relative overflow-visible">
+    <ul className="flex md:grid flex-col md:grid-cols-2 justify-start md:justify-normal items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw] mb-20">
+      <li className="h-48 md:h-[20rem] group/list-view-item1 flex justify-start items-center w-full md:w-max relative overflow-visible">
         <span className="y-right-absolute-full w-2 group-hover/list-view-item1:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
-        <div className="flex-1 flex md:flex-col  py-4 h-max">
-          <div className="w-[5rem] mr-[10%] h-[5rem] flex">
+        <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
+          <div className="w-[5rem] mr-[10%] md:w-[16rem] md:h-full h-[5rem] flex md:mb-4">
             <img
               src="/public/icons/big-colored-folder.png"
               alt="the icon image representing a big colored folder"
-              className="w-full h-full aspect-square drop-shadow-lg"
+              className="w-[80%] h-[80%] aspect-square drop-shadow-lg"
             />
           </div>
 
@@ -98,23 +156,23 @@ export const FileListView: React.FC = () => {
           </div>
         </div>
 
-        <div className="h-full ml-auto justify-self-end flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
+        <div className="h-full ml-auto justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
           <img
             src="/images/emoji_student_1.png"
             alt="the image representing the author of a file"
-            className="h-[4rem] w-[4rem] aspect-square"
+            className="h-[4rem] w-[4rem] aspect-square rounded-full"
           />
         </div>
       </li>
 
-      <li className="h-48 group/list-view-item2 overflow-visible flex justify-start items-center w-full md:w-max relative">
+      <li className="h-48 md:h-[20rem] group/list-view-item2 flex justify-start items-center w-full md:w-max relative overflow-visible">
         <span className="y-right-absolute-full w-2 group-hover/list-view-item2:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
-        <div className="flex-1 flex md:flex-col  py-4 h-max">
-          <div className="w-[5rem] mr-[10%] h-[5rem] flex">
+        <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
+          <div className="w-[5rem] mr-[10%] md:w-[16rem] md:h-full h-[5rem] flex md:mb-4">
             <img
               src="/public/icons/big-colored-folder.png"
               alt="the icon image representing a big colored folder"
-              className="w-full h-full aspect-square drop-shadow-lg"
+              className="w-[80%] h-[80%] aspect-square drop-shadow-lg"
             />
           </div>
 
@@ -126,11 +184,67 @@ export const FileListView: React.FC = () => {
           </div>
         </div>
 
-        <div className="h-full ml-auto justify-self-end flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
+        <div className="h-full ml-auto justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
           <img
             src="/images/emoji_student_1.png"
             alt="the image representing the author of a file"
-            className="h-[4rem] w-[4rem] aspect-square"
+            className="h-[4rem] w-[4rem] aspect-square rounded-full"
+          />
+        </div>
+      </li>
+
+      <li className="h-48 md:h-[20rem] group/list-view-item2 flex justify-start items-center w-full md:w-max relative overflow-visible">
+        <span className="y-right-absolute-full w-2 group-hover/list-view-item2:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
+        <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
+          <div className="w-[5rem] mr-[10%] md:w-[16rem] md:h-full h-[5rem] flex md:mb-4">
+            <img
+              src="/public/icons/big-colored-folder.png"
+              alt="the icon image representing a big colored folder"
+              className="w-[80%] h-[80%] aspect-square drop-shadow-lg"
+            />
+          </div>
+
+          <div className="flex-1 flex flex-col items-start justify-center">
+            <h2 className="font-semibold text-lg">Work_in_progress_1</h2>
+            <p className="font-medium text-outline1d">
+              last saved 2 minutes ago
+            </p>
+          </div>
+        </div>
+
+        <div className="h-full ml-auto justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
+          <img
+            src="/images/emoji_student_1.png"
+            alt="the image representing the author of a file"
+            className="h-[4rem] w-[4rem] aspect-square rounded-full"
+          />
+        </div>
+      </li>
+
+      <li className="h-48 md:h-[20rem] group/list-view-item2 flex justify-start items-center w-full md:w-max relative overflow-visible">
+        <span className="y-right-absolute-full w-2 group-hover/list-view-item2:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
+        <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
+          <div className="w-[5rem] mr-[10%] md:w-[16rem] md:h-full h-[5rem] flex md:mb-4">
+            <img
+              src="/public/icons/big-colored-folder.png"
+              alt="the icon image representing a big colored folder"
+              className="w-[80%] h-[80%] aspect-square drop-shadow-lg"
+            />
+          </div>
+
+          <div className="flex-1 flex flex-col items-start justify-center">
+            <h2 className="font-semibold text-lg">Work_in_progress_1</h2>
+            <p className="font-medium text-outline1d">
+              last saved 2 minutes ago
+            </p>
+          </div>
+        </div>
+
+        <div className="h-full ml-auto justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
+          <img
+            src="/images/emoji_student_1.png"
+            alt="the image representing the author of a file"
+            className="h-[4rem] w-[4rem] aspect-square rounded-full"
           />
         </div>
       </li>
@@ -270,7 +384,7 @@ export const FilesPage: React.FC = () => {
               <StarredProjectsArea />
             </div>
           </ResizablePanel>
-          <ResizableHandle withHandle />
+          <ResizableHandle withHandle className="w-[3px]" />
           <ResizablePanel defaultSize={75}>
             <div className="flex flex-col items-center justify-start h-full p-6">
               <ProjectOptionsArea />

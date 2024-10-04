@@ -121,6 +121,16 @@ script {
   }
 }
 
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
+}
+
 @layer base {
   body {
     @apply flex flex-col items-center justify-start w-full bg-background text-foreground;
