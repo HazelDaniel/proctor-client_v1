@@ -18,8 +18,8 @@ export const FilesHeader: React.FC = () => {
             alt="the profile picture of the current user on the files page"
             className="w-10 h-10 drop-shadow-md"
           />
-          <p className="flex-grow m-4">James B.</p>
-          <div className="flex flex-col items-center justify-center w-10 h-full">
+          <p className="flex-grow m-4 hidden md:block">James B.</p>
+          <div className="flex flex-col items-center justify-center w-10 h-full ml-4">
             <span className="absolute">
               <span></span>
             </span>

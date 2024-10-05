@@ -104,8 +104,8 @@ export const StarredProjectsArea: React.FC = () => {
         </li>
       </ul>
 
-      <div className="w-[95%] h-max overflow-visible flex relative">
-        <div className="w-full peer/settings-bar p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly mt-4">
+      <div className="w-[95%] h-max group/settings-pane overflow-visible flex relative">
+        <div className="w-full peer/settings-bar p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly mt-4 ring-offset-2 group-has-[button:focus]/settings-pane:border-2">
           <button className="toggle flex items-center justify-center w-4 h-4 focus:outline-none">
             <svg className="w-full scale-75 md:scale-50">
               <use xlinkHref="#double-caret"></use>
@@ -119,8 +119,8 @@ export const StarredProjectsArea: React.FC = () => {
           </button>
         </div>
 
-        <div className="absolute w-full ring-1 ring-outline1 h-[20rem] bottom-[100%] z-9 block bg-canvas rounded-tr-md rounded-tl-md py-4 px-8 scale-y-0 origin-bottom peer-has-[button.toggle:focus]/settings-bar:scale-y-100 transition-all duration-300 focus-within:scale-y-100 focus-visible:scale-y-100">
-          <ul className="w-full h-full flex flex-col ring">
+        <div className="absolute w-full ring-1 ring-outline1 h-max bottom-[100%] z-9 block bg-canvas rounded-tr-md rounded-tl-md py-4 px-8 scale-y-0 origin-bottom peer-has-[button.toggle:focus]/settings-bar:scale-y-100 transition-all duration-300 focus-within:scale-y-100 focus-visible:scale-y-100">
+          <ul className="w-full h-max flex flex-col ring">
             <button className="w-full h-16 ring flex items-center justify-center">
               hello
             </button>
@@ -136,7 +136,7 @@ export const StarredProjectsArea: React.FC = () => {
 
 export const FileListView: React.FC = () => {
   return (
-    <ul className="flex md:grid flex-col md:grid-cols-2 justify-start md:justify-normal items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw] mb-20">
+    <ul className="flex md:grid flex-col md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(25rem,1fr))] justify-start md:justify-normal items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw] mb-20">
       <li className="h-48 md:h-[20rem] group/list-view-item1 flex justify-start items-center w-full md:w-max relative overflow-visible">
         <span className="y-right-absolute-full w-2 group-hover/list-view-item1:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
         <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
