@@ -1,5 +1,4 @@
 import { ClientLoaderFunctionArgs, Form, Link } from "@remix-run/react";
-import { Link as LinkIcon } from "lucide-react";
 import { Logo } from "~/components/logo";
 
 export const clientLoader = (args: ClientLoaderFunctionArgs) => {
