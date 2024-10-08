@@ -129,6 +129,9 @@ script {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+  .text-danger {
+    @apply text-red-400;
+  }
 }
 
 @layer base {

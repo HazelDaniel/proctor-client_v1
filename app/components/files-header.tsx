@@ -50,7 +50,10 @@ export const FilesHeader: React.FC = () => {
         </div>
         <span className="h-[60%] md:h-[80%] w-[3px] bg-outline1 y-centered-absolute right-0 rounded"></span>
       </div>
-      <div className="flex items-center justify-between flex-1 h-full pl-4">
+      <div
+        className="flex items-center justify-between flex-1 h-full pl-4"
+        style={{ "--logo-box-here": "10rem" } as any}
+      >
         <h2>All Projects</h2>
         <Logo />
       </div>

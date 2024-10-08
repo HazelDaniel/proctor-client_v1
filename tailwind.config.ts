@@ -7,6 +7,10 @@ export default {
     extend: {
       backgroundImage: {
         "conic-gradient": "conic-gradient(var(--tw-gradient-stops))",
+        "auth-bg-mobile": "url('/images/onboarding-bg-mobile.png')",
+        "auth-bg-desktop": "url('/images/onboarding-bg-desktop.png')",
+        "eye-visible": "url('')",
+        "eye-hidden": "url('')",
       },
       backgroundSize: {
         full: "300%, 300%",

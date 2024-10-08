@@ -2,7 +2,7 @@ import { Link } from "@remix-run/react";
 
 export const Logo: React.FC = () => {
   return (
-    <div className="w-10 h-10 rounded-sm cursor-pointer">
+    <div className="w-[--logo-box-here] h-[--logo-box-here] rounded-sm cursor-pointer">
       <svg
         className="h-full w-full"
         viewBox="0 0 100 100"

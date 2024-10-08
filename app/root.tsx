@@ -351,7 +351,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M31 16.5001L16.5 16.5001M16.5 16.5001L2 16.5001M16.5 16.5001L16.5 2M16.5 16.5001L16.5 31"
                 stroke="rgb(var(--outline-1d))"
-                stroke-width="3"
+                stroke-width="2"
                 stroke-linecap="round"
                 stroke-linejoin="round"
               />
