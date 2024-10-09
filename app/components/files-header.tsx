@@ -52,7 +52,7 @@ export const FilesHeader: React.FC = () => {
       </div>
       <div
         className="flex items-center justify-between flex-1 h-full pl-4"
-        style={{ "--logo-box-here": "10rem" } as any}
+        style={{ "--logo-box-here": "3rem" } as any}
       >
         <h2>All Projects</h2>
         <Logo />

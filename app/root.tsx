@@ -516,8 +516,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </symbol>
 
           <symbol id="comment">
-            <svg viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M13.3501 24.3078C19.7842 24.3078 25 19.0902 25 12.6539C25 6.21764 19.7842 1 13.3501 1C6.9161 1 1.70028 6.21764 1.70028 12.6539C1.70028 14.5182 2.13787 16.2802 2.9159 17.8428C3.50323 19.0224 1.36364 21.9307 1.05309 23.0918C0.751877 24.218 1.78179 25.2482 2.90756 24.9469C4.06822 24.6363 6.98388 22.5043 8.16307 23.0918C9.72513 23.8701 11.4865 24.3078 13.3501 24.3078Z" stroke="#020617" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg
+              viewBox="0 0 26 26"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M13.3501 24.3078C19.7842 24.3078 25 19.0902 25 12.6539C25 6.21764 19.7842 1 13.3501 1C6.9161 1 1.70028 6.21764 1.70028 12.6539C1.70028 14.5182 2.13787 16.2802 2.9159 17.8428C3.50323 19.0224 1.36364 21.9307 1.05309 23.0918C0.751877 24.218 1.78179 25.2482 2.90756 24.9469C4.06822 24.6363 6.98388 22.5043 8.16307 23.0918C9.72513 23.8701 11.4865 24.3078 13.3501 24.3078Z"
+                stroke="#020617"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
             </svg>
           </symbol>
 
@@ -556,9 +566,36 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </svg>
           </symbol>
 
-          <symbol id="check"></symbol>
+          <symbol id="external-link">
+            <svg
+              viewBox="0 0 28 28"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M1.5 1.75C1.5 1.61193 1.61193 1.5 1.75 1.5H9.75V0H1.75C0.783501 0 0 0.783503 0 1.75V25.75C0 26.7165 0.783503 27.5 1.75 27.5H25.75C26.7165 27.5 27.5 26.7165 27.5 25.75V17.75H26V25.75C26 25.8881 25.8881 26 25.75 26H1.75C1.61193 26 1.5 25.8881 1.5 25.75V1.75ZM16.75 0C16.3358 0 16 0.335786 16 0.75C16 1.16421 16.3358 1.5 16.75 1.5H23.978L9.21157 16.7279C8.92322 17.0253 8.93053 17.5001 9.22789 17.7884C9.52525 18.0768 10.0001 18.0695 10.2884 17.7721L25 2.6008V9.75C25 10.1642 25.3358 10.5 25.75 10.5C26.1642 10.5 26.5 10.1642 26.5 9.75V0.75C26.5 0.335786 26.1642 0 25.75 0H16.75Z"
+                fill="#444444"
+              />
+            </svg>
+          </symbol>
 
-          <symbol id="filter"></symbol>
+          <symbol id="caret">
+            <svg
+              viewBox="0 0 15 28"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M1 27L14 14L1 1"
+                stroke="rgb(var(--outline-1))"
+                strokeWidth={2}
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </symbol>
 
           <symbol id="linkedin"></symbol>
 
