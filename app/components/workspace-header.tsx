@@ -6,6 +6,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "./ui/sheet";
+import { Copy } from "lucide-react";
+import { ResetIcon } from "@radix-ui/react-icons";
 
 export const WorkspaceHeader: React.FC<{
   sidePaneOpened: boolean;
@@ -16,7 +28,13 @@ export const WorkspaceHeader: React.FC<{
     <header className="files-header flex items-center justify-start w-full h-32 md:h-20 px-4 pr-0 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-10">
       <div className="relative flex-row justify-start pr-4 md:w-1/4 h-3/4 flex w-max justify-self-start">
         <div className="h-full w-full flex items-center mr-auto">
-          <button className={"w-8 h-8 mr-0 md:mr-auto" + `${sidePaneOpened ? " scale-x-[-1]": ""}`} onClick={() => toggleSidePane(prev => !prev)}>
+          <button
+            className={
+              "w-8 h-8 mr-0 md:mr-auto" +
+              `${sidePaneOpened ? " scale-x-[-1]" : ""}`
+            }
+            onClick={() => toggleSidePane((prev) => !prev)}
+          >
             <svg className="w-full h-full">
               <use xlinkHref="#open-side-tab"></use>
             </svg>
@@ -111,11 +129,43 @@ export const WorkspaceHeader: React.FC<{
         </DropdownMenu>
       </div>
 
-      <button className="w-16 h-[80%] md:h-full self-start hover:bg-accent/25 flex items-center justify-center ml-2 transition-colors duration-300">
-        <svg className="w-[80%] md:w-8 h-full scale-90">
-          <use xlinkHref="#plus"></use>
-        </svg>
-      </button>
+      <Sheet>
+        <SheetTrigger asChild>
+          <button className="w-16 h-[80%] md:h-full self-start hover:bg-accent/25 flex items-center justify-center ml-2 transition-colors duration-300">
+            <svg className="w-[80%] md:w-8 h-full scale-90">
+              <use xlinkHref="#code"></use>
+            </svg>
+          </button>
+        </SheetTrigger>
+        <SheetContent className="bg-primary w-[80%] pt-16 flex flex-col md:min-w-[40rem] border-none">
+          <SheetHeader>
+            <div className="flex justify-between h-max">
+              <p className="h-4 w-max text-muted-foreground">Output SQL</p>
+              <div className="h-full w-max flex">
+                <span className="h-4 w-4 cursor-pointer mx-2">
+                  <Copy className="stroke-muted-foreground w-full h-full" />
+                </span>
+                <span className="h-4 w-4 cursor-pointer mx-2">
+                  <ResetIcon className="stroke-muted-foreground w-full h-full" />
+                </span>
+              </div>
+            </div>
+          </SheetHeader>
+
+          <div className="flex-1 w-full relative">
+            <pre className="text-accent overflow-scroll no-scrollbar h-full bg-outline1/5 p-2 ring-1 ring-outline1/20 rounded-sm">
+              CREATE TABLE users (<br /> user_id UUID PRIMARY KEY DEFAULT
+              random_uuid()
+              <br />
+              );
+            </pre>
+          </div>
+
+          <SheetDescription className="justify-self-end mt-auto text-center">
+            Always double check generated SQL codes for errors.
+          </SheetDescription>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 };

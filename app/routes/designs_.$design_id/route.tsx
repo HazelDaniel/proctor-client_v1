@@ -66,9 +66,21 @@ const DesignPanel: React.FC = () => {
 };
 
 const CommentBoard: React.FC = () => {
+  const [boardOpened, toggleBoard] = useState(false);
+
   return (
-    <div className="fixed top-[10rem] md:top-32 right-0 w-[25rem] h-[20rem] flex shadow-lg shadow-outline1/25">
-      <ul className="h-full flex-1 flex-col overflow-auto no-scrollbar">
+    <div
+      className={
+        "fixed top-[10rem] md:top-20 right-0 w-[25rem] h-[20rem] flex shadow-lg shadow-outline1/25" +
+        `${!boardOpened ? " shadow-none" : ""}`
+      }
+    >
+      <ul
+        className={
+          "h-full flex-1 flex-col overflow-auto no-scrollbar" +
+          `${!boardOpened ? " scale-0 origin-right" : ""}`
+        }
+      >
         <li className="flex w-full h-[5rem] bg-canvas/55 backdrop-blur-md ring-transparent ring-2 flex-col items-start p-2">
           <div className="w-full h-1/2 relative flex justify-end">
             <Link
@@ -85,12 +97,12 @@ const CommentBoard: React.FC = () => {
           </div>
           <div className="flex gap-1 flex-1 w-full">
             <img
-              src="/public/images/emoji_student_1.png"
+              src="/images/emoji_student_1.png"
               alt=""
               className="w-8 h-8 rounded-full"
             />
             <img
-              src="/public/images/emoji_student_2.png"
+              src="/images/emoji_student_2.png"
               alt=""
               className="w-8 h-8 rounded-full"
             />
@@ -116,43 +128,12 @@ const CommentBoard: React.FC = () => {
           </div>
           <div className="flex gap-1 flex-1 w-full">
             <img
-              src="/public/images/emoji_student_1.png"
+              src="/images/emoji_student_1.png"
               alt=""
               className="w-8 h-8 rounded-full"
             />
             <img
-              src="/public/images/emoji_student_2.png"
-              alt=""
-              className="w-8 h-8 rounded-full"
-            />
-            <span className="justify-self-end ml-auto text-outline1 text-sm h-full flex items-center justify-center">
-              Thur, 11:02 am
-            </span>
-          </div>
-        </li>
-
-        <li className="flex w-full h-[5rem] bg-canvas/55 backdrop-blur-md ring-transparent ring-2 flex-col items-start p-2">
-          <div className="w-full h-1/2 relative flex justify-end">
-            <Link
-              to={""}
-              className="absolute left-0 w-full h-full top-0 text-accent/75 font-semibold"
-            >
-              chat #12041
-            </Link>
-            <span className="h-4 w-4">
-              <svg className="h-full w-full">
-                <use xlinkHref="#external-link"></use>
-              </svg>
-            </span>
-          </div>
-          <div className="flex gap-1 flex-1 w-full">
-            <img
-              src="/public/images/emoji_student_1.png"
-              alt=""
-              className="w-8 h-8 rounded-full"
-            />
-            <img
-              src="/public/images/emoji_student_2.png"
+              src="/images/emoji_student_2.png"
               alt=""
               className="w-8 h-8 rounded-full"
             />
@@ -178,12 +159,12 @@ const CommentBoard: React.FC = () => {
           </div>
           <div className="flex gap-1 flex-1 w-full">
             <img
-              src="/public/images/emoji_student_1.png"
+              src="/images/emoji_student_1.png"
               alt=""
               className="w-8 h-8 rounded-full"
             />
             <img
-              src="/public/images/emoji_student_2.png"
+              src="/images/emoji_student_2.png"
               alt=""
               className="w-8 h-8 rounded-full"
             />
@@ -209,12 +190,43 @@ const CommentBoard: React.FC = () => {
           </div>
           <div className="flex gap-1 flex-1 w-full">
             <img
-              src="/public/images/emoji_student_1.png"
+              src="/images/emoji_student_1.png"
               alt=""
               className="w-8 h-8 rounded-full"
             />
             <img
-              src="/public/images/emoji_student_2.png"
+              src="/images/emoji_student_2.png"
+              alt=""
+              className="w-8 h-8 rounded-full"
+            />
+            <span className="justify-self-end ml-auto text-outline1 text-sm h-full flex items-center justify-center">
+              Thur, 11:02 am
+            </span>
+          </div>
+        </li>
+
+        <li className="flex w-full h-[5rem] bg-canvas/55 backdrop-blur-md ring-transparent ring-2 flex-col items-start p-2">
+          <div className="w-full h-1/2 relative flex justify-end">
+            <Link
+              to={""}
+              className="absolute left-0 w-full h-full top-0 text-accent/75 font-semibold"
+            >
+              chat #12041
+            </Link>
+            <span className="h-4 w-4">
+              <svg className="h-full w-full">
+                <use xlinkHref="#external-link"></use>
+              </svg>
+            </span>
+          </div>
+          <div className="flex gap-1 flex-1 w-full">
+            <img
+              src="/images/emoji_student_1.png"
+              alt=""
+              className="w-8 h-8 rounded-full"
+            />
+            <img
+              src="/images/emoji_student_2.png"
               alt=""
               className="w-8 h-8 rounded-full"
             />
@@ -225,7 +237,13 @@ const CommentBoard: React.FC = () => {
         </li>
       </ul>
       <div className="w-8 h-full bg-canvas flex flex-col justify-center items-center">
-        <button className="w-8 h-8 flex items-center justify-center">
+        <button
+          className={
+            "w-8 h-8 flex items-center justify-center" +
+            `${boardOpened ? " scale-x-[-1]" : ""}`
+          }
+          onClick={() => toggleBoard((prevBoard) => !prevBoard)}
+        >
           <svg className="w-[80%] h-full scale-y-125">
             <use xlinkHref="#caret"></use>
           </svg>
