@@ -8,12 +8,9 @@ import {
 } from "@radix-ui/react-dropdown-menu";
 import {
   Sheet,
-  SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
-  SheetTitle,
   SheetTrigger,
 } from "./ui/sheet";
 import { Copy } from "lucide-react";
@@ -23,9 +20,8 @@ export const WorkspaceHeader: React.FC<{
   sidePaneOpened: boolean;
   toggleSidePane: React.Dispatch<React.SetStateAction<boolean>>;
 }> = ({ sidePaneOpened, toggleSidePane }) => {
-  console.log("sidepane opened? ", sidePaneOpened);
   return (
-    <header className="files-header flex items-center justify-start w-full h-32 md:h-20 px-4 pr-0 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-10">
+    <header className="files-header flex items-center justify-start w-full h-32 md:h-20 px-4 pr-0 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-[15]">
       <div className="relative flex-row justify-start pr-4 md:w-1/4 h-3/4 flex w-max justify-self-start">
         <div className="h-full w-full flex items-center mr-auto">
           <button
@@ -42,15 +38,11 @@ export const WorkspaceHeader: React.FC<{
 
           <div className="md:flex w-max justify-between hidden">
             <button className="w-8 h-8 mr-8">
-              <svg className="h-full w-full scale-x-[-0.8] scale-y-[0.8]">
-                <use xlinkHref="#undo"></use>
-              </svg>
+              <ResetIcon className="h-full w-full scale-[0.8]" />
             </button>
 
             <button className="w-8 h-8">
-              <svg className="h-full w-full scale-[0.8]">
-                <use xlinkHref="#undo"></use>
-              </svg>
+              <ResetIcon className="h-full w-full scale-x-[-0.8] scale-y-[0.8]" />
             </button>
           </div>
         </div>
@@ -105,14 +97,14 @@ export const WorkspaceHeader: React.FC<{
         </span>
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none">
+          <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none z-8">
             <button className="w-8 h-8 flex items-center justify-center">
               <svg className="w-full h-full">
                 <use xlinkHref="#kebab"></use>
               </svg>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-[15rem] mr-8 rounded-md p-2 bg-canvas *:outline-none *:focus:outline-none drop-shadow-md mt-4">
+          <DropdownMenuContent className="w-[15rem] mr-8 rounded-md p-2 bg-canvas *:outline-none *:focus:outline-none drop-shadow-md mt-4 z-[15]">
             <DropdownMenuItem className="rounded-sm p-4 cursor-pointer">
               invite collaborator
             </DropdownMenuItem>
@@ -142,10 +134,10 @@ export const WorkspaceHeader: React.FC<{
             <div className="flex justify-between h-max">
               <p className="h-4 w-max text-muted-foreground">Output SQL</p>
               <div className="h-full w-max flex">
-                <span className="h-4 w-4 cursor-pointer mx-2">
+                <span className="h-[20px] w-[20px] cursor-pointer mx-2">
                   <Copy className="stroke-muted-foreground w-full h-full" />
                 </span>
-                <span className="h-4 w-4 cursor-pointer mx-2">
+                <span className="h-[20px] w-[20px] cursor-pointer mx-2">
                   <ResetIcon className="stroke-muted-foreground w-full h-full" />
                 </span>
               </div>

@@ -1,8 +1,13 @@
 export const WorkspaceSidetab: React.FC<{
   sidePaneOpened: boolean;
-}> = ({ sidePaneOpened}) => {
+}> = ({ sidePaneOpened }) => {
   return (
-    <div className={"w-[30rem] max-w-[100vw] h-[100vh] fixed z-10 bg-bg rounded-sm border-t-4 border-t-accent/50 top-[6rem] md:top-[4.5rem] *:select-none" +  `${!sidePaneOpened ? " left-[-100vw]" : ""}`}>
+    <div
+      className={
+        "w-[30rem] max-w-[100vw] h-[100vh] fixed z-[15] bg-bg rounded-sm border-t-4 border-t-accent/50 top-[6rem] md:top-[4.5rem] *:select-none" +
+        `${!sidePaneOpened ? " left-[-100vw]" : ""}`
+      }
+    >
       <div className="wrapper flex flex-col justify-between w-full h-full overflow-y-auto p-2 py-8">
         <div className="flex flex-col justify-start align-center w-full h-max">
           <div className="flex flex-col w-full my-4">
