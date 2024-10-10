@@ -2,7 +2,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
@@ -11,15 +10,35 @@ import {
   SheetContent,
   SheetDescription,
   SheetHeader,
+  SheetTitle,
   SheetTrigger,
 } from "./ui/sheet";
 import { Copy } from "lucide-react";
 import { ResetIcon } from "@radix-ui/react-icons";
+import { outputPaneSelector, sidePaneSelector, store } from "~/store";
+import {
+  XOpenOutputPane,
+  closeSidePane,
+  openOutputPane,
+  openSidePane,
+} from "~/reducers/workspace.reducer";
+import { useDispatch, useSelector } from "react-redux";
+import { useCallback } from "react";
+import { ThunkAction, UnknownAction } from "@reduxjs/toolkit";
 
-export const WorkspaceHeader: React.FC<{
-  sidePaneOpened: boolean;
-  toggleSidePane: React.Dispatch<React.SetStateAction<boolean>>;
-}> = ({ sidePaneOpened, toggleSidePane }) => {
+export const WorkspaceHeader: React.FC = () => {
+  const outputPaneOpened = useSelector(outputPaneSelector);
+  const sidePaneOpened = useSelector(sidePaneSelector);
+  const dispatch = useDispatch<UnknownAction | any>();
+
+  const toggleSidePane = useCallback(() => {
+    if (sidePaneOpened) {
+      dispatch(closeSidePane());
+      return;
+    }
+    dispatch(openSidePane());
+  }, [sidePaneOpened]);
+
   return (
     <header className="files-header flex items-center justify-start w-full h-32 md:h-20 px-4 pr-0 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-[15]">
       <div className="relative flex-row justify-start pr-4 md:w-1/4 h-3/4 flex w-max justify-self-start">
@@ -29,7 +48,7 @@ export const WorkspaceHeader: React.FC<{
               "w-8 h-8 mr-0 md:mr-auto" +
               `${sidePaneOpened ? " scale-x-[-1]" : ""}`
             }
-            onClick={() => toggleSidePane((prev) => !prev)}
+            onClick={() => toggleSidePane()}
           >
             <svg className="w-full h-full">
               <use xlinkHref="#open-side-tab"></use>
@@ -121,14 +140,22 @@ export const WorkspaceHeader: React.FC<{
         </DropdownMenu>
       </div>
 
-      <Sheet>
+      <Sheet open={outputPaneOpened}>
         <SheetTrigger asChild>
-          <button className="w-16 h-[80%] md:h-full self-start hover:bg-accent/25 flex items-center justify-center ml-2 transition-colors duration-300">
+          <button
+            className="w-16 h-[80%] md:h-full self-start hover:bg-accent/25 flex items-center justify-center ml-2 transition-colors duration-300"
+            onClick={() => {
+              dispatch(XOpenOutputPane());
+            }}
+          >
             <svg className="w-[80%] md:w-8 h-full scale-90">
               <use xlinkHref="#code"></use>
             </svg>
           </button>
         </SheetTrigger>
+        <SheetTitle className="sr-only">
+          output pane of the db design
+        </SheetTitle>
         <SheetContent className="bg-primary w-[80%] pt-16 flex flex-col md:min-w-[40rem] border-none">
           <SheetHeader>
             <div className="flex justify-between h-max">

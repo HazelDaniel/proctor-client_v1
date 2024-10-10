@@ -1,6 +1,8 @@
-export const WorkspaceSidetab: React.FC<{
-  sidePaneOpened: boolean;
-}> = ({ sidePaneOpened }) => {
+import { useSelector } from "react-redux";
+import { sidePaneSelector } from "~/store";
+
+export const WorkspaceSidetab: React.FC = () => {
+  const sidePaneOpened = useSelector(sidePaneSelector);
   return (
     <div
       className={
@@ -56,11 +58,11 @@ export const WorkspaceSidetab: React.FC<{
                 <input
                   type="checkbox"
                   name=""
-                  id="toggle-comments-pane"
+                  id="show-comments-pane"
                   className="inline accent-accent mr-4"
                 />
-                <label htmlFor="toggle-comments-pane" className="mr-auto">
-                  toggle comments pane
+                <label htmlFor="show-comments-pane" className="mr-auto">
+                  show comments pane
                 </label>
                 <span className="w-8 h-8 mr-2 flex items-center">
                   <svg className="w-4 h-4 mr-1">
@@ -77,11 +79,11 @@ export const WorkspaceSidetab: React.FC<{
                 <input
                   type="checkbox"
                   name=""
-                  id="toggle-comments"
+                  id="show-comments"
                   className="inline accent-accent mr-4"
                 />
-                <label htmlFor="toggle-comments" className="mr-auto">
-                  toggle comments
+                <label htmlFor="show-comments" className="mr-auto">
+                  show comments
                 </label>
                 <span className="w-8 h-8 mr-2 flex items-center">
                   <svg className="w-4 h-4 mr-1">
@@ -98,11 +100,11 @@ export const WorkspaceSidetab: React.FC<{
                 <input
                   type="checkbox"
                   name=""
-                  id="toggle-output-pane"
+                  id="show-output-pane"
                   className="inline accent-accent mr-4"
                 />
-                <label htmlFor="toggle-output-pane" className="mr-auto">
-                  toggle output pane
+                <label htmlFor="show-output-pane" className="mr-auto">
+                  show output pane
                 </label>
                 <span className="w-8 h-8 mr-2 flex items-center">
                   <svg className="w-4 h-4 mr-1">
@@ -114,6 +116,27 @@ export const WorkspaceSidetab: React.FC<{
                   </span>
                 </span>
               </li>
+
+              <li className="w-full flex justify-between items-center h-8 overflow-hidden capitalize my-2">
+                <input
+                  type="checkbox"
+                  name=""
+                  id="show-all"
+                  className="inline accent-accent mr-4"
+                />
+                <label htmlFor="show-all" className="mr-auto">
+                  show all panes
+                </label>
+                <span className="w-8 h-8 mr-2 flex items-center">
+                  <svg className="w-4 h-4 mr-1">
+                    <use xlinkHref="#command"></use>
+                  </svg>
+
+                  <span className="text-lg text-outline1d text-opacity-50 opacity-60">
+                    \
+                  </span>
+                </span>
+              </li>
             </ul>
           </div>
         </div>
@@ -121,7 +144,7 @@ export const WorkspaceSidetab: React.FC<{
         {/* settings pane */}
         <div className="w-[99%] h-max group/settings-pane overflow-visible flex relative mb-20">
           <div className="w-full peer/settings-bar p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly mt-4 ring-offset-2 group-has-[button:focus]/settings-pane:border-2">
-            <button className="toggle flex items-center justify-center w-4 h-4 focus:outline-none">
+            <button className="show flex items-center justify-center w-4 h-4 focus:outline-none">
               <svg className="w-full scale-75 md:scale-50">
                 <use xlinkHref="#double-caret"></use>
               </svg>

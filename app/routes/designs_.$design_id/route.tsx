@@ -1,4 +1,5 @@
 import { ClientLoaderFunctionArgs, Form, Link, json } from "@remix-run/react";
+import { Provider } from "react-redux";
 import type { MetaFunction } from "@remix-run/node";
 import useEventListener from "~/hooks/useevent";
 import { useRef, useState } from "react";
@@ -10,10 +11,10 @@ import {
   DrawerContent,
   DrawerHeader,
   DrawerTitle,
-  DrawerDescription,
   DrawerFooter,
   DrawerClose,
 } from "~/components/ui/drawer";
+import { store } from "~/store";
 
 export const meta: MetaFunction = () => {
   return [
@@ -87,7 +88,6 @@ const CommentBoard: React.FC = () => {
     >
       <Drawer>
         <DrawerTrigger ref={commentBoardOpenerRef} className="invisible">
-          Open
         </DrawerTrigger>
         <DrawerContent className="h-[45rem] md:h-[30rem] bg-bg pt-8 border-t-accent border-t-4">
           <DrawerHeader className="flex items-center justify-center">
@@ -394,11 +394,8 @@ export const DesignsPage: React.FC = () => {
   useEventListener("resize", handleResize, window as HTMLElement | any);
 
   return (
-    <>
-      <WorkspaceHeader
-        sidePaneOpened={sidePaneOpened}
-        toggleSidePane={toggleSidePane}
-      />
+    <Provider store={store}>
+      <WorkspaceHeader/>
       <section className="designs-section flex-1 w-full basis-auto min-h-[100vh] h-max md:mt-20 mt-32 overflow-hidden">
         <img
           src="/icons/canvas-bg.svg"
@@ -407,9 +404,9 @@ export const DesignsPage: React.FC = () => {
         />
         <DesignPanel />
         <CommentBoard />
-        <WorkspaceSidetab sidePaneOpened={sidePaneOpened} />
+        <WorkspaceSidetab />
       </section>
-    </>
+    </Provider>
   );
 };
 
