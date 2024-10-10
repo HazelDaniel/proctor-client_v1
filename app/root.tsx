@@ -1,4 +1,5 @@
 import {
+  ClientLoaderFunctionArgs,
   Links,
   Meta,
   Outlet,
@@ -6,8 +7,12 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import type { LinksFunction } from "@remix-run/node";
-
 import "./tailwind.css";
+
+import { Provider } from "react-redux";
+import { persistor, store } from "./store";
+import { useEffect, useState } from "react";
+import { PersistGate } from "redux-persist/integration/react";
 
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -26,6 +31,10 @@ export const links: LinksFunction = () => [
     href: "logo.svg",
   },
 ];
+
+export const clientLoader = (args: ClientLoaderFunctionArgs) => {
+  return {}
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -49,9 +58,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M16 9.17336C15.5826 13.629 11.1261 16.7902 6.7438 15.8262C-1.56366 13.9988 -0.541809 1.75684 7.75966 1C3.82856 6.24679 10.6817 13.0516 16 9.17336Z"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -65,67 +74,67 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M12 19.0039V21.0039"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M7 17.0001L5 19.0001"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M18.9998 19.0001L17 17"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M21 12L19 12"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M5 12L3 12"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <circle
                 cx="12"
                 cy="12"
                 r="4"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M19 5L17 7"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M5 5L7 7"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M12 3V5"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -137,8 +146,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
+                fillRule="evenodd"
+                clipRule="evenodd"
                 d="M0.131802 3.13188C-0.043934 3.30762 -0.043934 3.59254 0.131802 3.76828C0.307538 3.94401 0.592462 3.94401 0.768198 3.76828L3.45008 1.0864L6.13196 3.76828C6.3077 3.94401 6.59262 3.94401 6.76836 3.76828C6.94409 3.59254 6.94409 3.30762 6.76836 3.13188L3.76828 0.131802C3.68389 0.0474105 3.56943 0 3.45008 0C3.33073 1.49012e-08 3.21627 0.0474105 3.13188 0.131802L0.131802 3.13188ZM6.76836 8.43507C6.94409 8.25933 6.94409 7.97441 6.76836 7.79867C6.59262 7.62293 6.3077 7.62293 6.13196 7.79867L3.45008 10.4806L0.768199 7.79867C0.592463 7.62293 0.307539 7.62293 0.131803 7.79867C-0.0439329 7.97441 -0.0439329 8.25933 0.131803 8.43507L3.13188 11.4351C3.30762 11.6109 3.59254 11.6109 3.76828 11.4351L6.76836 8.43507Z"
                 fill="#71717A"
               />
@@ -153,9 +162,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               <path
                 d="M10.2617 10.2799L12.3151 12.3334M11.7225 6.72076C11.7225 9.51204 9.46735 11.7748 6.68547 11.7748C3.9036 11.7748 1.64844 9.51204 1.64844 6.72076C1.64844 3.92947 3.9036 1.66669 6.68547 1.66669C9.46735 1.66669 11.7225 3.92947 11.7225 6.72076Z"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 className="stroke-outline1d"
               />
             </svg>
@@ -184,10 +193,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M14.473 5.6875H25.8889C27.6071 5.6875 29 7.08661 29 8.8125V22.875C29 24.6009 27.6071 26 25.8889 26H4.11112C2.3929 26 1 24.6009 1 22.875V5.6875M14.473 5.6875C13.7159 5.6875 12.9848 5.41019 12.4166 4.90754L8.88157 1.77996C8.31344 1.27731 7.58232 1 6.82522 1H4.11112C2.3929 1 1 2.39911 1 4.125V5.6875M14.473 5.6875H1"
                 stroke="#1D192B"
-                stroke-opacity="0.16"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeOpacity="0.16"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -212,9 +221,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               <path
                 d="M6.12132 13.8787C5.57843 13.3358 4.82843 13 4 13C2.34315 13 1 14.3431 1 16C1 17.6569 2.34315 19 4 19C5.65685 19 7 17.6569 7 16C7 15.1716 6.66421 14.4216 6.12132 13.8787ZM6.12132 13.8787L13.8787 6.12132M13.8787 6.12132C14.4216 6.66421 15.1716 7 16 7C17.6569 7 19 5.65685 19 4C19 2.34315 17.6569 1 16 1C14.3431 1 13 2.34315 13 4C13 4.82843 13.3358 5.57843 13.8787 6.12132ZM13.8787 6.12132L13.8828 6.11719"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -227,9 +236,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               <path
                 d="M6.80087 18.199C6.28823 18.7119 5.59279 19 4.86764 19H1V15.1564C1 14.432 1.28753 13.7373 1.79944 13.2248M6.80087 18.199L1.79944 13.2248M6.80087 18.199L16.7742 8.22125M1.79944 13.2248L11.7826 3.22963M11.7826 3.22963L13.2088 1.80175C14.2762 0.733036 16.0081 0.732708 17.076 1.80102L18.2023 2.92782C19.2692 3.99518 19.2692 5.72521 18.2023 6.79258L16.7742 8.22125M11.7826 3.22963L16.7742 8.22125"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -242,9 +251,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
             >
               <path
                 d="M10.0004 5.7998V15.9998M10.0004 5.7998C10.0004 4.09569 10.1078 2.21639 8.36221 1.32698C7.72047 1 6.8802 1 5.20004 1H2.60004C1.36437 1 1.00043 1.4366 1.00043 2.6001V11.4001C1.00043 11.9678 0.964657 12.5947 1.54633 12.8911C1.76003 13 2.03944 13 2.5984 13H5.43116C7.80824 13 8.69113 14.0363 10.0004 15.9998M10.0004 5.7998C10.0004 4.09608 9.89276 2.21629 11.6381 1.32698C12.2799 1 13.1201 1 14.8002 1H17.4002C18.6356 1 19.0004 1.43643 19.0004 2.6001V11.4001C19.0004 11.967 19.0358 12.5951 18.4547 12.8911C18.241 13 17.9614 13 17.4025 13H14.5698C12.1922 13 11.3098 14.0356 10.0004 15.9998"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -256,12 +265,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
+                fillRule="evenodd"
+                clipRule="evenodd"
                 d="M22.8939 1C19.0291 4.05819 16.8361 6.77394 16.3147 9.14725C15.7934 11.5206 15.7146 13.7802 16.0784 15.9261H23L11.7058 26L1 15.9261H7.57865C7.61113 11.9583 9.08487 8.58512 12 5.80656C14.9151 3.02794 18.5464 1.42581 22.8939 1Z"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -275,16 +284,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M19.9968 21.4246C18.262 23.3248 15.8654 24.5 13.2181 24.5C7.92359 24.5 3.63152 19.799 3.63152 14C3.63152 8.20102 7.92359 3.5 13.2181 3.5C17.5405 3.5 20.1605 6.65525 22.8047 9.91667"
                 stroke="#020617"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M22.8047 5.25V9.91667H18.544"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -298,16 +307,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M31.75 6.37146V37.3186"
                 stroke="#020617"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M6.25 21.845C6.25 14.1216 6.25 10.2599 8.99587 7.86059C11.7417 5.46124 16.1612 5.46124 25 5.46124C33.8388 5.46124 38.2583 5.46124 41.0041 7.86059C43.75 10.2599 43.75 14.1216 43.75 21.845C43.75 29.5684 43.75 33.43 41.0041 35.8294C38.2583 38.2287 33.8388 38.2287 25 38.2287C16.1612 38.2287 11.7417 38.2287 8.99587 35.8294C6.25 33.43 6.25 29.5684 6.25 21.845Z"
                 stroke="#020617"
-                stroke-width="3"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -319,8 +328,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
+                fillRule="evenodd"
+                clipRule="evenodd"
                 d="M17.022 3.30198L14.2449 9.97903C13.5968 11.5371 12.1316 12.6016 10.4495 12.7365L3.24109 13.3144L8.73315 18.0189C10.0147 19.1167 10.5744 20.8392 10.1828 22.4806L8.50492 29.5148L14.6763 25.7453C16.1164 24.8657 17.9276 24.8657 19.3676 25.7453L25.5391 29.5148L23.8611 22.4806C23.4696 20.8392 24.0293 19.1167 25.3108 18.0189L30.8029 13.3144L23.5945 12.7365C21.9124 12.6016 20.4472 11.5371 19.7991 9.97903L17.022 3.30198ZM18.8686 1.23194C18.1854 -0.410647 15.8585 -0.410645 15.1754 1.23194L11.9365 9.01895C11.6485 9.71142 10.9973 10.1846 10.2497 10.2445L1.843 10.9185C0.0696952 11.0606 -0.649356 13.2736 0.701718 14.431L7.10676 19.9176C7.67634 20.4055 7.92508 21.171 7.75107 21.9005L5.79422 30.1041C5.38145 31.8345 7.26395 33.2023 8.78215 32.2749L15.9795 27.8788C16.6195 27.4879 17.4245 27.4879 18.0645 27.8788L25.2618 32.2749C26.78 33.2023 28.6625 31.8345 28.2498 30.1041L26.2929 21.9005C26.1189 21.171 26.3676 20.4055 26.9372 19.9176L33.3423 14.431C34.6933 13.2736 33.9743 11.0606 32.201 10.9185L23.7942 10.2445C23.0467 10.1846 22.3954 9.71142 22.1074 9.01895L18.8686 1.23194Z"
                 fill="#020617"
               />
@@ -334,8 +343,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
+                fillRule="evenodd"
+                clipRule="evenodd"
                 d="M4.83301 11.5001C4.83301 10.3956 5.72844 9.50014 6.83301 9.50014L11.083 9.50014C11.6353 9.50014 12.083 9.94786 12.083 10.5001C12.083 11.0524 11.6353 11.5001 11.083 11.5001L6.83301 11.5001L6.83301 28.1668L28.1663 28.1668L28.1663 11.5001L23.9163 11.5001C23.3641 11.5001 22.9163 11.0524 22.9163 10.5001C22.9163 9.94786 23.3641 9.50014 23.9163 9.50014L28.1663 9.50014C29.2709 9.50014 30.1663 10.3956 30.1663 11.5001L30.1663 28.1668C30.1663 29.2714 29.2709 30.1668 28.1663 30.1668L6.83301 30.1668C5.72844 30.1668 4.83301 29.2714 4.83301 28.1668L4.83301 11.5001ZM16.4997 3.58088L16.4997 19.8333C16.4997 20.3856 16.9474 20.8333 17.4997 20.8333C18.052 20.8333 18.4997 20.3856 18.4997 19.8333L18.4997 3.58088L22.0426 7.12377C22.4331 7.51429 23.0663 7.51429 23.4568 7.12377C23.8473 6.73325 23.8473 6.10008 23.4568 5.70956L18.2068 0.459557C18.0192 0.272021 17.7649 0.166664 17.4997 0.166664C17.2345 0.166664 16.9801 0.272021 16.7926 0.459557L11.5426 5.70956C11.152 6.10008 11.152 6.73325 11.5426 7.12377C11.9331 7.51429 12.5663 7.51429 12.9568 7.12377L16.4997 3.58088Z"
                 fill="#020617"
               />
@@ -351,9 +360,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M31 16.5001L16.5 16.5001M16.5 16.5001L2 16.5001M16.5 16.5001L16.5 2M16.5 16.5001L16.5 31"
                 stroke="rgb(var(--outline-1d))"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -367,16 +376,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M2.54961 13.4056C2.2778 13.0326 2.1419 12.8462 2.04835 12.4854C1.98388 12.2367 1.98388 11.7633 2.04835 11.5146C2.1419 11.1538 2.2778 10.9674 2.54961 10.5944C4.03902 8.55068 7.30262 5 12 5C16.6974 5 19.961 8.55068 21.4504 10.5944C21.7222 10.9674 21.8581 11.1538 21.9516 11.5146C22.0161 11.7633 22.0161 12.2367 21.9516 12.4854C21.8581 12.8462 21.7222 13.0326 21.4504 13.4056C19.961 15.4493 16.6974 19 12 19C7.30262 19 4.03902 15.4493 2.54961 13.4056Z"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M12 14C13.1046 14 14 13.1046 14 12C14 10.8954 13.1046 10 12 10C10.8954 10 10 10.8954 10 12C10 13.1046 10.8954 14 12 14Z"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -390,9 +399,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M26.0355 9.9645L31.5 4.5M26.0355 9.9645C28.8522 11.7649 30.9285 14.1804 32.1756 15.8916C32.5833 16.451 32.7872 16.7308 32.9275 17.2719C33.0242 17.6449 33.0242 18.3551 32.9275 18.7281C32.7872 19.2692 32.5833 19.549 32.1756 20.1084C29.9415 23.174 25.0461 28.5 18 28.5C14.887 28.5 12.1939 27.4604 9.96449 26.0355M26.0355 9.9645L20.1213 15.8787M4.49997 31.5L9.96449 26.0355M9.96449 26.0355L15.8786 20.1213M5.79128 22.5C4.99797 21.6445 4.34025 20.8162 3.82441 20.1084C3.4167 19.549 3.21285 19.2692 3.07253 18.7281C2.97582 18.3551 2.97582 17.6449 3.07253 17.2719C3.21285 16.7308 3.4167 16.451 3.82441 15.8916C6.05853 12.826 10.9539 7.5 18 7.5C18.8856 7.5 19.7373 7.58414 20.5539 7.73736M20.1213 15.8787C20.6642 16.4216 21 17.1716 21 18C21 19.6569 19.6568 21 18 21C17.1715 21 16.4215 20.6642 15.8786 20.1213M20.1213 15.8787L15.8786 20.1213"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -440,7 +449,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <g clip-path="url(#clip0_59_23009)">
+              <g clipPath="url(#clip0_59_23009)">
                 <path
                   d="M6.64272 26.8864C6.64272 29.2301 7.15826 31.0296 7.83188 32.1181C8.71522 33.544 10.0324 34.148 11.3756 34.148C13.1079 34.148 14.6927 33.7188 17.7466 29.5032C20.1934 26.1244 23.0764 21.3814 25.0161 18.408L28.3013 13.3706C30.5833 9.87213 33.2244 5.98312 36.253 3.3469C38.7248 1.19523 41.3919 0 44.0758 0C48.5821 0 52.8744 2.60626 56.1596 7.49437C59.7547 12.8476 61.5 19.5906 61.5 26.5491C61.5 30.6857 60.6832 33.7253 59.293 36.1268C57.9498 38.4491 55.332 40.7694 50.9285 40.7694V34.148C54.699 34.148 55.64 30.6901 55.64 26.7327C55.64 21.0934 54.3225 14.8348 51.4205 10.3632C49.3607 7.19107 46.6917 5.25304 43.7553 5.25304C40.5794 5.25304 38.0236 7.6435 35.1513 11.9065C33.6244 14.1711 32.0566 16.9311 30.2967 20.0452L28.3589 23.4712C24.4664 30.3592 23.4805 31.928 21.5344 34.5172C18.123 39.0512 15.2104 40.7694 11.3756 40.7694C6.82674 40.7694 3.94993 38.8033 2.1686 35.8407C0.714217 33.4265 0 30.259 0 26.6495L6.64272 26.8864Z"
                   fill="#444444"
@@ -468,7 +477,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <g clip-path="url(#clip0_59_23014)">
+              <g clipPath="url(#clip0_59_23014)">
                 <path
                   d="M37.1562 0.960963H3.84375C3.08791 0.953271 2.35989 1.24574 1.81944 1.77418C1.27898 2.30263 0.97023 3.02389 0.960938 3.77971V37.2267C0.971911 37.9814 1.2814 38.7011 1.82167 39.2281C2.36195 39.7552 3.08901 40.0468 3.84375 40.0391H37.1562C37.9121 40.0451 38.6397 39.7516 39.1798 39.2228C39.72 38.6941 40.0289 37.973 40.0391 37.2171V3.7701C40.0256 3.0165 39.7152 2.29867 39.1754 1.77265C38.6356 1.24663 37.9099 0.954935 37.1562 0.960963Z"
                   fill="#444444"
@@ -508,9 +517,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M8.875 1.03857V24.9614M17.125 1.03857V24.9614M1.03857 17.125H24.9614M1.03857 8.875H24.9614M13 25C7.34315 25 4.51472 25 2.75736 23.2426C1 21.4853 1 18.6569 1 13C1 7.34315 1 4.51472 2.75736 2.75736C4.51472 1 7.34315 1 13 1C18.6569 1 21.4853 1 23.2426 2.75736C25 4.51472 25 7.34315 25 13C25 18.6569 25 21.4853 23.2426 23.2426C21.4853 25 18.6569 25 13 25Z"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -524,9 +533,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M13.3501 24.3078C19.7842 24.3078 25 19.0902 25 12.6539C25 6.21764 19.7842 1 13.3501 1C6.9161 1 1.70028 6.21764 1.70028 12.6539C1.70028 14.5182 2.13787 16.2802 2.9159 17.8428C3.50323 19.0224 1.36364 21.9307 1.05309 23.0918C0.751877 24.218 1.78179 25.2482 2.90756 24.9469C4.06822 24.6363 6.98388 22.5043 8.16307 23.0918C9.72513 23.8701 11.4865 24.3078 13.3501 24.3078Z"
                 stroke="#020617"
-                stroke-width="2"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -552,16 +561,16 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <path
                 d="M12.6045 26.7861C13.5214 29.0511 14.6875 30.625 17.5003 30.625C20.313 30.625 21.4791 29.0511 22.396 26.7861"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
               <path
                 d="M27.4619 14.9568C27.4619 9.55883 23.8735 4.375 17.5261 4.375C11.1787 4.375 7.59031 9.55883 7.59031 14.9568C7.59031 17.1465 6.14977 18.8277 4.93967 20.5842C-0.500091 29.2922 35.2828 28.901 30.1125 20.5842C28.9024 18.8277 27.4619 17.1465 27.4619 14.9568Z"
                 stroke="#020617"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
@@ -573,8 +582,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
+                fillRule="evenodd"
+                clipRule="evenodd"
                 d="M1.5 1.75C1.5 1.61193 1.61193 1.5 1.75 1.5H9.75V0H1.75C0.783501 0 0 0.783503 0 1.75V25.75C0 26.7165 0.783503 27.5 1.75 27.5H25.75C26.7165 27.5 27.5 26.7165 27.5 25.75V17.75H26V25.75C26 25.8881 25.8881 26 25.75 26H1.75C1.61193 26 1.5 25.8881 1.5 25.75V1.75ZM16.75 0C16.3358 0 16 0.335786 16 0.75C16 1.16421 16.3358 1.5 16.75 1.5H23.978L9.21157 16.7279C8.92322 17.0253 8.93053 17.5001 9.22789 17.7884C9.52525 18.0768 10.0001 18.0695 10.2884 17.7721L25 2.6008V9.75C25 10.1642 25.3358 10.5 25.75 10.5C26.1642 10.5 26.5 10.1642 26.5 9.75V0.75C26.5 0.335786 26.1642 0 25.75 0H16.75Z"
                 fill="#444444"
               />
@@ -591,17 +600,39 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 d="M1 27L14 14L1 1"
                 stroke="rgb(var(--outline-1))"
                 strokeWidth={2}
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
           </symbol>
 
           <symbol id="code">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M17.0894 7.97394L17.3196 8.20419C19.109 9.99356 20.0037 10.8882 20.0037 12C20.0037 13.1118 19.109 14.0065 17.3196 15.7958L17.0894 16.0261" stroke="#020617" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M6.91089 7.97394L6.68063 8.20419C4.89127 9.99356 3.99658 10.8882 3.99658 12C3.99658 13.1118 4.89127 14.0065 6.68063 15.7958L6.91089 16.0261" stroke="#020617" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            <path d="M13.8763 5L10.125 19" stroke="#020617" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M17.0894 7.97394L17.3196 8.20419C19.109 9.99356 20.0037 10.8882 20.0037 12C20.0037 13.1118 19.109 14.0065 17.3196 15.7958L17.0894 16.0261"
+                stroke="#020617"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M6.91089 7.97394L6.68063 8.20419C4.89127 9.99356 3.99658 10.8882 3.99658 12C3.99658 13.1118 4.89127 14.0065 6.68063 15.7958L6.91089 16.0261"
+                stroke="#020617"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M13.8763 5L10.125 19"
+                stroke="#020617"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </symbol>
 
@@ -619,5 +650,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+
+  return (
+    <>
+      <Provider store={store}>
+        <PersistGate persistor={persistor}>
+          <Outlet />
+        </PersistGate>
+      </Provider>
+    </>
+  );
 }

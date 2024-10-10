@@ -1,8 +1,8 @@
 import { ClientLoaderFunctionArgs, Form, Link, json } from "@remix-run/react";
-import { Provider } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import type { MetaFunction } from "@remix-run/node";
 import useEventListener from "~/hooks/useevent";
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { WorkspaceHeader } from "~/components/workspace-header";
 import { WorkspaceSidetab } from "~/components/workspace-sidetab";
 import {
@@ -14,7 +14,13 @@ import {
   DrawerFooter,
   DrawerClose,
 } from "~/components/ui/drawer";
-import { store } from "~/store";
+import { commentsPaneSelector, commentsSelector, settingsSelector } from "~/store";
+import {
+  XOpenComments,
+  closeComments,
+  closeCommentsPane,
+  openCommentsPane,
+} from "~/reducers/workspace.reducer";
 
 export const meta: MetaFunction = () => {
   return [
@@ -76,8 +82,30 @@ const DesignPanel: React.FC = () => {
 };
 
 const CommentBoard: React.FC = () => {
-  const [boardOpened, toggleBoard] = useState(false);
   const commentBoardOpenerRef = useRef<HTMLButtonElement>(null);
+  const activeCommentBoard = useSelector(commentsSelector);
+  const settings = useSelector(settingsSelector);
+  const boardVisible = useSelector(commentsPaneSelector);
+  const dispatch = useDispatch();
+
+  const [boardInteract, setboardInteract] = useState<boolean>(false);
+  const boardOpened = !boardInteract
+    ? settings.commentsPane
+    : boardVisible;
+
+
+  const toggleBoard = useCallback(() => {
+    if (boardOpened) {
+      dispatch(closeCommentsPane());
+      setboardInteract(true);
+      return;
+    }
+    dispatch(openCommentsPane());
+    setboardInteract(true);
+  }, [boardOpened]);
+
+  console.log("active comment board ", activeCommentBoard);
+  console.log("is comment board opened? ", boardOpened);
 
   return (
     <div
@@ -87,11 +115,13 @@ const CommentBoard: React.FC = () => {
       }
     >
       <Drawer>
-        <DrawerTrigger ref={commentBoardOpenerRef} className="invisible">
-        </DrawerTrigger>
+        <DrawerTrigger
+          ref={commentBoardOpenerRef}
+          className="invisible"
+        ></DrawerTrigger>
         <DrawerContent className="h-[45rem] md:h-[30rem] bg-bg pt-8 border-t-accent border-t-4">
           <DrawerHeader className="flex items-center justify-center">
-            <DrawerTitle>chat #12041</DrawerTitle>
+            <DrawerTitle>chat #{activeCommentBoard}</DrawerTitle>
           </DrawerHeader>
 
           <DrawerFooter className="flex flex-col justify-between flex-1 gap-8 md:flex-row">
@@ -198,6 +228,7 @@ const CommentBoard: React.FC = () => {
               className="absolute top-0 left-0 w-full h-full font-semibold text-accent/75"
               onClick={(e) => {
                 e.preventDefault();
+                dispatch(XOpenComments(12041) as any);
                 commentBoardOpenerRef.current?.click();
               }}
             >
@@ -233,10 +264,11 @@ const CommentBoard: React.FC = () => {
               className="absolute top-0 left-0 w-full h-full font-semibold text-accent/75"
               onClick={(e) => {
                 e.preventDefault();
+                dispatch(XOpenComments(12042) as any);
                 commentBoardOpenerRef.current?.click();
               }}
             >
-              chat #12041
+              chat #12042
             </Link>
             <span className="w-4 h-4">
               <svg className="w-full h-full">
@@ -268,10 +300,11 @@ const CommentBoard: React.FC = () => {
               className="absolute top-0 left-0 w-full h-full font-semibold text-accent/75"
               onClick={(e) => {
                 e.preventDefault();
+                dispatch(XOpenComments(12043) as any);
                 commentBoardOpenerRef.current?.click();
               }}
             >
-              chat #12041
+              chat #12043
             </Link>
             <span className="w-4 h-4">
               <svg className="w-full h-full">
@@ -303,10 +336,11 @@ const CommentBoard: React.FC = () => {
               className="absolute top-0 left-0 w-full h-full font-semibold text-accent/75"
               onClick={(e) => {
                 e.preventDefault();
+                dispatch(XOpenComments(12044) as any);
                 commentBoardOpenerRef.current?.click();
               }}
             >
-              chat #12041
+              chat #12044
             </Link>
             <span className="w-4 h-4">
               <svg className="w-full h-full">
@@ -338,10 +372,11 @@ const CommentBoard: React.FC = () => {
               className="absolute top-0 left-0 w-full h-full font-semibold text-accent/75"
               onClick={(e) => {
                 e.preventDefault();
+                dispatch(XOpenComments(12045) as any);
                 commentBoardOpenerRef.current?.click();
               }}
             >
-              chat #12041
+              chat #12045
             </Link>
             <span className="w-4 h-4">
               <svg className="w-full h-full">
@@ -372,7 +407,7 @@ const CommentBoard: React.FC = () => {
             "w-8 h-8 flex items-center justify-center scale-x-[-1]" +
             `${boardOpened ? " scale-x-[unset]" : ""}`
           }
-          onClick={() => toggleBoard((prevBoard) => !prevBoard)}
+          onClick={() => toggleBoard()}
         >
           <svg className="w-[80%] h-full scale-y-125">
             <use xlinkHref="#caret"></use>
@@ -394,8 +429,8 @@ export const DesignsPage: React.FC = () => {
   useEventListener("resize", handleResize, window as HTMLElement | any);
 
   return (
-    <Provider store={store}>
-      <WorkspaceHeader/>
+    <>
+      <WorkspaceHeader />
       <section className="designs-section flex-1 w-full basis-auto min-h-[100vh] h-max md:mt-20 mt-32 overflow-hidden">
         <img
           src="/icons/canvas-bg.svg"
@@ -406,7 +441,7 @@ export const DesignsPage: React.FC = () => {
         <CommentBoard />
         <WorkspaceSidetab />
       </section>
-    </Provider>
+    </>
   );
 };
 

@@ -1,5 +1,60 @@
-import { useSelector } from "react-redux";
-import { sidePaneSelector } from "~/store";
+import { UnknownAction } from "@reduxjs/toolkit";
+import React, { useMemo, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  setCloseCommentsPane,
+  setCloseOutputPane,
+  setOpenCommentsPane,
+  setOpenOutputPane,
+} from "~/reducers/workspace.reducer";
+import { settingsSelector, sidePaneSelector } from "~/store";
+
+const PaneSettingsFlag: React.FC<{
+  command: string;
+  text: string;
+  checkAction: UnknownAction;
+  uncheckAction: UnknownAction;
+  matchingActionText: string
+}> = ({ checkAction, command, text, uncheckAction, matchingActionText }) => {
+  const dispatch = useDispatch();
+  const [isChecked, setChecked] = useState<boolean>(false);
+  const settings = useSelector(settingsSelector);
+  const id = text.replaceAll(" ", "-");
+
+  return (
+    <li className="w-full flex justify-between items-center h-8 overflow-hidden capitalize my-2">
+      <input
+        type="checkbox"
+        name=""
+        id={id}
+        className="inline accent-accent mr-4"
+        checked={isChecked || settings[matchingActionText as unknown as keyof typeof settings]}
+        onChange={(e) => {
+          let target: HTMLInputElement = e.target as HTMLInputElement;
+          if (target.checked) {
+            setChecked(true);
+            dispatch(checkAction);
+          } else {
+            setChecked(false);
+            dispatch(uncheckAction);
+          }
+        }}
+      />
+      <label htmlFor={id} className="mr-auto">
+        {text}
+      </label>
+      <span className="w-8 h-8 mr-2 flex items-center">
+        <svg className="w-4 h-4 mr-1">
+          <use xlinkHref="#command"></use>
+        </svg>
+
+        <span className="text-lg text-outline1d text-opacity-50 opacity-60">
+          {command}
+        </span>
+      </span>
+    </li>
+  );
+};
 
 export const WorkspaceSidetab: React.FC = () => {
   const sidePaneOpened = useSelector(sidePaneSelector);
@@ -54,68 +109,21 @@ export const WorkspaceSidetab: React.FC = () => {
               View options
             </p>
             <ul className="h-max font-medium w-full rounded-md bg-canvas mt-2 p-4 pt-8 before:w-[99%] before:x-centered-absolute before:h-[2px] before:bg-outline1/90 before:top-4 before:rounded-lg relative ring-1 ring-outline1/60">
-              <li className="w-full flex justify-between items-center h-8 overflow-hidden capitalize my-2">
-                <input
-                  type="checkbox"
-                  name=""
-                  id="show-comments-pane"
-                  className="inline accent-accent mr-4"
-                />
-                <label htmlFor="show-comments-pane" className="mr-auto">
-                  show comments pane
-                </label>
-                <span className="w-8 h-8 mr-2 flex items-center">
-                  <svg className="w-4 h-4 mr-1">
-                    <use xlinkHref="#command"></use>
-                  </svg>
+              <PaneSettingsFlag
+                checkAction={setOpenCommentsPane()}
+                command="J"
+                text="show comments pane"
+                matchingActionText="commentsPane"
+                uncheckAction={setCloseCommentsPane()}
+              />
 
-                  <span className="text-lg text-outline1d text-opacity-50 opacity-60">
-                    J
-                  </span>
-                </span>
-              </li>
-
-              <li className="w-full flex justify-between items-center h-8 overflow-hidden capitalize my-2">
-                <input
-                  type="checkbox"
-                  name=""
-                  id="show-comments"
-                  className="inline accent-accent mr-4"
-                />
-                <label htmlFor="show-comments" className="mr-auto">
-                  show comments
-                </label>
-                <span className="w-8 h-8 mr-2 flex items-center">
-                  <svg className="w-4 h-4 mr-1">
-                    <use xlinkHref="#command"></use>
-                  </svg>
-
-                  <span className="text-lg text-outline1d text-opacity-50 opacity-60">
-                    K
-                  </span>
-                </span>
-              </li>
-
-              <li className="w-full flex justify-between items-center h-8 overflow-hidden capitalize my-2">
-                <input
-                  type="checkbox"
-                  name=""
-                  id="show-output-pane"
-                  className="inline accent-accent mr-4"
-                />
-                <label htmlFor="show-output-pane" className="mr-auto">
-                  show output pane
-                </label>
-                <span className="w-8 h-8 mr-2 flex items-center">
-                  <svg className="w-4 h-4 mr-1">
-                    <use xlinkHref="#command"></use>
-                  </svg>
-
-                  <span className="text-lg text-outline1d text-opacity-50 opacity-60">
-                    E
-                  </span>
-                </span>
-              </li>
+              <PaneSettingsFlag
+                checkAction={setOpenOutputPane()}
+                command="E"
+                text="show output pane"
+                matchingActionText="outputPane"
+                uncheckAction={setCloseOutputPane()}
+              />
 
               <li className="w-full flex justify-between items-center h-8 overflow-hidden capitalize my-2">
                 <input

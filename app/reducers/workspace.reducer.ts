@@ -1,9 +1,5 @@
 import { TaskAbortError, createSlice } from "@reduxjs/toolkit";
-import type {
-  Action,
-  PayloadAction,
-  ThunkAction,
-} from "@reduxjs/toolkit";
+import type { Action, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
 
 export interface WorkspaceStateType {
   panes: {
@@ -14,6 +10,12 @@ export interface WorkspaceStateType {
   };
   commentBoard: {
     currentID: number | null;
+  };
+  settings: {
+    commentsPane: boolean;
+    outputPane: boolean;
+    allPanes: boolean;
+    sidePane: boolean;
   };
 }
 
@@ -26,6 +28,12 @@ const initialWorkspaceState: WorkspaceStateType = {
   },
   commentBoard: {
     currentID: null,
+  },
+  settings: {
+    commentsPane: false,
+    outputPane: false,
+    allPanes: false,
+    sidePane: false,
   },
 };
 
@@ -65,6 +73,23 @@ const workspaceSlice = createSlice({
       state.panes.outputPane = false;
       state.panes.commentsPane = false;
     },
+
+    setOpenCommentsPane: (state) => {
+      state.panes.commentsPane = true;
+      state.settings.commentsPane = true;
+    },
+    setCloseCommentsPane: (state) => {
+      state.panes.commentsPane = false;
+      state.settings.commentsPane = false;
+    },
+    setOpenOutputPane: (state) => {
+      state.panes.outputPane = true;
+      state.settings.outputPane = true;
+    },
+    setCloseOutputPane: (state) => {
+      state.panes.outputPane = false;
+      state.settings.outputPane = false;
+    },
   },
 });
 
@@ -78,38 +103,41 @@ export const {
   openOutputPane,
   closeOutputPane,
   openSidePane,
-  closeSidePane
+  closeSidePane,
+  setOpenCommentsPane,
+  setCloseCommentsPane,
+  setOpenOutputPane,
+  setCloseOutputPane,
 } = workspaceSlice.actions;
+
+const workspaceReducer = workspaceSlice.reducer;
 
 export const XOpenComments: (
   commentID: number | null
 ) => ThunkAction<
   void,
-  WorkspaceStateType,
+  {workspace: ReturnType<typeof workspaceReducer>},
   unknown,
   PayloadAction<any> | Action
 > = (commentID) => {
   return (dispatch, getState) => {
-    void getState;
-    dispatch(closeOutputPane());
-    dispatch(closeSidePane());
+    if (!getState().workspace.settings.outputPane) dispatch(closeOutputPane());
+    if (!getState().workspace.settings.sidePane) dispatch(closeSidePane());
     dispatch(openComments(commentID));
   };
 };
 
-export const XOpenOutputPane: (
-) => ThunkAction<
+export const XOpenOutputPane: () => ThunkAction<
   void,
-  WorkspaceStateType,
+  {workspace: ReturnType<typeof workspaceReducer>},
   unknown,
   PayloadAction<any> | Action
 > = () => {
   return (dispatch, getState) => {
-    void getState;
-    dispatch(closeSidePane());
-    dispatch(closeComments());
+    if (!getState().workspace.settings.sidePane) dispatch(closeSidePane());
+    if (!getState().workspace.settings.commentsPane) dispatch(closeCommentsPane());
     dispatch(openOutputPane());
   };
 };
 
-export default workspaceSlice.reducer;
+export default workspaceReducer;
