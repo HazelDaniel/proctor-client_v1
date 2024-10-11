@@ -7,6 +7,7 @@ export interface WorkspaceStateType {
     outputPane: boolean;
     allPanes: boolean;
     sidePane: boolean;
+    designPane: boolean;
   };
   commentBoard: {
     currentID: number | null;
@@ -16,6 +17,7 @@ export interface WorkspaceStateType {
     outputPane: boolean;
     allPanes: boolean;
     sidePane: boolean;
+    designPane: boolean;
   };
 }
 
@@ -25,6 +27,7 @@ const initialWorkspaceState: WorkspaceStateType = {
     outputPane: false,
     allPanes: false,
     sidePane: false,
+    designPane: false,
   },
   commentBoard: {
     currentID: null,
@@ -34,6 +37,7 @@ const initialWorkspaceState: WorkspaceStateType = {
     outputPane: false,
     allPanes: false,
     sidePane: false,
+    designPane: false,
   },
 };
 
@@ -65,6 +69,12 @@ const workspaceSlice = createSlice({
     closeOutputPane: (state) => {
       state.panes.outputPane = false;
     },
+    openDesignPane: (state) => {
+      state.panes.designPane = true;
+    },
+    closeDesignPane: (state) => {
+      state.panes.designPane = false;
+    },
     openAllPanes: (state) => {
       state.panes.outputPane = true;
       state.panes.commentsPane = true;
@@ -90,6 +100,14 @@ const workspaceSlice = createSlice({
       state.panes.outputPane = false;
       state.settings.outputPane = false;
     },
+    setOpenDesignPane: (state) => {
+      state.panes.designPane = true;
+      state.settings.designPane = true;
+    },
+    setCloseDesignPane: (state) => {
+      state.panes.designPane = false;
+      state.settings.designPane = false;
+    },
   },
 });
 
@@ -104,10 +122,14 @@ export const {
   closeOutputPane,
   openSidePane,
   closeSidePane,
+  openDesignPane,
+  closeDesignPane,
   setOpenCommentsPane,
   setCloseCommentsPane,
   setOpenOutputPane,
   setCloseOutputPane,
+  setOpenDesignPane,
+  setCloseDesignPane
 } = workspaceSlice.actions;
 
 const workspaceReducer = workspaceSlice.reducer;
@@ -116,7 +138,7 @@ export const XOpenComments: (
   commentID: number | null
 ) => ThunkAction<
   void,
-  {workspace: ReturnType<typeof workspaceReducer>},
+  { workspace: ReturnType<typeof workspaceReducer> },
   unknown,
   PayloadAction<any> | Action
 > = (commentID) => {
@@ -129,13 +151,14 @@ export const XOpenComments: (
 
 export const XOpenOutputPane: () => ThunkAction<
   void,
-  {workspace: ReturnType<typeof workspaceReducer>},
+  { workspace: ReturnType<typeof workspaceReducer> },
   unknown,
   PayloadAction<any> | Action
 > = () => {
   return (dispatch, getState) => {
     if (!getState().workspace.settings.sidePane) dispatch(closeSidePane());
-    if (!getState().workspace.settings.commentsPane) dispatch(closeCommentsPane());
+    if (!getState().workspace.settings.commentsPane)
+      dispatch(closeCommentsPane());
     dispatch(openOutputPane());
   };
 };

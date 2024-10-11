@@ -3,8 +3,10 @@ import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   setCloseCommentsPane,
+  setCloseDesignPane,
   setCloseOutputPane,
   setOpenCommentsPane,
+  setOpenDesignPane,
   setOpenOutputPane,
 } from "~/reducers/workspace.reducer";
 import { settingsSelector, sidePaneSelector } from "~/store";
@@ -123,6 +125,14 @@ export const WorkspaceSidetab: React.FC = () => {
                 text="show output pane"
                 matchingActionText="outputPane"
                 uncheckAction={setCloseOutputPane()}
+              />
+
+              <PaneSettingsFlag
+                checkAction={setOpenDesignPane()}
+                command="-"
+                text="show design pane"
+                matchingActionText="designPane"
+                uncheckAction={setCloseDesignPane()}
               />
 
               <li className="w-full flex justify-between items-center h-8 overflow-hidden capitalize my-2">

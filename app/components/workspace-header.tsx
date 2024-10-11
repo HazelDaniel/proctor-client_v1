@@ -19,7 +19,6 @@ import {
   outputPaneSelector,
   settingsSelector,
   sidePaneSelector,
-  store,
 } from "~/store";
 import {
   XOpenOutputPane,
@@ -51,8 +50,7 @@ export const WorkspaceHeader: React.FC = () => {
     dispatch(openSidePane());
   }, [sidePaneOpened]);
 
-  console.log("output pane opened ? ", outputPaneOpened);
-  console.log("output pane visible ? ", outputPaneVisible);
+  console.log("rendering workspace header...");
 
   return (
     <header className="files-header flex items-center justify-start w-full h-32 md:h-20 px-4 pr-0 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-[15]">

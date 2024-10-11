@@ -14,13 +14,18 @@ import {
   DrawerFooter,
   DrawerClose,
 } from "~/components/ui/drawer";
-import { commentsPaneSelector, commentsSelector, settingsSelector } from "~/store";
+import {
+  commentsPaneSelector,
+  commentsSelector,
+  settingsSelector,
+} from "~/store";
 import {
   XOpenComments,
-  closeComments,
   closeCommentsPane,
   openCommentsPane,
 } from "~/reducers/workspace.reducer";
+import "@xyflow/react/dist/style.css";
+import { DesignCanvas } from "~/components/design-canvas";
 
 export const meta: MetaFunction = () => {
   return [
@@ -33,53 +38,6 @@ export const clientLoader = async (args: ClientLoaderFunctionArgs) => {
   return json({});
 };
 
-const DesignPanel: React.FC = () => {
-  return (
-    <div className="design-panel w-max min-w-[25rem] md:min-w-[35rem] h-32 align-center mt-32 relative z-10 mx-auto flex px-8 border-r-[18px] border-l-[18px] md:border-r-[20px] md:border-l-[20px] border-accent rounded-lg bg-canvas shadow-md drop-shadow-md shadow-outline1 py-4 z-5">
-      <div className="h-full mx-auto bg-outline1/35 w-[8rem] flex flex-col relative items-center justify-end overflow-hidden group/folder-pane-g cursor-pointer *:select-none">
-        <img
-          src="/icons/shadow-file-bottom.svg"
-          alt="icon of a stacked folder"
-          className="absolute w-[85%] bottom-[-40%] transition-all group-hover/folder-pane-g:bottom-[-10%] group-hover/folder-pane-g:rotate-[-2deg] origin-bottom ease-in-out"
-        />
-        <img
-          src="/icons/shadow-file-top.svg"
-          alt=""
-          className="absolute w-[85%] bottom-[-20%] transition-all group-hover/folder-pane-g:bottom-[-10%] group-hover/folder-pane-g:rotate-2 origin-bottom"
-        />
-      </div>
-      <span className="h-full w-[2px] bg-outline1 rounded mx-[2rem]"></span>
-      <ul className="flex flex-row items-center h-full gap-4 mx-auto w-max">
-        <li className="flex items-center justify-center w-16 h-16 p-2 rounded-md cursor-pointer ring-outline1/35 ring-2">
-          <div className="w-[80%] h-[80%] rounded-md flex items-center justify-center border-outline1/35 border-2 rounded-tr-none relative">
-            <span className="absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"></span>
-            <svg className="w-full h-full scale-75">
-              <use xlinkHref="#t"></use>
-            </svg>
-          </div>
-        </li>
-
-        <li className="flex items-center justify-center w-16 h-16 p-2 rounded-md cursor-pointer ring-outline1/35 ring-2">
-          <div className="w-[80%] h-[80%] rounded-md flex items-center justify-center border-outline1/35 border-2 rounded-tr-none relative">
-            <span className="absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"></span>
-            <svg className="w-full h-full scale-75">
-              <use xlinkHref="#grid"></use>
-            </svg>
-          </div>
-        </li>
-
-        <li className="flex items-center justify-center w-16 h-16 p-2 rounded-md cursor-pointer ring-outline1/35 ring-2">
-          <div className="w-[80%] h-[80%] rounded-md flex items-center justify-center border-outline1/35 border-2 rounded-tr-none relative">
-            <span className="absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"></span>
-            <svg className="w-full h-full scale-75">
-              <use xlinkHref="#comment"></use>
-            </svg>
-          </div>
-        </li>
-      </ul>
-    </div>
-  );
-};
 
 const CommentBoard: React.FC = () => {
   const commentBoardOpenerRef = useRef<HTMLButtonElement>(null);
@@ -89,10 +47,7 @@ const CommentBoard: React.FC = () => {
   const dispatch = useDispatch();
 
   const [boardInteract, setboardInteract] = useState<boolean>(false);
-  const boardOpened = !boardInteract
-    ? settings.commentsPane
-    : boardVisible;
-
+  const boardOpened = !boardInteract ? settings.commentsPane : boardVisible;
 
   const toggleBoard = useCallback(() => {
     if (boardOpened) {
@@ -104,8 +59,8 @@ const CommentBoard: React.FC = () => {
     setboardInteract(true);
   }, [boardOpened]);
 
-  console.log("active comment board ", activeCommentBoard);
-  console.log("is comment board opened? ", boardOpened);
+  // console.log("active comment board ", activeCommentBoard);
+  // console.log("is comment board opened? ", boardOpened);
 
   return (
     <div
@@ -432,13 +387,17 @@ export const DesignsPage: React.FC = () => {
     <>
       <WorkspaceHeader />
       <section className="designs-section flex-1 w-full basis-auto min-h-[100vh] h-max md:mt-20 mt-32 overflow-hidden">
-        <img
+        {/* <img
           src="/icons/canvas-bg.svg"
           alt="the background image of a design canvas"
           className="fixed top-0 left-0 w-full h-full bg-fixed bg-repeat select-none bg-full scale-3x md:scale-2x"
-        />
-        <DesignPanel />
+        /> */}
+
         <CommentBoard />
+
+        <div className="w-[100vw] max-w-[100vw] h-[80vh] relative bottom-0 overflow-hidden">
+          <DesignCanvas/>
+        </div>
         <WorkspaceSidetab />
       </section>
     </>

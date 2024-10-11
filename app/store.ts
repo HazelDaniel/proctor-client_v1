@@ -52,6 +52,12 @@ export const commentsPaneSelector = (state: {
   return state.workspace.panes.commentsPane;
 };
 
+export const designPaneSelector = (state: {
+  workspace: ReturnType<typeof workspaceReducer>;
+}) => {
+  return state.workspace.panes.designPane;
+};
+
 export const commentsSelector = (state: {
   workspace: ReturnType<typeof workspaceReducer>;
 }) => {
