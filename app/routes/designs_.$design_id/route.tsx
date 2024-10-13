@@ -2,7 +2,7 @@ import { ClientLoaderFunctionArgs, Form, Link, json } from "@remix-run/react";
 import { useDispatch, useSelector } from "react-redux";
 import type { MetaFunction } from "@remix-run/node";
 import useEventListener from "~/hooks/useevent";
-import { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { WorkspaceHeader } from "~/components/workspace-header";
 import { WorkspaceSidetab } from "~/components/workspace-sidetab";
 import {
@@ -31,6 +31,11 @@ export const meta: MetaFunction = () => {
   return [
     { title: "design | proctor" },
     { name: "description", content: "proctor design file" },
+    {
+      name: "viewport",
+      content:
+        "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0",
+    },
   ];
 };
 
@@ -38,13 +43,12 @@ export const clientLoader = async (args: ClientLoaderFunctionArgs) => {
   return json({});
 };
 
-
 const CommentBoard: React.FC = () => {
-  const commentBoardOpenerRef = useRef<HTMLButtonElement>(null);
   const activeCommentBoard = useSelector(commentsSelector);
   const settings = useSelector(settingsSelector);
   const boardVisible = useSelector(commentsPaneSelector);
   const dispatch = useDispatch();
+  const [commentsOpened, openComments] = useState<boolean>(false);
 
   const [boardInteract, setboardInteract] = useState<boolean>(false);
   const boardOpened = !boardInteract ? settings.commentsPane : boardVisible;
@@ -59,9 +63,6 @@ const CommentBoard: React.FC = () => {
     setboardInteract(true);
   }, [boardOpened]);
 
-  // console.log("active comment board ", activeCommentBoard);
-  // console.log("is comment board opened? ", boardOpened);
-
   return (
     <div
       className={
@@ -69,11 +70,12 @@ const CommentBoard: React.FC = () => {
         `${!boardOpened ? " shadow-none" : ""}`
       }
     >
-      <Drawer>
-        <DrawerTrigger
-          ref={commentBoardOpenerRef}
-          className="invisible"
-        ></DrawerTrigger>
+      <Drawer
+        open={commentsOpened}
+        onOpenChange={(open) => {
+          openComments(!!open);
+        }}
+      >
         <DrawerContent className="h-[45rem] md:h-[30rem] bg-bg pt-8 border-t-accent border-t-4">
           <DrawerHeader className="flex items-center justify-center">
             <DrawerTitle>chat #{activeCommentBoard}</DrawerTitle>
@@ -184,7 +186,8 @@ const CommentBoard: React.FC = () => {
               onClick={(e) => {
                 e.preventDefault();
                 dispatch(XOpenComments(12041) as any);
-                commentBoardOpenerRef.current?.click();
+                openComments(true);
+                // commentBoardOpenerRef.current?.click();
               }}
             >
               chat #12041
@@ -220,7 +223,8 @@ const CommentBoard: React.FC = () => {
               onClick={(e) => {
                 e.preventDefault();
                 dispatch(XOpenComments(12042) as any);
-                commentBoardOpenerRef.current?.click();
+                // commentBoardOpenerRef.current?.click();
+                openComments(true);
               }}
             >
               chat #12042
@@ -256,7 +260,8 @@ const CommentBoard: React.FC = () => {
               onClick={(e) => {
                 e.preventDefault();
                 dispatch(XOpenComments(12043) as any);
-                commentBoardOpenerRef.current?.click();
+                // commentBoardOpenerRef.current?.click();
+                openComments(true);
               }}
             >
               chat #12043
@@ -292,7 +297,8 @@ const CommentBoard: React.FC = () => {
               onClick={(e) => {
                 e.preventDefault();
                 dispatch(XOpenComments(12044) as any);
-                commentBoardOpenerRef.current?.click();
+                // commentBoardOpenerRef.current?.click();
+                openComments(true);
               }}
             >
               chat #12044
@@ -328,7 +334,8 @@ const CommentBoard: React.FC = () => {
               onClick={(e) => {
                 e.preventDefault();
                 dispatch(XOpenComments(12045) as any);
-                commentBoardOpenerRef.current?.click();
+                // commentBoardOpenerRef.current?.click();
+                openComments(true);
               }}
             >
               chat #12045
@@ -373,7 +380,7 @@ const CommentBoard: React.FC = () => {
   );
 };
 
-export const DesignsPage: React.FC = () => {
+export const DesignsPage: React.FC = React.memo(() => {
   const [windowSize, setWindowSize] = useState<number>(window.innerWidth);
 
   const handleResize = () => {
@@ -386,7 +393,7 @@ export const DesignsPage: React.FC = () => {
   return (
     <>
       <WorkspaceHeader />
-      <section className="designs-section flex-1 w-full basis-auto min-h-[100vh] h-max md:mt-20 mt-32 overflow-hidden">
+      <section className="designs-section flex-1 w-full basis-auto h-max md:mt-20 mt-32 overflow-hidden">
         {/* <img
           src="/icons/canvas-bg.svg"
           alt="the background image of a design canvas"
@@ -395,13 +402,15 @@ export const DesignsPage: React.FC = () => {
 
         <CommentBoard />
 
-        <div className="w-[100vw] max-w-[100vw] h-[80vh] relative bottom-0 overflow-hidden">
-          <DesignCanvas/>
+        <div className="w-[100vw] max-w-[100vw] h-[82vh] md:h-[87vh] relative bottom-0 overflow-hidden">
+          <DesignCanvas />
         </div>
+
         <WorkspaceSidetab />
+
       </section>
     </>
   );
-};
+});
 
 export default DesignsPage;
