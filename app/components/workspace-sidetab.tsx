@@ -16,7 +16,7 @@ const PaneSettingsFlag: React.FC<{
   text: string;
   checkAction: UnknownAction;
   uncheckAction: UnknownAction;
-  matchingActionText: string
+  matchingActionText: string;
 }> = ({ checkAction, command, text, uncheckAction, matchingActionText }) => {
   const dispatch = useDispatch();
   const [isChecked, setChecked] = useState<boolean>(false);
@@ -30,7 +30,10 @@ const PaneSettingsFlag: React.FC<{
         name=""
         id={id}
         className="inline accent-accent mr-4"
-        checked={isChecked || settings[matchingActionText as unknown as keyof typeof settings]}
+        checked={
+          isChecked ||
+          settings[matchingActionText as unknown as keyof typeof settings]
+        }
         onChange={(e) => {
           let target: HTMLInputElement = e.target as HTMLInputElement;
           if (target.checked) {
@@ -63,7 +66,7 @@ export const WorkspaceSidetab: React.FC = () => {
   return (
     <div
       className={
-        "w-[30rem] max-w-[100vw] h-[100vh] fixed z-[15] bg-bg rounded-sm border-t-4 border-t-accent/50 top-[6rem] md:top-[4.5rem] *:select-none" +
+        "w-[30rem] max-w-[100vw] h-[90vh] md:h-[100vh] fixed z-[15] bg-bg rounded-sm border-t-4 border-t-accent/50 top-[6rem] md:top-[4.5rem] *:select-none" +
         `${!sidePaneOpened ? " left-[-100vw]" : ""}`
       }
     >
