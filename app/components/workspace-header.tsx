@@ -15,24 +15,19 @@ import {
 } from "./ui/sheet";
 import { Copy } from "lucide-react";
 import { ResetIcon } from "@radix-ui/react-icons";
-import {
-  outputPaneSelector,
-  settingsSelector,
-  sidePaneSelector,
-} from "~/store";
+import { workspaceSelectors, } from "~/store";
 import {
   XOpenOutputPane,
   closeSidePane,
   openSidePane,
 } from "~/reducers/workspace.reducer";
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback, useEffect, useState } from "react";
-import { ThunkAction, UnknownAction } from "@reduxjs/toolkit";
+import { useCallback, useState } from "react";
+import { UnknownAction } from "@reduxjs/toolkit";
 
 export const WorkspaceHeader: React.FC = () => {
-  const outputPaneVisible = useSelector(outputPaneSelector);
-  const sidePaneVisible = useSelector(sidePaneSelector);
-  const settings = useSelector(settingsSelector);
+  const {outputPane: outputPaneVisible, sidePane: sidePaneVisible, settings} = useSelector(workspaceSelectors);
+
   const dispatch = useDispatch<UnknownAction | any>();
   const [outputPaneInteract, setOutputPaneInteract] = useState<boolean>(false);
 
@@ -53,7 +48,7 @@ export const WorkspaceHeader: React.FC = () => {
   console.log("rendering workspace header...");
 
   return (
-    <header className="files-header flex items-center justify-start w-full h-32 md:h-20 px-4 pr-0 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-[15]">
+    <header className="workspace-header flex items-center justify-start w-full h-32 md:h-20 px-4 pr-0 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-[15]">
       <div className="relative flex-row justify-start pr-4 md:w-1/4 h-3/4 flex w-max justify-self-start">
         <div className="h-full w-full flex items-center mr-auto">
           <button
