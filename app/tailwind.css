@@ -8,6 +8,10 @@ html {
   @media (prefers-color-scheme: dark) {
     color-scheme: dark;
   }
+  .react-flow__attribution {
+    display: none !important;
+  }
+
 }
 
 *,
@@ -119,11 +123,11 @@ script {
     @apply outline-none ring-1 ring-offset-1 ring-offset-outline1 ring-outline1 focus:ring-1;
     box-shadow: 0.5px 0.5px 8px rgb(var(--outline-1));
   }
-  .chat-box>li:last-of-type>div:nth-of-type(2)  {
+  .chat-box > li:last-of-type > div:nth-of-type(2) {
     background-color: #00000017;
     mix-blend-mode: luminosity;
   }
-  .chat-box>li:last-of-type>div:nth-of-type(2) p:nth-of-type(2) {
+  .chat-box > li:last-of-type > div:nth-of-type(2) p:nth-of-type(2) {
     border-left: 0.5rem solid rgb(var(--accent-color));
   }
 }
@@ -133,8 +137,8 @@ script {
     display: none;
   }
   .no-scrollbar {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none; /* Firefox */
   }
   .text-danger {
     @apply text-red-400;
