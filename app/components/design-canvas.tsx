@@ -1,36 +1,47 @@
-import { Background, Controls, Panel, ReactFlow, ViewportPortal } from "@xyflow/react";
-import { useSelector } from "react-redux";
-import { settingsSelector } from "~/store";
+import {
+  Background,
+  Controls,
+  Panel,
+  ReactFlow,
+  ViewportPortal,
+  XYPosition,
+  useReactFlow,
+} from "@xyflow/react";
+import React, { Children, ReactNode, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useDebounce } from "~/hooks/usedebounce";
+import { setNodePosition } from "~/reducers/nodes.reducer";
+import {
+  nodeSelectorMemo,
+  nodesSelectorMemo,
+  settingsSelector,
+  subsetNodesSelectorMemo,
+} from "~/store";
+import { isEqual } from "~/utils/comparison";
 
-const nodes = [
-  {
-    id: "1",
-    data: { label: "Hello" },
-    position: { x: 0, y: 0 },
-    type: "input",
-  },
-  {
-    id: "2",
-    data: { label: "World" },
-    position: { x: 100, y: 100 },
-  },
-];
-
-export const chatBubble: React.FC = () => {
+export const ChatBubble: React.FC<{pos: XYPosition}> = ({pos}) => {
   return (
     <ViewportPortal>
-      <div
-        style={{ transform: 'translate(100px, 100px)', position: 'absolute' }}
-      >
-        This div is positioned at [100, 100] on the flow.
-      </div>
+      <div className={`floating-portal-item w-8 h-8 bg-accent rounded-full absolute translate-x-[${pos.x}px] translate-y-[${pos.y}px]`}></div>
     </ViewportPortal>
   );
+};
+
+export const ChatBubbleViewCtx: React.FC<{children: ReactNode}> = ({children}) => {
+  return <>
+    {Children}
+  </>
+}
+
+export const ChatBubbleView: React.FC = () => {
+  return <ChatBubbleViewCtx>
+    <div></div>
+  </ChatBubbleViewCtx>
 }
 
 const DesignPanel: React.FC = () => {
   return (
-    <div className="design-panel w-max min-w-[25rem] md:min-w-[35rem] h-32 align-center mt-32 relative z-[2] mx-auto flex px-8 border-x-[10px] md:border-r-[20px] md:border-l-[20px] border-accent rounded-lg bg-canvas shadow-md drop-shadow-md shadow-outline1 py-4 z-5">
+    <div className="design-panel w-max min-w-[25rem] md:min-w-[35rem] h-32 align-center relative z-[2] mx-auto flex px-8 border-x-[10px] md:border-r-[20px] md:border-l-[20px] border-accent rounded-lg bg-canvas shadow-md drop-shadow-md shadow-outline1 py-4 z-5">
       <div className="h-full mx-auto bg-outline1/35 w-[8rem] flex flex-col relative items-center justify-end overflow-hidden group/folder-pane-g cursor-pointer *:select-none">
         <img
           src="/icons/shadow-file-bottom.svg"
@@ -78,22 +89,45 @@ const DesignPanel: React.FC = () => {
 
 export const CanvasPanel: React.FC = () => {
   const settings = useSelector(settingsSelector);
-  if (settings.designPane) return (
-    <Panel position={"bottom-center"}>
-      <DesignPanel />
-    </Panel>
-  );
+  if (settings.designPane)
+    return (
+      <Panel
+        position={"bottom-center"}
+        className="max-h-max flex flex-col justify-start items-center"
+        id="design-panel-parent"
+      >
+        <DesignPanel />
+      </Panel>
+    );
   return null;
 };
 
-export const DesignCanvas: React.FC = () => {
+export const DesignCanvas: React.FC = React.memo(() => {
+  const dispatch = useDispatch();
+  const nodes = useSelector(nodesSelectorMemo, isEqual);
+  const node = useSelector(nodeSelectorMemo("1"), isEqual);
+  const subsetNodes = useSelector(subsetNodesSelectorMemo(["2", "1", "3"]), isEqual);
+
+  console.log("node is ", node);
+  console.log("while other nodes  are ", nodes);
+  console.log("and subset nodes are ", subsetNodes);
+
+  const onNodesChange = (changes: any) => {
+    changes.forEach(({ type, id, position }: any) => {
+      if (type === "position" && position) {
+        dispatch(setNodePosition({ id: id, position: position }));
+      }
+    });
+  };
+
   return (
     <>
-      <ReactFlow nodes={nodes}>
+      <ReactFlow nodes={nodes} onNodesChange={onNodesChange} edges={[]}>
         <Background />
+        {/* <ChatBubble pos={}/> */}
         <CanvasPanel />
         <Controls />
       </ReactFlow>
     </>
   );
-};
+});
