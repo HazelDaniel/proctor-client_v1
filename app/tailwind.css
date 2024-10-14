@@ -11,7 +11,6 @@ html {
   .react-flow__attribution {
     display: none !important;
   }
-
 }
 
 *,
@@ -142,6 +141,9 @@ script {
   }
   .text-danger {
     @apply text-red-400;
+  }
+  .floating-portal-item {
+    transform: translateX(var(--pos-x)) translateY(var(--pos-y));
   }
 }
 

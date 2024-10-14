@@ -50,7 +50,6 @@ import { StatefulNodeType } from "~/types";
 import { isEqual } from "~/utils/comparison";
 
 export const ChatBubble: React.FC<{ pos: XYPosition }> = ({ pos }) => {
-  // console.log("position is ", pos);
   return (
     <div
       className={`floating-portal-item w-8 h-8 bg-accent rounded-full absolute`}
@@ -68,8 +67,6 @@ export const ChatBubbleView = React.memo(() => {
     []
   );
 
-  // console.log("bubbles are:  ");
-  // console.log(bubbles());
   return (
     <ViewportPortal>
       {getBubbles(chatBubbleState).map((bubble) => {
@@ -104,7 +101,10 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
           className={
             "flex items-center justify-center w-16 h-16 p-2 rounded-md cursor-pointer ring-outline1/35 ring-2 has-[.active]:ring-accent transition-all duration-300"
           }
-          onClick={() => designPaneDispatch(__setActiveTab("text"))}
+          onClick={(e) => {
+            e.stopPropagation();
+            designPaneDispatch(__setActiveTab("text"));
+          }}
         >
           <div
             className={
@@ -123,7 +123,10 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
           className={
             "flex items-center justify-center w-16 h-16 p-2 rounded-md cursor-pointer ring-outline1/35 ring-2 has-[.active]:ring-accent transition-all duration-300"
           }
-          onClick={() => designPaneDispatch(__setActiveTab("table"))}
+          onClick={(e) => {
+            e.stopPropagation();
+            designPaneDispatch(__setActiveTab("table"));
+          }}
         >
           <div
             className={
@@ -142,7 +145,10 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
           className={
             "flex items-center justify-center w-16 h-16 p-2 rounded-md cursor-pointer ring-outline1/35 ring-2 has-[.active]:ring-accent transition-all duration-300"
           }
-          onClick={() => designPaneDispatch(__setActiveTab("comment"))}
+          onClick={(e) => {
+            e.stopPropagation();
+            designPaneDispatch(__setActiveTab("comment"));
+          }}
         >
           <div
             className={
@@ -226,9 +232,9 @@ export const DesignCanvas: React.FC = React.memo(() => {
       const panPosDeltaX = panPosFrame[1].x - panPosFrame[0].x;
       const panPosDeltaY = panPosFrame[1].y - panPosFrame[0].y;
 
-      // console.log(
-      //   `--panPosDeltaX: ${panPosDeltaX}\t panPosDeltaY: ${panPosDeltaY}`
-      // );
+      console.log(
+        `--panPosDeltaX: ${panPosDeltaX}\t panPosDeltaY: ${panPosDeltaY}`
+      );
 
       const canvasParent = document.getElementById(
         "design-canvas-wrapper"
@@ -280,6 +286,7 @@ export const DesignCanvas: React.FC = React.memo(() => {
     });
   };
 
+  // EFFECTS
   useEffect(() => {
     if (!!designPaneState.activeTab && instance) {
       instance.setViewport({
@@ -289,6 +296,8 @@ export const DesignCanvas: React.FC = React.memo(() => {
       });
     }
   }, [designPaneState.activeTab, instance]);
+
+  console.log("pane offset is ", panPosFrame);
 
   return (
     <>
@@ -300,10 +309,16 @@ export const DesignCanvas: React.FC = React.memo(() => {
         defaultViewport={{ zoom: 1, x: 0, y: 0 }}
         maxZoom={!!designPaneState.activeTab ? 1 : 4}
         minZoom={!!designPaneState.activeTab ? 1 : 0.25}
-        onMoveStart={(_, vp) => {
-          if (!shouldCalcFrame) return;
+        onMoveStart={(event, vp) => {
+          if (!shouldCalcFrame || designPaneState.activeTab) return;
           setPanPosFrame((prev) => {
-            const [_, end] = prev;
+            const [prevStart, end] = prev;
+            if (
+              prevStart.x === vp.x &&
+              prevStart.y === vp.y &&
+              !!(prevStart.x & prevStart.y)
+            )
+              return prev;
             return [{ x: vp.x, y: vp.y ? -vp.y : vp.y }, end];
           });
         }}
