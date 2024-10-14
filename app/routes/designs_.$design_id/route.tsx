@@ -26,6 +26,8 @@ import {
 } from "~/reducers/workspace.reducer";
 import "@xyflow/react/dist/style.css";
 import { DesignCanvas } from "~/components/design-canvas";
+import { ChatBubbleViewCtx } from "~/context-components/chat-bubble-view.context";
+import { handleResize } from "~/event-handlers/workspace.handlers";
 
 export const meta: MetaFunction = () => {
   return [
@@ -67,7 +69,7 @@ const CommentBoard: React.FC = () => {
     <div
       className={
         "fixed top-[10rem] md:top-20 right-0 w-[25rem] h-[20rem] flex shadow-lg shadow-outline1/25 z-10" +
-        `${!boardOpened ? " shadow-none" : ""}`
+        `${!boardOpened ? " shadow-none w-[2rem]" : ""}`
       }
     >
       <Drawer
@@ -381,33 +383,30 @@ const CommentBoard: React.FC = () => {
 };
 
 export const DesignsPage: React.FC = React.memo(() => {
-  const [windowSize, setWindowSize] = useState<number>(window.innerWidth);
+  const [_, setWindowSize] = useState<number>(window.innerWidth);
 
-  const handleResize = () => {
-    setWindowSize(window.innerWidth);
-  };
-  const [sidePaneOpened, toggleSidePane] = useState(false);
-
-  useEventListener("resize", handleResize, window as HTMLElement | any);
+  useEventListener(
+    "resize",
+    handleResize(null, (_, width) => setWindowSize(width)),
+    window as HTMLElement | any
+  );
 
   return (
     <>
       <WorkspaceHeader />
       <section className="designs-section flex-1 w-full basis-auto h-max md:mt-20 mt-32 overflow-hidden">
-        {/* <img
-          src="/icons/canvas-bg.svg"
-          alt="the background image of a design canvas"
-          className="fixed top-0 left-0 w-full h-full bg-fixed bg-repeat select-none bg-full scale-3x md:scale-2x"
-        /> */}
+        <ChatBubbleViewCtx>
+          <CommentBoard />
 
-        <CommentBoard />
+          <div
+            className="w-[100vw] max-w-[100vw] h-[82vh] md:h-[87vh] relative bottom-0 overflow-hidden my-auto"
+            id="design-canvas-wrapper"
+          >
+            <DesignCanvas />
+          </div>
 
-        <div className="w-[100vw] max-w-[100vw] h-[82vh] md:h-[87vh] relative bottom-0 overflow-hidden">
-          <DesignCanvas />
-        </div>
-
-        <WorkspaceSidetab />
-
+          <WorkspaceSidetab />
+        </ChatBubbleViewCtx>
       </section>
     </>
   );
