@@ -1,4 +1,4 @@
-import { TaskAbortError, createSlice } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
 import type { Action, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
 
 export interface WorkspaceStateType {
