@@ -10,7 +10,7 @@ export interface WorkspaceStateType {
     designPane: boolean;
   };
   commentBoard: {
-    currentID: number | null;
+    currentID: string | null;
   };
   settings: {
     commentsPane: boolean;
@@ -51,7 +51,7 @@ const workspaceSlice = createSlice({
     closeSidePane: (state) => {
       state.panes.sidePane = false;
     },
-    openComments: (state, action: PayloadAction<number | null>) => {
+    openComments: (state, action: PayloadAction<string | null>) => {
       state.commentBoard.currentID = action.payload;
     },
     closeComments: (state) => {
@@ -135,7 +135,7 @@ export const {
 const workspaceReducer = workspaceSlice.reducer;
 
 export const XOpenComments: (
-  commentID: number | null
+  commentID: string | null
 ) => ThunkAction<
   void,
   { workspace: ReturnType<typeof workspaceReducer> },

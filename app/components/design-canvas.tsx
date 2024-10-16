@@ -182,7 +182,7 @@ export const CanvasPanel: React.FC = () => {
   return null;
 };
 
-export const DesignCanvas: React.FC = React.memo(() => {
+export const DesignCanvas: React.FC<{instance: ReactFlowInstance<StatefulNodeType & { id: string }, never> |  undefined; setInstance: React.Dispatch<React.SetStateAction<ReactFlowInstance<StatefulNodeType & { id: string }, never> | undefined>>}> = React.memo(({instance, setInstance}) => {
   // GLOBAL STATE
   const dispatch = useDispatch();
   const nodes = useSelector(nodesSelector, isEqual);
@@ -193,8 +193,6 @@ export const DesignCanvas: React.FC = React.memo(() => {
   ) as ChatBubbleContextValueType;
 
   // LOCAL STATE
-  const [instance, setInstance] =
-    useState<ReactFlowInstance<StatefulNodeType & { id: string }, never>>();
   const [designPaneState, designPaneDispatch] = useReducer(
     designPaneReducer,
     initialDesignPaneState
@@ -213,12 +211,19 @@ export const DesignCanvas: React.FC = React.memo(() => {
 
   const [shouldCalcFrame, setShouldCalcFrame] = useState<boolean>(true);
 
+
   // COMPONENT EVENT HANDLERS
   useEventListener(
     "keyup",
     handleKeyPress(null, (event) => {
       if (!event) return;
-      if (event.key === "Escape") designPaneDispatch(__setActiveTab(null));
+      switch (event.key) {
+        case "Escape": {
+          designPaneDispatch(__setActiveTab(null));
+          break;
+        }
+        default: break;
+      }
     }),
     window as unknown as HTMLElement
   );
