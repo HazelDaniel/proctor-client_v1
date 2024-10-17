@@ -1,7 +1,12 @@
 import {
   Background,
   Controls,
+  Handle,
+  Node,
+  NodeProps,
+  NodeTypes,
   Panel,
+  Position,
   ReactFlow,
   ReactFlowInstance,
   ViewportPortal,
@@ -11,6 +16,8 @@ import {
   useReactFlow,
 } from "@xyflow/react";
 import React, {
+  CSSProperties,
+  ChangeEvent,
   Children,
   ReactNode,
   useCallback,
@@ -41,6 +48,7 @@ import {
 } from "~/reducers/design-pane.reducer";
 import { setNodePosition } from "~/reducers/nodes.reducer";
 import {
+  nodeChildrenLengthSelector,
   nodeSelector,
   nodesSelector,
   settingsSelector,
@@ -48,6 +56,17 @@ import {
 } from "~/store";
 import { StatefulNodeType } from "~/types";
 import { isEqual } from "~/utils/comparison";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { Copy } from "lucide-react";
 
 export const ChatBubble: React.FC<{ pos: XYPosition }> = ({ pos }) => {
   return (
@@ -106,7 +125,7 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
             designPaneDispatch(__setActiveTab("text"));
           }}
         >
-          <div
+          <button
             className={
               "w-[80%] h-[80%] rounded-md flex items-center justify-center border-outline1/35 border-2 rounded-tr-none relative" +
               `${designPaneState.activeTab === "text" ? " active" : ""}`
@@ -116,7 +135,7 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
             <svg className="w-full h-full scale-75">
               <use xlinkHref="#t"></use>
             </svg>
-          </div>
+          </button>
         </li>
 
         <li
@@ -128,17 +147,51 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
             designPaneDispatch(__setActiveTab("table"));
           }}
         >
-          <div
-            className={
-              "w-[80%] h-[80%] rounded-md flex items-center justify-center border-outline1/35 border-2 rounded-tr-none relative" +
-              `${designPaneState.activeTab === "table" ? " active" : ""}`
-            }
-          >
-            <span className="absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"></span>
-            <svg className="w-full h-full scale-75">
-              <use xlinkHref="#grid"></use>
-            </svg>
-          </div>
+          <Dialog>
+            <DialogTrigger asChild className="">
+              <button
+                className={
+                  "w-[80%] h-[80%] rounded-md flex items-center justify-center border-outline1/35 border-2 rounded-tr-none relative" +
+                  `${designPaneState.activeTab === "table" ? " active" : ""}`
+                }
+              >
+                <span className="absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"></span>
+
+                <svg className="w-full h-full scale-75">
+                  <use xlinkHref="#grid"></use>
+                </svg>
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle>Share link</DialogTitle>
+                <DialogDescription>
+                  Anyone who has this link will be able to view this.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="flex items-center space-x-2">
+                <div className="grid flex-1 gap-2">
+                  <label htmlFor="link" className="sr-only">
+                    Link
+                  </label>
+                  <input
+                    id="link"
+                    defaultValue="https://ui.shadcn.com/docs/installation"
+                    readOnly
+                  />
+                </div>
+                <button type="submit" className="px-3">
+                  <span className="sr-only">Copy</span>
+                  <Copy className="h-4 w-4" />
+                </button>
+              </div>
+              <DialogFooter className="sm:justify-start">
+                <DialogClose asChild>
+                  <button type="button">Close</button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </li>
 
         <li
@@ -182,7 +235,76 @@ export const CanvasPanel: React.FC = () => {
   return null;
 };
 
-export const DesignCanvas: React.FC<{instance: ReactFlowInstance<StatefulNodeType & { id: string }, never> |  undefined; setInstance: React.Dispatch<React.SetStateAction<ReactFlowInstance<StatefulNodeType & { id: string }, never> | undefined>>}> = React.memo(({instance, setInstance}) => {
+export type TableNodeType = Node<
+  {
+    initialCount?: number;
+  },
+  "counter"
+>;
+
+const TableNode: React.FC<NodeProps> = ({ data, id }) => {
+  return (
+    <div
+      className="table-node w-[--node-width-here] bg-red-200 relative items-center block"
+      key={`table-node-${id}`}
+    >
+      <div
+        className="relative w-[--node-width-here] flex rounded-md"
+        style={{ "--node-width-here": "20rem" } as unknown as CSSProperties}
+      >
+        <Handle
+          type="target"
+          position={Position.Right}
+          className="y-centered-absolute w-2 h-2 ring z-5 my-auto"
+        />
+        <Handle
+          type="source"
+          position={Position.Left}
+          id={`handle-${id}-left`}
+          className="y-centered-absolute w-2 h-2 ring  z-5"
+        />
+        <Handle
+          type="source"
+          position={Position.Bottom}
+          id={`handle-${id}-right`}
+          className="y-centered-absolute left-0 w-2 h-2 ring  z-5"
+        />
+      </div>
+    </div>
+  );
+};
+
+const GroupTableNode: React.FC<NodeProps> = ({ id }) => {
+  // const nodeChildrenLength = useSelector(nodeChildrenLengthSelector(id), isEqual);
+
+  return (
+    <div
+      className="flex flex-col table-node-group"
+      style={
+        {
+          "--node-width-here": "20rem",
+          "--node-children-here": 2,
+        } as unknown as CSSProperties
+      }
+    ></div>
+  );
+};
+
+const tableNodeTypes = {
+  tableNode: TableNode,
+  group: GroupTableNode,
+};
+
+export const DesignCanvas: React.FC<{
+  instance:
+    | ReactFlowInstance<StatefulNodeType & { id: string }, never>
+    | undefined;
+  setInstance: React.Dispatch<
+    React.SetStateAction<
+      ReactFlowInstance<StatefulNodeType & { id: string }, never> | undefined
+    >
+  >;
+}> = React.memo(({ instance, setInstance }) => {
   // GLOBAL STATE
   const dispatch = useDispatch();
   const nodes = useSelector(nodesSelector, isEqual);
@@ -211,7 +333,6 @@ export const DesignCanvas: React.FC<{instance: ReactFlowInstance<StatefulNodeTyp
 
   const [shouldCalcFrame, setShouldCalcFrame] = useState<boolean>(true);
 
-
   // COMPONENT EVENT HANDLERS
   useEventListener(
     "keyup",
@@ -222,7 +343,8 @@ export const DesignCanvas: React.FC<{instance: ReactFlowInstance<StatefulNodeTyp
           designPaneDispatch(__setActiveTab(null));
           break;
         }
-        default: break;
+        default:
+          break;
       }
     }),
     window as unknown as HTMLElement
@@ -275,6 +397,9 @@ export const DesignCanvas: React.FC<{instance: ReactFlowInstance<StatefulNodeTyp
           if (!(x && y)) break;
           chatBubbleDispatch(__addBubble({ x, y }));
         }
+        case "table": {
+          designPaneDispatch(__setActiveTab(null));
+        }
         default: {
           break;
         }
@@ -302,12 +427,13 @@ export const DesignCanvas: React.FC<{instance: ReactFlowInstance<StatefulNodeTyp
     }
   }, [designPaneState.activeTab, instance]);
 
-  console.log("pane offset is ", panPosFrame);
-
   return (
     <>
       <ReactFlow
         nodes={nodes}
+        nodeTypes={
+          tableNodeTypes as unknown as { [prop: string]: React.FC<NodeProps> }
+        }
         onNodesChange={onNodesChange}
         edges={[]}
         onPaneClick={onPaneClick}

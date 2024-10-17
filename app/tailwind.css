@@ -45,6 +45,10 @@ script {
     --outline-1d: 67, 69, 64;
     --outline-2: 217 217 217;
 
+    /* LAYOUT */
+    --global-node-width: 16rem;
+    --global-node-height: 4rem;
+
     /* LIBRARY COLORS */
     --muted-foreground-color: 100 116 139;
     --foreground-color: 2 6 23;
@@ -144,6 +148,14 @@ script {
   }
   .floating-portal-item {
     transform: translateX(var(--pos-x)) translateY(var(--pos-y));
+  }
+  .table-node-group {
+    @apply w-[--node-width-here] h-max relative flex flex-col p-0;
+    height: calc(var(--global-node-height) * var(--node-children-here));
+    /* position: relative !important; */
+  }
+  .table-node {
+    @apply w-[--node-width-here] h-max mx-auto rounded-sm bg-accent relative;
   }
 }
 

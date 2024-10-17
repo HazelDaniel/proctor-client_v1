@@ -1,0 +1,4 @@
+sequence of features
+> table creation pane:
+	[implementation]
+	- show up as a drawer

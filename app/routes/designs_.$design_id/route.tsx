@@ -69,7 +69,7 @@ const CommentBoxDrawer: React.FC<{
 }) {
   return (
     <Drawer
-      open={false}
+      open={commentsOpened}
       onOpenChange={(open) => {
         openComments(!!open);
       }}
@@ -209,9 +209,9 @@ const CommentBoard: React.FC<{
 
   useEffect(() => {
     if (ReactflowInstance && activeCommentBoard) {
-      const { position, visible } = chatBubbleState.bubbles[activeCommentBoard];
-
-      // console.log("active bubble is now: ", activeBubble);
+      const equivBubble = chatBubbleState.bubbles[activeCommentBoard];
+      if (!equivBubble) return;
+      const { position, visible } = equivBubble;
       ReactflowInstance.setCenter(position.x, position.y, {
         duration: 300,
         zoom: 1,
@@ -222,7 +222,7 @@ const CommentBoard: React.FC<{
   return (
     <div
       className={
-        "fixed top-[10rem] md:top-20 right-0 w-[25rem] h-[20rem] flex shadow-lg shadow-outline1/25 z-10" +
+        "fixed top-[10rem] md:top-20 right-0 w-[25rem] h-[20rem] flex shadow-lg shadow-outline1/25 z-10 rounded-md bg-outline1/5 bg-blend-darken" +
         `${!boardOpened ? " shadow-none w-[2rem]" : ""}`
       }
     >

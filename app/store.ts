@@ -14,6 +14,7 @@ import {
 import { default as workspaceReducer } from "~/reducers/workspace.reducer";
 import { default as nodesReducer } from "~/reducers/nodes.reducer";
 import { PersistoreStore } from "./dao/persistor-store.dao";
+import { StatefulNodeType } from "./types";
 
 const rootReducer = combineReducers({ workspace: workspaceReducer, nodes: nodesReducer });
 
@@ -86,27 +87,50 @@ export const workspaceSelectors = createStructuredSelector({
 export const nodesSelector = (state: {
   nodes: ReturnType<typeof nodesReducer>;
 }) => {
-  const result = [...Object.entries(state.nodes.nodes)].map(([key, value]) => ({
-    ...value,
-    id: key
-  }));
+  const gnodeEntries = [...Object.entries(state.nodes.groupNodes)];
+  const resultGnodes: StatefulNodeType[] = [];
+  const resultNodes: StatefulNodeType[] = [];
 
-  return result;
+  for (const [key, value] of gnodeEntries) {
+    for (const [k, v] of [...Object.entries(value.nodes)]) {
+      resultNodes.push({...v, id: k, parentId: key});
+    }
+    let res: StatefulNodeType = {...value, id: key};
+    if ("nodes" in res) {
+      delete res["nodes"];
+    }
+    resultGnodes.push(res);
+
+    return [...resultGnodes, ...resultNodes]
+  }
+
+  return resultNodes;
 };
 
 export const nodeSelector = (id: string) => (state: {nodes: ReturnType<typeof nodesReducer>;}) => {
-  return state.nodes.nodes[id];
+  let gNode = state.nodes.groupNodes[id];
+  let resNode = Object.fromEntries(Object.entries(gNode).filter(([k, v]) => {
+    return k !== "nodes";
+  }))
+  return  resNode;
 }
 
-export const subsetNodesSelector = (ids: string[]) => (state: {nodes: ReturnType<typeof nodesReducer>;}) => {
+export const subsetNodesSelector = (ids: Set<string>) => (state: {nodes: ReturnType<typeof nodesReducer>;}) => {
   const result = [];
-  for (const id of ids) {
-    if (state.nodes.nodes[id]) {
-      result.push(state.nodes.nodes[id]);
+  const allNodes = nodesSelector(state);
+  for (const node of allNodes) {
+    if (ids.has(node.id)) {
+      result.push(node);
     }
   }
 
   return result;
+}
+
+export const nodeChildrenLengthSelector = (id: string) => (state: {nodes: ReturnType<typeof nodesReducer>;}) => {
+  let childrenLength = ([...Object.values(state.nodes.groupNodes[id]?.nodes)].length);
+
+  return  childrenLength;
 }
 
 export const nodesSelectorMemo = createSelector(
@@ -125,7 +149,7 @@ export const nodeSelectorMemo = (id: string) =>
 );
 
 export const subsetNodesSelectorMemo =
-  (ids: string[]) => createSelector(subsetNodesSelector(ids), (state) => {
+  (ids: Set<string>) => createSelector(subsetNodesSelector(ids), (state) => {
     return state;
   })
 
