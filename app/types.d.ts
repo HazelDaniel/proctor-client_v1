@@ -2,7 +2,18 @@ import { Node } from "@xyflow/react";
 
 export interface StatefulNodeType extends Node {
   position: { x: number; y: number };
-  data: { label: string; [prop: string]: any };
+  data: {
+    label: string;
+    toolbarVisible?: boolean;
+    type:
+      | "table"
+      | "primary"
+      | "secondary"
+      | "composite"
+      | "ordinary"
+      | undefined;
+    [prop: string]: any;
+  };
   type?: string;
 }
 

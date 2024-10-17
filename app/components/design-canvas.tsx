@@ -4,6 +4,7 @@ import {
   Handle,
   Node,
   NodeProps,
+  NodeToolbar,
   NodeTypes,
   Panel,
   Position,
@@ -48,6 +49,7 @@ import {
 } from "~/reducers/design-pane.reducer";
 import { setNodePosition } from "~/reducers/nodes.reducer";
 import {
+  childNodePositionSelector,
   nodeChildrenLengthSelector,
   nodeSelector,
   nodesSelector,
@@ -242,51 +244,81 @@ export type TableNodeType = Node<
   "counter"
 >;
 
-const TableNode: React.FC<NodeProps> = ({ data, id }) => {
+const TableNode: React.FC<NodeProps> = ({ data, id, parentId }) => {
+  const currentChildPosition = useSelector(
+    childNodePositionSelector(id, parentId),
+    isEqual
+  );
+  if (currentChildPosition === -1) return null;
   return (
     <div
-      className="table-node w-[--node-width-here] bg-red-200 relative items-center block"
+      className="table-node w-[--node-width-here] relative items-center block"
       key={`table-node-${id}`}
+      style={
+        {
+          "--node-width-here": "20rem",
+          "--node-pos-here": `${currentChildPosition}`,
+        } as unknown as CSSProperties
+      }
     >
-      <div
-        className="relative w-[--node-width-here] flex rounded-md"
-        style={{ "--node-width-here": "20rem" } as unknown as CSSProperties}
-      >
-        <Handle
-          type="target"
-          position={Position.Right}
-          className="y-centered-absolute w-2 h-2 ring z-5 my-auto"
-        />
-        <Handle
-          type="source"
-          position={Position.Left}
-          id={`handle-${id}-left`}
-          className="y-centered-absolute w-2 h-2 ring  z-5"
-        />
-        <Handle
-          type="source"
-          position={Position.Bottom}
-          id={`handle-${id}-right`}
-          className="y-centered-absolute left-0 w-2 h-2 ring  z-5"
-        />
-      </div>
+      {/* <div
+        className="relative w-[--node-width-here] flex rounded-md h-[--global-node-height] bg-blue-300 mt-[inherit] transform-[inherit]"
+      > */}
+      <Handle
+        type="target"
+        position={Position.Right}
+        className="w-2 h-2 ring z-5 my-auto"
+      />
+      <Handle
+        type="source"
+        position={Position.Left}
+        id={`handle-${id}-left`}
+        className="y-centered-absolute w-2 h-2 ring z-5"
+      />
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        id={`handle-${id}-right`}
+        className="left-0 w-2 h-2 ring z-5 my-auto static"
+      />
+      {/* </div> */}
     </div>
   );
 };
 
-const GroupTableNode: React.FC<NodeProps> = ({ id }) => {
+const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
   // const nodeChildrenLength = useSelector(nodeChildrenLengthSelector(id), isEqual);
 
   return (
     <div
-      className="flex flex-col table-node-group"
+      className="flex flex-col table-node-group relative overflow-y-visible"
       style={
         {
           "--node-width-here": "20rem",
           "--node-children-here": 2,
         } as unknown as CSSProperties
       }
-    ></div>
+    >
+      <div className="group-head-handle relative mt-[-70px] md:mt-[-5rem] w-[--node-width-here] h-8 mx-auto bg-canvas ring-1 rounded-[3px] ring-outline1/45">
+        <div className="grid grid-cols-2 h-[70%] w-8 md:w-6 y-centered-absolute left-1 scale-[0.8]">
+          <span className="w-1 h-1 rounded-full bg-outline1d"></span>
+          <span className="w-1 h-1 rounded-full bg-outline1d ml-[-5px]"></span>
+          <span className="w-1 h-1 rounded-full bg-outline1d "></span>
+          <span className="w-1 h-1 rounded-full bg-outline1d ml-[-5px]"></span>
+          <span className="w-1 h-1 rounded-full bg-outline1d "></span>
+          <span className="w-1 h-1 rounded-full bg-outline1d ml-[-5px]"></span>
+        </div>
+      </div>
+
+      <NodeToolbar
+        isVisible={data.toolbarVisible as boolean | undefined}
+        position={Position.Top}
+        className="w-[--node-width-here] text-start text-sm text-outline1d flex justify-start items-center left-0 pb-4 mix-blend-difference"
+        offset={20}
+      >
+        customers__order_table
+      </NodeToolbar>
+    </div>
   );
 };
 

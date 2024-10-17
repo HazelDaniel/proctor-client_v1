@@ -13,43 +13,93 @@ export interface NodesStateType {
 const initialNodesState: NodesStateType = {
   groupNodes: {
     "gnode-a": {
-      data: { label: "" },
+      data: { label: "", toolbarVisible: true, toolbarPosition: "top" },
       position: { x: 0, y: 0 },
       type: "group",
       className: "table-node-group",
       style: {
         width: "max-content",
         height: "max-content",
-        padding: "0"
+        padding: "0",
+        backgroundColor: "unset",
       },
       nodes: {
-        "node-2": {
+        "1729152101929": {
           data: { label: "World!" },
-          position: { x: 0, y: 3 },
+          position: { x: 0, y: 0 },
           type: "tableNode",
           extent: "parent",
           className: "table-node",
-          draggable: true,
+          draggable: false,
           style: {
             width: "var(--node-width-here)",
             height: "var(--global-node-height)",
+            marginTop: "calc(var(--node-pos-here) * var(--global-node-height))",
+            ...{ "--node-pos-here": "0" },
           },
         },
-        "node-3": {
+        "1729152101939": {
           data: { label: "World!" },
-          position: { x: 0, y: 7 },
+          position: { x: 0, y: 0 },
           type: "tableNode",
           extent: "parent",
           className: "table-node",
-          draggable: true,
+          draggable: false,
           style: {
             width: "var(--node-width-here)",
             height: "var(--global-node-height)",
+            marginTop: `calc(var(--node-pos-here) * var(--global-node-height))`,
+            ...{ "--node-pos-here": "1" },
+          },
+        },
+      },
+    },
+    "gnode-b": {
+      data: { label: "", toolbarVisible: true, type: "" },
+      position: { x: 520, y: 200 },
+      type: "group",
+      className: "table-node-group",
+      style: {
+        width: "max-content",
+        height: "max-content",
+        padding: "0",
+        backgroundColor: "unset",
+      },
+      nodes: {
+        "1729152101949": {
+          data: { label: "World!" },
+          position: { x: 0, y: 0 },
+          type: "tableNode",
+          extent: "parent",
+          className: "table-node",
+          draggable: false,
+          style: {
+            width: "var(--node-width-here)",
+            height: "var(--global-node-height)",
+            marginTop: "calc(var(--node-pos-here) * var(--global-node-height))",
+            ...{ "--node-pos-here": "0" },
+          },
+        },
+        "1729152101959": {
+          data: { label: "World!" },
+          position: { x: 0, y: 0 },
+          type: "tableNode",
+          extent: "parent",
+          className: "table-node",
+          draggable: false,
+          style: {
+            width: "var(--node-width-here)",
+            height: "var(--global-node-height)",
+            marginTop: `calc(var(--node-pos-here) * var(--global-node-height))`,
+            ...{ "--node-pos-here": "1" },
           },
         },
       },
     },
   },
+  // groupNodes: {
+
+  // },
 };
 
 const nodesSlice = createSlice({

@@ -16,7 +16,10 @@ import { default as nodesReducer } from "~/reducers/nodes.reducer";
 import { PersistoreStore } from "./dao/persistor-store.dao";
 import { StatefulNodeType } from "./types";
 
-const rootReducer = combineReducers({ workspace: workspaceReducer, nodes: nodesReducer });
+const rootReducer = combineReducers({
+  workspace: workspaceReducer,
+  nodes: nodesReducer,
+});
 
 const persistConfig: PersistConfig<{
   workspace: ReturnType<typeof workspaceReducer>;
@@ -32,7 +35,7 @@ const persistedReducer = persistReducer(persistConfig, rootReducer);
 export const store = configureStore({
   reducer: persistedReducer,
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({ 
+    getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
       },
@@ -72,9 +75,11 @@ export const commentsSelector = (state: {
   return state.workspace.commentBoard.currentID;
 };
 
-export const settingsSelector = (state: {workspace: ReturnType<typeof workspaceReducer>}) => {
+export const settingsSelector = (state: {
+  workspace: ReturnType<typeof workspaceReducer>;
+}) => {
   return state.workspace.settings;
-}
+};
 
 export const workspaceSelectors = createStructuredSelector({
   outputPane: outputPaneSelector,
@@ -93,65 +98,73 @@ export const nodesSelector = (state: {
 
   for (const [key, value] of gnodeEntries) {
     for (const [k, v] of [...Object.entries(value.nodes)]) {
-      resultNodes.push({...v, id: k, parentId: key});
+      resultNodes.push({ ...v, id: k, parentId: key });
     }
-    let res: StatefulNodeType = {...value, id: key};
+    let res: StatefulNodeType = { ...value, id: key };
     if ("nodes" in res) {
       delete res["nodes"];
     }
     resultGnodes.push(res);
-
-    return [...resultGnodes, ...resultNodes]
   }
 
-  return resultNodes;
+  return [...resultGnodes, ...resultNodes];
 };
 
-export const nodeSelector = (id: string) => (state: {nodes: ReturnType<typeof nodesReducer>;}) => {
-  let gNode = state.nodes.groupNodes[id];
-  let resNode = Object.fromEntries(Object.entries(gNode).filter(([k, v]) => {
-    return k !== "nodes";
-  }))
-  return  resNode;
-}
+export const nodeSelector =
+  (id: string) => (state: { nodes: ReturnType<typeof nodesReducer> }) => {
+    let gNode = state.nodes.groupNodes[id];
+    let resNode = Object.fromEntries(
+      Object.entries(gNode).filter(([k, v]) => {
+        return k !== "nodes";
+      })
+    );
+    return resNode;
+  };
 
-export const subsetNodesSelector = (ids: Set<string>) => (state: {nodes: ReturnType<typeof nodesReducer>;}) => {
-  const result = [];
-  const allNodes = nodesSelector(state);
-  for (const node of allNodes) {
-    if (ids.has(node.id)) {
-      result.push(node);
+export const childNodePositionSelector =
+  (id: string, parentID: string | undefined) =>
+  (state: { nodes: ReturnType<typeof nodesReducer> }) => {
+    if (!parentID) return -1;
+    let gNode = state.nodes.groupNodes[parentID];
+    const gNodeKeys = Object.keys(gNode.nodes).sort((a, b) => +a - +b);
+
+    return gNodeKeys.indexOf(id);
+  };
+
+export const subsetNodesSelector =
+  (ids: Set<string>) => (state: { nodes: ReturnType<typeof nodesReducer> }) => {
+    const result = [];
+    const allNodes = nodesSelector(state);
+    for (const node of allNodes) {
+      if (ids.has(node.id)) {
+        result.push(node);
+      }
     }
-  }
 
-  return result;
-}
+    return result;
+  };
 
-export const nodeChildrenLengthSelector = (id: string) => (state: {nodes: ReturnType<typeof nodesReducer>;}) => {
-  let childrenLength = ([...Object.values(state.nodes.groupNodes[id]?.nodes)].length);
+export const nodeChildrenLengthSelector =
+  (id: string) => (state: { nodes: ReturnType<typeof nodesReducer> }) => {
+    let childrenLength = [...Object.values(state.nodes.groupNodes[id]?.nodes)]
+      .length;
 
-  return  childrenLength;
-}
+    return childrenLength;
+  };
 
-export const nodesSelectorMemo = createSelector(
-  nodesSelector,
-  (nodes) => {
-    return nodes;
-  }
-);
+export const nodesSelectorMemo = createSelector(nodesSelector, (nodes) => {
+  return nodes;
+});
 
 export const nodeSelectorMemo = (id: string) =>
-  createSelector(
-    nodeSelector(id),
-    (node) => {
-      return node;
-    }
-);
+  createSelector(nodeSelector(id), (node) => {
+    return node;
+  });
 
-export const subsetNodesSelectorMemo =
-  (ids: Set<string>) => createSelector(subsetNodesSelector(ids), (state) => {
+export const subsetNodesSelectorMemo = (ids: Set<string>) =>
+  createSelector(subsetNodesSelector(ids), (state) => {
     return state;
-  })
+  });
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
