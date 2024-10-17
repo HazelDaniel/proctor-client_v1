@@ -540,7 +540,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </svg>
           </symbol>
 
-          <symbol id="video"></symbol>
+          <symbol id="key">
+            <svg  viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6.75 24C9.92564 24 12.5 21.4256 12.5 18.25C12.5 15.0744 9.92564 12.5 6.75 12.5C3.57436 12.5 1 15.0744 1 18.25C1 21.4256 3.57436 24 6.75 24Z" stroke="var(--icon-color-here)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M16.7959 8.74945L18.4816 10.4351C19.7536 11.7072 20.201 9.36402 21.9756 9.06888C22.5716 8.96975 23.0959 8.76704 23.3214 8.10846C23.5213 7.52495 23.2942 6.97765 22.5877 6.27115L20.8055 4.48895" stroke="var(--icon-color-here)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <path d="M11.2227 13.7778L24.0004 1" stroke="var(--icon-color-here)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </symbol>
 
           <symbol id="caret-up"></symbol>
 

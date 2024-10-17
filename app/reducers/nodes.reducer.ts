@@ -34,7 +34,8 @@ const initialNodesState: NodesStateType = {
           style: {
             width: "var(--node-width-here)",
             height: "var(--global-node-height)",
-            marginTop: "calc(var(--node-pos-here) * var(--global-node-height))",
+            marginTop:
+              "calc(var(--node-pos-here) * var(--global-node-height) + 8px * var(--node-pos-here))",
             ...{ "--node-pos-here": "0" },
           },
         },
@@ -48,7 +49,7 @@ const initialNodesState: NodesStateType = {
           style: {
             width: "var(--node-width-here)",
             height: "var(--global-node-height)",
-            marginTop: `calc(var(--node-pos-here) * var(--global-node-height))`,
+            marginTop: `calc(var(--node-pos-here) * var(--global-node-height) + 8px * var(--node-pos-here))`,
             ...{ "--node-pos-here": "1" },
           },
         },
@@ -76,7 +77,7 @@ const initialNodesState: NodesStateType = {
           style: {
             width: "var(--node-width-here)",
             height: "var(--global-node-height)",
-            marginTop: "calc(var(--node-pos-here) * var(--global-node-height))",
+            marginTop: `calc(var(--node-pos-here) * var(--global-node-height) + 8px * var(--node-pos-here))`,
             ...{ "--node-pos-here": "0" },
           },
         },
@@ -90,7 +91,7 @@ const initialNodesState: NodesStateType = {
           style: {
             width: "var(--node-width-here)",
             height: "var(--global-node-height)",
-            marginTop: `calc(var(--node-pos-here) * var(--global-node-height))`,
+            marginTop: `calc(var(--node-pos-here) * var(--global-node-height) + 8px * var(--node-pos-here))`,
             ...{ "--node-pos-here": "1" },
           },
         },

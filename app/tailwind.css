@@ -165,6 +165,7 @@ script {
   }
   .table-node-group .table-node-group {
     background-color: unset;
+    margin-top: inherit;
   }
 
   .table-node-group {
@@ -178,10 +179,13 @@ script {
     border: none;
   }
   .table-node {
-    @apply w-[--node-width-here] h-max mx-auto rounded-md bg-accent/95 relative;
-    margin-top: calc(var(--global-node-height) * var(--node-pos-here));
+    @apply w-[--node-width-here] h-max mx-auto rounded-md relative bg-accent/95;
+    /* margin-top: calc(var(--global-node-height) * var(--node-pos-here)) ; */
     z-index: 5;
-    border: 1px solid rgb(var(--canvas-color));
+  }
+
+  .table-node-child {
+    @apply relative;
   }
 }
 

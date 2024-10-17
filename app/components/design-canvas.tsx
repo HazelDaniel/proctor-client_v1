@@ -252,7 +252,7 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId }) => {
   if (currentChildPosition === -1) return null;
   return (
     <div
-      className="table-node w-[--node-width-here] relative items-center block"
+      className="table-node-child all-[inherit] h-[--global-node-height] min-h-[--global-node-height] rounded-md ring z-9 w-[--node-width-here]"
       key={`table-node-${id}`}
       style={
         {
@@ -261,27 +261,34 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId }) => {
         } as unknown as CSSProperties
       }
     >
-      {/* <div
-        className="relative w-[--node-width-here] flex rounded-md h-[--global-node-height] bg-blue-300 mt-[inherit] transform-[inherit]"
-      > */}
-      <Handle
-        type="target"
-        position={Position.Right}
-        className="w-2 h-2 ring z-5 my-auto"
-      />
+      <p className="w-full text-center h-full flex items-center justify-center text-canvas relative">
+        order_date
+        <span
+          className="w-4 h-4 absolute flex items-center justify-end right-2"
+          style={
+            {
+              "--icon-color-here": "rgb(var(--canvas-color))",
+            } as unknown as CSSProperties
+          }
+        >
+          <svg className="w-full h-full scale-90 md:scale-75">
+            <use xlinkHref="#key"></use>
+          </svg>
+        </span>
+      </p>
+
       <Handle
         type="source"
         position={Position.Left}
         id={`handle-${id}-left`}
-        className="y-centered-absolute w-2 h-2 ring z-5"
+        className="rounded-none bg-canvas"
       />
       <Handle
         type="source"
-        position={Position.Bottom}
+        position={Position.Right}
+        className="rounded-none"
         id={`handle-${id}-right`}
-        className="left-0 w-2 h-2 ring z-5 my-auto static"
       />
-      {/* </div> */}
     </div>
   );
 };

@@ -5,13 +5,13 @@ export interface StatefulNodeType extends Node {
   data: {
     label: string;
     toolbarVisible?: boolean;
-    type:
-      | "table"
-      | "primary"
-      | "secondary"
-      | "composite"
-      | "ordinary"
-      | undefined;
+    // type:
+    //   | "table"
+    //   | "primary"
+    //   | "secondary"
+    //   | "composite"
+    //   | "ordinary"
+    //   | undefined;
     [prop: string]: any;
   };
   type?: string;
