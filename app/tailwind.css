@@ -179,8 +179,7 @@ script {
     border: none;
   }
   .table-node {
-    @apply w-[--node-width-here] h-max mx-auto rounded-md relative bg-accent/95;
-    /* margin-top: calc(var(--global-node-height) * var(--node-pos-here)) ; */
+    @apply w-[--node-width-here] h-max mx-auto rounded-md relative;
     z-index: 5;
   }
 

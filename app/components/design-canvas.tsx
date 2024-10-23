@@ -15,6 +15,7 @@ import {
   useEdgesState,
   useNodesState,
   useReactFlow,
+  useUpdateNodeInternals,
 } from "@xyflow/react";
 import React, {
   CSSProperties,
@@ -56,7 +57,7 @@ import {
   settingsSelector,
   subsetNodesSelector,
 } from "~/store";
-import { StatefulNodeType } from "~/types";
+import { StatefulNodeType, statefulNodeColorType } from "~/types";
 import { isEqual } from "~/utils/comparison";
 import {
   Dialog,
@@ -237,6 +238,21 @@ export const CanvasPanel: React.FC = () => {
   return null;
 };
 
+// export const TranscientTableNodeHandles: React.FC<{ id: string }> = ({ id }) => {
+//   const updateNodeInternals = useUpdateNodeInternals();
+
+//   useEffect(() => {
+//     updateNodeInternals(id);
+//   }, [id]);
+
+//   return (
+//     <>
+//       {Array.from({ length: 2 }).map((_, index) => (
+//       ))}
+//     </>
+//   );
+// };
+
 export type TableNodeType = Node<
   {
     initialCount?: number;
@@ -244,15 +260,31 @@ export type TableNodeType = Node<
   "counter"
 >;
 
-const TableNode: React.FC<NodeProps> = ({ data, id, parentId }) => {
+const TableNode: React.FC<NodeProps> = ({ data, id, parentId, type }) => {
   const currentChildPosition = useSelector(
     childNodePositionSelector(id, parentId),
     isEqual
   );
   if (currentChildPosition === -1) return null;
+
+  const nodeColorSelection: statefulNodeColorType = useMemo(
+    () =>
+      ({
+        primary: "accent",
+        secondary: "outline1/75",
+        table: "transparent",
+        ordinary: "bg",
+      } as statefulNodeColorType),
+    []
+  );
+
   return (
     <div
-      className="table-node-child all-[inherit] h-[--global-node-height] min-h-[--global-node-height] rounded-md ring z-9 w-[--node-width-here]"
+      className={`table-node-child all-[inherit] h-[--global-node-height] min-h-[--global-node-height] rounded-md z-9 w-[--node-width-here] bg-${
+        nodeColorSelection[
+          data.type as unknown as keyof typeof nodeColorSelection
+        ]
+      }`}
       key={`table-node-${id}`}
       style={
         {
@@ -261,32 +293,44 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId }) => {
         } as unknown as CSSProperties
       }
     >
-      <p className="w-full text-center h-full flex items-center justify-center text-canvas relative">
+      <p
+        className="w-full text-center h-full flex items-center justify-center text-canvas relative"
+        style={{
+          color:
+            data.type === "primary" ? "rgb(var(--canvas-color))" : "#3c3c3c",
+        }}
+      >
         order_date
         <span
           className="w-4 h-4 absolute flex items-center justify-end right-2"
           style={
             {
-              "--icon-color-here": "rgb(var(--canvas-color))",
+              "--icon-color-here":
+                data.type === "primary"
+                  ? "rgb(var(--canvas-color))"
+                  : "#3c3c3c",
             } as unknown as CSSProperties
           }
         >
           <svg className="w-full h-full scale-90 md:scale-75">
-            <use xlinkHref="#key"></use>
+            <use
+              xlinkHref={
+                data.type === "primary"
+                  ? "#key"
+                  : data.type === "secondary"
+                  ? "#link-icon"
+                  : ""
+              }
+            ></use>
           </svg>
         </span>
       </p>
 
-      <Handle
-        type="source"
-        position={Position.Left}
-        id={`handle-${id}-left`}
-        className="rounded-none bg-canvas"
-      />
+      <Handle type="source" position={Position.Left} id={`handle-${id}-left`} />
+
       <Handle
         type="source"
         position={Position.Right}
-        className="rounded-none"
         id={`handle-${id}-right`}
       />
     </div>
@@ -294,8 +338,6 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId }) => {
 };
 
 const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
-  // const nodeChildrenLength = useSelector(nodeChildrenLengthSelector(id), isEqual);
-
   return (
     <div
       className="flex flex-col table-node-group relative overflow-y-visible"

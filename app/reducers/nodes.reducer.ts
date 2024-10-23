@@ -4,8 +4,9 @@ import type { StatefulNodeType } from "~/types";
 
 export interface NodesStateType {
   groupNodes: {
-    [prop: string]: Omit<StatefulNodeType, "id"> & {
+    [prop: string]: Omit<StatefulNodeType, "id" | "data"> & {
       nodes: { [prop: string]: Omit<StatefulNodeType, "id"> };
+      data: {[prop: string]: any}
     };
   };
 }
@@ -25,7 +26,7 @@ const initialNodesState: NodesStateType = {
       },
       nodes: {
         "1729152101929": {
-          data: { label: "World!" },
+          data: { label: "World!", type: "primary" },
           position: { x: 0, y: 0 },
           type: "tableNode",
           extent: "parent",
@@ -34,14 +35,11 @@ const initialNodesState: NodesStateType = {
           style: {
             width: "var(--node-width-here)",
             height: "var(--global-node-height)",
-            marginTop:
-              "calc(var(--node-pos-here) * var(--global-node-height) + 8px * var(--node-pos-here))",
-            ...{ "--node-pos-here": "0" },
           },
         },
         "1729152101939": {
-          data: { label: "World!" },
-          position: { x: 0, y: 0 },
+          data: { label: "World!", type: "ordinary" },
+          position: { x: 0, y: 43 },
           type: "tableNode",
           extent: "parent",
           className: "table-node",
@@ -49,8 +47,6 @@ const initialNodesState: NodesStateType = {
           style: {
             width: "var(--node-width-here)",
             height: "var(--global-node-height)",
-            marginTop: `calc(var(--node-pos-here) * var(--global-node-height) + 8px * var(--node-pos-here))`,
-            ...{ "--node-pos-here": "1" },
           },
         },
       },
@@ -68,7 +64,7 @@ const initialNodesState: NodesStateType = {
       },
       nodes: {
         "1729152101949": {
-          data: { label: "World!" },
+          data: { label: "World!", type: "primary" },
           position: { x: 0, y: 0 },
           type: "tableNode",
           extent: "parent",
@@ -77,13 +73,11 @@ const initialNodesState: NodesStateType = {
           style: {
             width: "var(--node-width-here)",
             height: "var(--global-node-height)",
-            marginTop: `calc(var(--node-pos-here) * var(--global-node-height) + 8px * var(--node-pos-here))`,
-            ...{ "--node-pos-here": "0" },
           },
         },
         "1729152101959": {
-          data: { label: "World!" },
-          position: { x: 0, y: 0 },
+          data: { label: "World!", type: "ordinary" },
+          position: { x: 0, y: 43 },
           type: "tableNode",
           extent: "parent",
           className: "table-node",
@@ -91,16 +85,11 @@ const initialNodesState: NodesStateType = {
           style: {
             width: "var(--node-width-here)",
             height: "var(--global-node-height)",
-            marginTop: `calc(var(--node-pos-here) * var(--global-node-height) + 8px * var(--node-pos-here))`,
-            ...{ "--node-pos-here": "1" },
           },
         },
       },
     },
   },
-  // groupNodes: {
-
-  // },
 };
 
 const nodesSlice = createSlice({

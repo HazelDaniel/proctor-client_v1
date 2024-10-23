@@ -5,16 +5,20 @@ export interface StatefulNodeType extends Node {
   data: {
     label: string;
     toolbarVisible?: boolean;
-    // type:
-    //   | "table"
-    //   | "primary"
-    //   | "secondary"
-    //   | "composite"
-    //   | "ordinary"
-    //   | undefined;
+    childPosition?: number;
+    type:
+      | "table"
+      | "primary"
+      | "secondary"
+      | "composite"
+      | "ordinary";
     [prop: string]: any;
   };
   type?: string;
+}
+
+export interface statefulNodeColorType {
+  [prop: StatefulNodeType["data"]["type"]]: string;
 }
 
 export interface StatefulChatBubbleType {

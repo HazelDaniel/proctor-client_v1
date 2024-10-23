@@ -33,8 +33,8 @@ export const links: LinksFunction = () => [
 ];
 
 export const clientLoader = (args: ClientLoaderFunctionArgs) => {
-  return {}
-}
+  return {};
+};
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -541,14 +541,71 @@ export function Layout({ children }: { children: React.ReactNode }) {
           </symbol>
 
           <symbol id="key">
-            <svg  viewBox="0 0 25 25" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M6.75 24C9.92564 24 12.5 21.4256 12.5 18.25C12.5 15.0744 9.92564 12.5 6.75 12.5C3.57436 12.5 1 15.0744 1 18.25C1 21.4256 3.57436 24 6.75 24Z" stroke="var(--icon-color-here)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M16.7959 8.74945L18.4816 10.4351C19.7536 11.7072 20.201 9.36402 21.9756 9.06888C22.5716 8.96975 23.0959 8.76704 23.3214 8.10846C23.5213 7.52495 23.2942 6.97765 22.5877 6.27115L20.8055 4.48895" stroke="var(--icon-color-here)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            <path d="M11.2227 13.7778L24.0004 1" stroke="var(--icon-color-here)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <svg
+              viewBox="0 0 25 25"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M6.75 24C9.92564 24 12.5 21.4256 12.5 18.25C12.5 15.0744 9.92564 12.5 6.75 12.5C3.57436 12.5 1 15.0744 1 18.25C1 21.4256 3.57436 24 6.75 24Z"
+                stroke="var(--icon-color-here)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M16.7959 8.74945L18.4816 10.4351C19.7536 11.7072 20.201 9.36402 21.9756 9.06888C22.5716 8.96975 23.0959 8.76704 23.3214 8.10846C23.5213 7.52495 23.2942 6.97765 22.5877 6.27115L20.8055 4.48895"
+                stroke="var(--icon-color-here)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M11.2227 13.7778L24.0004 1"
+                stroke="var(--icon-color-here)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </symbol>
 
-          <symbol id="caret-up"></symbol>
+          <symbol id="link-icon">
+            <svg
+              viewBox="0 0 20 20"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M8.93555 6.32412L13.3164 1.93944C14.592 0.662722 16.6883 0.690844 17.9986 2.00226C19.3089 3.31365 19.337 5.41178 18.0614 6.68848L14.2579 10.4952"
+                stroke="var(--icon-color-here)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M5.74211 9.50464L1.93863 13.3114C0.662996 14.5882 0.691133 16.6862 2.00138 17.9977C3.31167 19.3091 5.40793 19.3372 6.68357 18.0605L11.0645 13.6758"
+                stroke="var(--icon-color-here)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M11.0635 8.92676C12.3749 10.2382 12.403 12.3363 11.1263 13.613"
+                stroke="var(--icon-color-here)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M8.99836 11.0105C7.68693 9.69904 7.65882 7.60096 8.93552 6.32422"
+                stroke="var(--icon-color-here)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </symbol>
 
           <symbol id="file"></symbol>
 
@@ -656,7 +713,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-
   return (
     <>
       <Provider store={store}>
