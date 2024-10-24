@@ -16,7 +16,7 @@ export interface StatefulNodeType extends Node {
 export interface StatefulGroupNodeType {
   [prop: string]: Omit<StatefulNodeType, "id" | "data"> & {
     nodes: { [prop: string]: Omit<StatefulNodeType, "id"> };
-    data: { [prop: string]: any };
+    data: { [prop: string]: any; toolbarVisible?: boolean; label: string };
   };
 }
 

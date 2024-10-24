@@ -257,18 +257,18 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId, type }) => {
     childNodePositionSelector(id, parentId),
     isEqual
   );
-  if (currentChildPosition === -1) return null;
 
   const nodeColorSelection: statefulNodeColorType = useMemo(
     () =>
       ({
         primary: "accent",
-        secondary: "outline1/75",
+        secondary: "bg",
         table: "transparent",
         ordinary: "bg",
       } as statefulNodeColorType),
     []
   );
+  if (currentChildPosition === -1) return null;
 
   return (
     <div
@@ -318,43 +318,49 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId, type }) => {
         </span>
       </p>
 
-      <Handle
-        type={data.type === "primary" ? "target" : "source"}
-        position={Position.Left}
-        id={`${id}-handle-left`}
-        style={{
-          borderRadius: "unset",
-          outline: "2px solid rgb(var(--fg-color))",
-          backgroundColor: "#3c3c3c",
-        }}
-      />
+      {(data as any).type !== "primary" &&
+      (data as any).type !== "secondary" ? null : (
+        <>
+          <Handle
+            type={data.type === "primary" ? "target" : "source"}
+            position={Position.Left}
+            id={`${id}-handle-left`}
+            style={{
+              borderRadius: "unset",
+              outline: "2px solid rgb(var(--fg-color))",
+              backgroundColor: "#3c3c3c",
+            }}
+          />
 
-      <Handle
-        type="source"
-        position={Position.Right}
-        id={`${id}-handle-right`}
-        style={{
-          borderRadius: "unset",
-          outline: "2px solid rgb(var(--fg-color))",
-          backgroundColor: "#3c3c3c",
-        }}
-      />
+          <Handle
+            type="source"
+            position={Position.Right}
+            id={`${id}-handle-right`}
+            style={{
+              borderRadius: "unset",
+              outline: "2px solid rgb(var(--fg-color))",
+              backgroundColor: "#3c3c3c",
+            }}
+          />
+        </>
+      )}
     </div>
   );
 };
 
 const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
+  const childrenCount = useSelector(nodeChildrenLengthSelector(id));
   return (
     <div
       className="flex flex-col table-node-group relative overflow-y-visible"
       style={
         {
           "--node-width-here": "20rem",
-          "--node-children-here": 2,
+          "--node-children-here": childrenCount,
         } as unknown as CSSProperties
       }
     >
-      <div className="group-head-handle relative mt-[-70px] md:mt-[-5rem] w-[--node-width-here] h-8 mx-auto bg-canvas ring-1 rounded-[3px] ring-outline1/45">
+      <div className="group-head-handle relative  w-[--node-width-here] h-8 min-h-8 mx-auto bg-canvas ring-1 rounded-[3px] ring-outline1/45 flex justify-end px-2 items-center">
         <div className="grid grid-cols-2 h-[70%] w-8 md:w-6 y-centered-absolute left-1 scale-[0.8]">
           <span className="w-1 h-1 rounded-full bg-outline1d"></span>
           <span className="w-1 h-1 rounded-full bg-outline1d ml-[-5px]"></span>
@@ -363,15 +369,20 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
           <span className="w-1 h-1 rounded-full bg-outline1d "></span>
           <span className="w-1 h-1 rounded-full bg-outline1d ml-[-5px]"></span>
         </div>
+        <button className="w-[10px] h-[10px]">
+          <svg className="w-full h-full stroke-outline1d">
+            <use xlinkHref="#pencil"></use>
+          </svg>
+        </button>
       </div>
 
       <NodeToolbar
         isVisible={data.toolbarVisible as boolean | undefined}
         position={Position.Top}
-        className="w-[--node-width-here] text-start text-sm text-outline1d flex justify-start items-center left-0 pb-4 mix-blend-difference node-toolbar"
+        className="w-[--node-width-here] text-start text-sm text-outline1d flex justify-start items-center left-0 pb-4 mix-blend-difference node-toolbar absolute"
         offset={20}
       >
-        customers__order_table
+        {`${(data as any).label}`}
       </NodeToolbar>
     </div>
   );
@@ -509,7 +520,7 @@ export const DesignCanvas: React.FC<{
     const onConnect: OnConnect = useCallback(
       (params) =>
         setEdges((eds) => {
-          const [edge] = eds;
+          const edge = params;
           const sourceNodeParentID = edge.source.split(":")[0] || "";
           const targetNodeParentID = edge.target.split(":")[0] || "";
 
@@ -523,27 +534,19 @@ export const DesignCanvas: React.FC<{
               edge.source
             ];
 
-          if (!(equivTargetNode && equivSourceNode)) return edges_;
-
-          console.log("source node is ", equivSourceNode);
-          console.log("target node is ", equivTargetNode);
+          if (!(equivTargetNode && equivSourceNode)) return eds;
 
           if (
-            equivTargetNode.data.type === "primary" &&
-            equivSourceNode.data.type === "primary"
+            equivTargetNode.data.type !== "primary" ||
+            equivSourceNode.data.type !== "secondary" ||
+            sourceNodeParentID === targetNodeParentID
           ) {
-            return edges_;
+            return eds;
           }
 
-          // console.log("equiv target node is ", equivTargetNode);
-          // console.log("eds is ", eds);
-          // console.log("the store is ", store.getState());
-          // if ((eds[0].data as any).type === "primary") {
-          //   eds = eds.reverse();
-          // }
           return addEdge(params, eds);
         }),
-      [edgesSelector, nodesSelector]
+      []
     );
 
     // EFFECTS

@@ -105,7 +105,7 @@ export const nodesSelector = (state: {
       ...value,
       id: key,
       type: "group",
-      data: { label: "", type: "table", columnName: ""  },
+      data: {...value.data, type: "table", columnName: ""}
     };
     if ("nodes" in res) {
       delete res["nodes"];

@@ -166,18 +166,31 @@ script {
   .table-node-group .table-node-group {
     background-color: unset;
     margin-top: inherit;
+    display: flex;
+    padding-top: 0;
+  }
+
+  .table-node-group * {
+    outline: none !important;
+    border: none !important;
   }
 
   .table-node-group {
     @apply h-max relative flex flex-col p-0 bg-[unset];
-    height: calc(var(--global-node-height) * var(--node-children-here));
+    height: calc(
+      (var(--global-node-height) * var(--node-children-here)) + 20px
+    );
     width: calc(var(--node-width-here) + 8px);
     margin-left: -3px;
     margin-top: -3px;
     padding: calc(var(--node-children-here) * 25px) 0;
     z-index: 3;
-    border: none;
+    position: relative;
   }
+  .group-head-handle {
+    margin-top: -32px;
+  }
+
   .table-node {
     @apply w-[--node-width-here] h-max mx-auto rounded-md relative;
     z-index: 5;
