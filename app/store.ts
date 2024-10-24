@@ -14,7 +14,8 @@ import {
 import { default as workspaceReducer } from "~/reducers/workspace.reducer";
 import { default as nodesReducer } from "~/reducers/nodes.reducer";
 import { PersistoreStore } from "./dao/persistor-store.dao";
-import { StatefulNodeType } from "./types";
+import { StatefulGroupNodeType, StatefulNodeType } from "./types";
+import { Edge } from "@xyflow/react";
 
 const rootReducer = combineReducers({
   workspace: workspaceReducer,
@@ -100,7 +101,12 @@ export const nodesSelector = (state: {
     for (const [k, v] of [...Object.entries(value.nodes)]) {
       resultNodes.push({ ...v, id: k, parentId: key });
     }
-    let res: StatefulNodeType = { ...value, id: key };
+    let res: StatefulNodeType = {
+      ...value,
+      id: key,
+      type: "group",
+      data: { label: "", type: "table", columnName: ""  },
+    };
     if ("nodes" in res) {
       delete res["nodes"];
     }
@@ -108,6 +114,16 @@ export const nodesSelector = (state: {
   }
 
   return [...resultGnodes, ...resultNodes];
+};
+
+export const edgesSelector: (state: {
+  nodes: ReturnType<typeof nodesReducer>;
+}) => Edge[] = (state) => {
+  const result: Edge[] = [];
+  for (const [k, v] of [...Object.entries(state.nodes.edges)]) {
+    result.push({...v, id: k})
+  }
+  return result;
 };
 
 export const nodeSelector =

@@ -6,15 +6,18 @@ export interface StatefulNodeType extends Node {
     label: string;
     toolbarVisible?: boolean;
     childPosition?: number;
-    type:
-      | "table"
-      | "primary"
-      | "secondary"
-      | "composite"
-      | "ordinary";
+    type: "table" | "primary" | "secondary" | "composite" | "ordinary";
+    columnName: string;
     [prop: string]: any;
   };
   type?: string;
+}
+
+export interface StatefulGroupNodeType {
+  [prop: string]: Omit<StatefulNodeType, "id" | "data"> & {
+    nodes: { [prop: string]: Omit<StatefulNodeType, "id"> };
+    data: { [prop: string]: any };
+  };
 }
 
 export interface statefulNodeColorType {

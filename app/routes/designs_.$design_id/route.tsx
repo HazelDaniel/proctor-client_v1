@@ -34,7 +34,7 @@ import "@xyflow/react/dist/style.css";
 import { DesignCanvas } from "~/components/design-canvas";
 import { ChatBubbleViewCtx } from "~/context-components/chat-bubble-view.context";
 import { handleResize } from "~/event-handlers/workspace.handlers";
-import { ReactFlowInstance } from "@xyflow/react";
+import { Edge, ReactFlowInstance } from "@xyflow/react";
 import { StatefulNodeType } from "~/types";
 import {
   ChatBubbleContextValueType,
@@ -176,7 +176,7 @@ const CommentBoxDrawer: React.FC<{
 
 const CommentBoard: React.FC<{
   instance:
-    | ReactFlowInstance<StatefulNodeType & { id: string }, never>
+    | ReactFlowInstance<StatefulNodeType & { id: string }, Edge>
     | undefined;
 }> = ({ instance: ReactflowInstance }) => {
   const activeCommentBoard = useSelector(commentsSelector);
@@ -222,7 +222,7 @@ const CommentBoard: React.FC<{
   return (
     <div
       className={
-        "fixed top-[10rem] md:top-20 right-0 w-[25rem] h-[20rem] flex shadow-lg shadow-outline1/25 z-10 rounded-md bg-outline1/5 bg-blend-darken" +
+        "fixed top-[10rem] md:top-20 right-0 w-[25rem] h-[20rem] flex shadow-lg shadow-outline1/25 z-10 rounded-md bg-bg bg-blend-darken" +
         `${!boardOpened ? " shadow-none w-[2rem]" : ""}`
       }
     >
@@ -307,7 +307,7 @@ const CommentBoard: React.FC<{
 export const DesignsPage: React.FC = React.memo(() => {
   const [_, setWindowSize] = useState<number>(window.innerWidth);
   const [instance, setInstance] =
-    useState<ReactFlowInstance<StatefulNodeType & { id: string }, never>>();
+    useState<ReactFlowInstance<StatefulNodeType & { id: string }, Edge>>();
 
   useEventListener(
     "resize",

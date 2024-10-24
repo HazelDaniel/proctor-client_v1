@@ -1,14 +1,11 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { Action, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
-import type { StatefulNodeType } from "~/types";
+import { Edge, MarkerType } from "@xyflow/react";
+import type { StatefulGroupNodeType, StatefulNodeType } from "~/types";
 
 export interface NodesStateType {
-  groupNodes: {
-    [prop: string]: Omit<StatefulNodeType, "id" | "data"> & {
-      nodes: { [prop: string]: Omit<StatefulNodeType, "id"> };
-      data: {[prop: string]: any}
-    };
-  };
+  groupNodes: StatefulGroupNodeType;
+  edges: { [prop: string]: Omit<Edge, "id"> };
 }
 
 const initialNodesState: NodesStateType = {
@@ -25,8 +22,8 @@ const initialNodesState: NodesStateType = {
         backgroundColor: "unset",
       },
       nodes: {
-        "1729152101929": {
-          data: { label: "World!", type: "primary" },
+        "gnode-a:1729152101929": {
+          data: { label: "World!", type: "primary", columnName: "customer_id" },
           position: { x: 0, y: 0 },
           type: "tableNode",
           extent: "parent",
@@ -37,8 +34,8 @@ const initialNodesState: NodesStateType = {
             height: "var(--global-node-height)",
           },
         },
-        "1729152101939": {
-          data: { label: "World!", type: "ordinary" },
+        "gnode-a:1729152101939": {
+          data: { label: "World!", type: "ordinary", columnName: "full_name" },
           position: { x: 0, y: 43 },
           type: "tableNode",
           extent: "parent",
@@ -52,7 +49,7 @@ const initialNodesState: NodesStateType = {
       },
     },
     "gnode-b": {
-      data: { label: "", toolbarVisible: true, type: "" },
+      data: { label: "", toolbarVisible: true, type: "table" },
       position: { x: 520, y: 200 },
       type: "group",
       className: "table-node-group",
@@ -63,8 +60,8 @@ const initialNodesState: NodesStateType = {
         backgroundColor: "unset",
       },
       nodes: {
-        "1729152101949": {
-          data: { label: "World!", type: "primary" },
+        "gnode-b:1729152101949": {
+          data: { label: "World!", type: "primary", columnName: "order_type" },
           position: { x: 0, y: 0 },
           type: "tableNode",
           extent: "parent",
@@ -75,8 +72,8 @@ const initialNodesState: NodesStateType = {
             height: "var(--global-node-height)",
           },
         },
-        "1729152101959": {
-          data: { label: "World!", type: "ordinary" },
+        "gnode-b:1729152101959": {
+          data: { label: "World!", type: "ordinary", columnName: "ordered_at" },
           position: { x: 0, y: 43 },
           type: "tableNode",
           extent: "parent",
@@ -88,6 +85,16 @@ const initialNodesState: NodesStateType = {
           },
         },
       },
+    },
+  },
+  edges: {
+    "edge-1729750598685": {
+      source: "gnode-b:1729152101959",
+      target: "gnode-a:1729152101939",
+      type: "bidirectional",
+      sourceHandle: `gnode-b:1729152101959-handle-left`,
+      targetHandle: `gnode-a:1729152101939-handle-right`,
+      markerEnd: { type: MarkerType.ArrowClosed },
     },
   },
 };

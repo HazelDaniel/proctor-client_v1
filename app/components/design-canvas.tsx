@@ -1,17 +1,21 @@
 import {
   Background,
+  ConnectionMode,
   Controls,
+  Edge,
   Handle,
   Node,
   NodeProps,
   NodeToolbar,
   NodeTypes,
+  OnConnect,
   Panel,
   Position,
   ReactFlow,
   ReactFlowInstance,
   ViewportPortal,
   XYPosition,
+  addEdge,
   useEdgesState,
   useNodesState,
   useReactFlow,
@@ -51,10 +55,12 @@ import {
 import { setNodePosition } from "~/reducers/nodes.reducer";
 import {
   childNodePositionSelector,
+  edgesSelector,
   nodeChildrenLengthSelector,
   nodeSelector,
   nodesSelector,
   settingsSelector,
+  store,
   subsetNodesSelector,
 } from "~/store";
 import { StatefulNodeType, statefulNodeColorType } from "~/types";
@@ -70,6 +76,7 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Copy } from "lucide-react";
+import { BidirectionalEdge } from "./bidirectional-edge";
 
 export const ChatBubble: React.FC<{ pos: XYPosition }> = ({ pos }) => {
   return (
@@ -238,21 +245,6 @@ export const CanvasPanel: React.FC = () => {
   return null;
 };
 
-// export const TranscientTableNodeHandles: React.FC<{ id: string }> = ({ id }) => {
-//   const updateNodeInternals = useUpdateNodeInternals();
-
-//   useEffect(() => {
-//     updateNodeInternals(id);
-//   }, [id]);
-
-//   return (
-//     <>
-//       {Array.from({ length: 2 }).map((_, index) => (
-//       ))}
-//     </>
-//   );
-// };
-
 export type TableNodeType = Node<
   {
     initialCount?: number;
@@ -284,7 +276,7 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId, type }) => {
         nodeColorSelection[
           data.type as unknown as keyof typeof nodeColorSelection
         ]
-      }`}
+      } shadow-inner`}
       key={`table-node-${id}`}
       style={
         {
@@ -300,7 +292,7 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId, type }) => {
             data.type === "primary" ? "rgb(var(--canvas-color))" : "#3c3c3c",
         }}
       >
-        order_date
+        {`${(data as any).columnName || ""}`}
         <span
           className="w-4 h-4 absolute flex items-center justify-end right-2"
           style={
@@ -326,12 +318,26 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId, type }) => {
         </span>
       </p>
 
-      <Handle type="source" position={Position.Left} id={`handle-${id}-left`} />
+      <Handle
+        type={data.type === "primary" ? "target" : "source"}
+        position={Position.Left}
+        id={`${id}-handle-left`}
+        style={{
+          borderRadius: "unset",
+          outline: "2px solid rgb(var(--fg-color))",
+          backgroundColor: "#3c3c3c",
+        }}
+      />
 
       <Handle
         type="source"
         position={Position.Right}
-        id={`handle-${id}-right`}
+        id={`${id}-handle-right`}
+        style={{
+          borderRadius: "unset",
+          outline: "2px solid rgb(var(--fg-color))",
+          backgroundColor: "#3c3c3c",
+        }}
       />
     </div>
   );
@@ -362,7 +368,7 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
       <NodeToolbar
         isVisible={data.toolbarVisible as boolean | undefined}
         position={Position.Top}
-        className="w-[--node-width-here] text-start text-sm text-outline1d flex justify-start items-center left-0 pb-4 mix-blend-difference"
+        className="w-[--node-width-here] text-start text-sm text-outline1d flex justify-start items-center left-0 pb-4 mix-blend-difference node-toolbar"
         offset={20}
       >
         customers__order_table
@@ -376,183 +382,219 @@ const tableNodeTypes = {
   group: GroupTableNode,
 };
 
+const tableEdgeTypes = {
+  bidirectional: BidirectionalEdge,
+};
+
 export const DesignCanvas: React.FC<{
   instance:
-    | ReactFlowInstance<StatefulNodeType & { id: string }, never>
+    | ReactFlowInstance<StatefulNodeType & { id: string }, Edge>
     | undefined;
   setInstance: React.Dispatch<
     React.SetStateAction<
-      ReactFlowInstance<StatefulNodeType & { id: string }, never> | undefined
+      ReactFlowInstance<StatefulNodeType & { id: string }, Edge> | undefined
     >
   >;
-}> = React.memo(({ instance, setInstance }) => {
-  // GLOBAL STATE
-  const dispatch = useDispatch();
-  const nodes = useSelector(nodesSelector, isEqual);
+}> = React.memo(
+  function CanvasInner({ instance, setInstance }) {
+    // GLOBAL STATE
+    const dispatch = useDispatch();
+    const nodes = useSelector(nodesSelector, isEqual);
+    const edges = useSelector(edgesSelector, isEqual);
 
-  // CONTEXT STATE
-  const { chatBubbleDispatch } = useContext(
-    chatBubbleContext
-  ) as ChatBubbleContextValueType;
+    // CONTEXT STATE
+    const { chatBubbleDispatch } = useContext(
+      chatBubbleContext
+    ) as ChatBubbleContextValueType;
 
-  // LOCAL STATE
-  const [designPaneState, designPaneDispatch] = useReducer(
-    designPaneReducer,
-    initialDesignPaneState
-  );
-  const designPaneValue = useMemo(
-    () => ({ designPaneState, designPaneDispatch }),
-    [designPaneState, designPaneDispatch]
-  );
+    // LOCAL STATE
+    const [designPaneState, designPaneDispatch] = useReducer(
+      designPaneReducer,
+      initialDesignPaneState
+    );
+    const designPaneValue = useMemo(
+      () => ({ designPaneState, designPaneDispatch }),
+      [designPaneState, designPaneDispatch]
+    );
 
-  const [panPosFrame, setPanPosFrame] = useState<
-    [{ x: number; y: number }, { x: number; y: number }]
-  >([
-    { x: 0, y: 0 },
-    { x: 0, y: 0 },
-  ]);
+    const [panPosFrame, setPanPosFrame] = useState<[{ x: number; y: number }]>([
+      { x: 0, y: 0 },
+    ]);
 
-  const [shouldCalcFrame, setShouldCalcFrame] = useState<boolean>(true);
+    const [edges_, setEdges, onEdgesChange] = useEdgesState(edges);
 
-  // COMPONENT EVENT HANDLERS
-  useEventListener(
-    "keyup",
-    handleKeyPress(null, (event) => {
-      if (!event) return;
-      switch (event.key) {
-        case "Escape": {
-          designPaneDispatch(__setActiveTab(null));
-          break;
+    // COMPONENT EVENT HANDLERS
+    useEventListener(
+      "keyup",
+      handleKeyPress(null, (event) => {
+        if (!event) return;
+        switch (event.key) {
+          case "Escape": {
+            designPaneDispatch(__setActiveTab(null));
+            break;
+          }
+          default:
+            break;
         }
-        default:
-          break;
-      }
-    }),
-    window as unknown as HTMLElement
-  );
+      }),
+      window as unknown as HTMLElement
+    );
 
-  const getCanvasPosition = useCallback(
-    (event: React.MouseEvent<Element, MouseEvent>) => {
-      if (!instance) return { x: undefined, y: undefined };
-      let { zoom } = instance.getViewport();
+    const getCanvasPosition = useCallback(
+      (event: React.MouseEvent<Element, MouseEvent>) => {
+        if (!instance) return { x: undefined, y: undefined };
+        let { zoom } = instance.getViewport();
 
-      // now, we get the position delta
-      const panPosDeltaX = panPosFrame[1].x - panPosFrame[0].x;
-      const panPosDeltaY = panPosFrame[1].y - panPosFrame[0].y;
+        // now, we get the position delta
+        const panPosDeltaX = panPosFrame[0].x;
+        const panPosDeltaY = panPosFrame[0].y;
 
-      console.log(
-        `--panPosDeltaX: ${panPosDeltaX}\t panPosDeltaY: ${panPosDeltaY}`
-      );
+        console.log("pan position frame ", panPosFrame);
+        console.log(
+          `--panPosDeltaX: ${panPosDeltaX}\t panPosDeltaY: ${panPosDeltaY}`
+        );
 
-      const canvasParent = document.getElementById(
-        "design-canvas-wrapper"
-      )! as HTMLDivElement;
-      const parentRect = canvasParent.getBoundingClientRect();
-      const netEventY = event.clientY - parentRect.y;
-      const netEventX = event.clientX - parentRect.x;
-      const grainXOffset = 16;
-      const grainYOffset = 12;
+        const canvasParent = document.getElementById(
+          "design-canvas-wrapper"
+        )! as HTMLDivElement;
+        const parentRect = canvasParent.getBoundingClientRect();
+        const netEventY = event.clientY - parentRect.y;
+        const netEventX = event.clientX - parentRect.x;
+        const grainXOffset = 16;
+        const grainYOffset = 12;
 
-      // net_node_position = (relative_event_position - (delta(node_position) * zoomFactor)) - error ---- (1)
-      // i.e, resulting node position = mouse position - offset between the cursor and the position
+        // net_node_position = (relative_event_position - (delta(node_position) * zoomFactor)) - error ---- (1)
+        // i.e, resulting node position = mouse position - offset between the cursor and the position
 
-      let zoomFactor = zoom; // assuming the zoom level is a positive real
+        let zoomFactor = zoom; // assuming the zoom level is a positive real
 
-      let x = netEventX - panPosDeltaX * zoomFactor;
-      let y = netEventY - -panPosDeltaY * zoomFactor; // the negative
+        let x = netEventX - panPosDeltaX * zoomFactor;
+        let y = netEventY - -panPosDeltaY * zoomFactor; // the negative
 
-      return { x: x - grainXOffset, y: y - grainYOffset };
-    },
-    [instance, panPosFrame]
-  );
+        return { x: x - grainXOffset, y: y - grainYOffset };
+      },
+      [instance, panPosFrame]
+    );
 
-  // FLOW EVENT HANDLERS
-  const onPaneClick = useCallback(
-    (event: React.MouseEvent<Element, MouseEvent>) => {
-      event.stopPropagation();
-      setShouldCalcFrame(false);
-      switch (designPaneState.activeTab) {
-        case "comment": {
-          if (!instance) break;
-          const { x, y } = getCanvasPosition(event);
-          if (!(x && y)) break;
-          chatBubbleDispatch(__addBubble({ x, y }));
+    // FLOW EVENT HANDLERS
+    const onPaneClick = useCallback(
+      (event: React.MouseEvent<Element, MouseEvent>) => {
+        event.stopPropagation();
+        switch (designPaneState.activeTab) {
+          case "comment": {
+            if (!instance) break;
+            const { x, y } = getCanvasPosition(event);
+            if (!(x && y)) break;
+            chatBubbleDispatch(__addBubble({ x, y }));
+          }
+          case "table": {
+            designPaneDispatch(__setActiveTab(null));
+          }
+          default: {
+            break;
+          }
         }
-        case "table": {
-          designPaneDispatch(__setActiveTab(null));
-        }
-        default: {
-          break;
-        }
-      }
-    },
-    [chatBubbleDispatch, instance, panPosFrame, designPaneState.activeTab]
-  );
+      },
+      [chatBubbleDispatch, instance, panPosFrame, designPaneState.activeTab]
+    );
 
-  const onNodesChange = (changes: any) => {
-    changes.forEach(({ type, id, position }: any) => {
-      if (type === "position" && position) {
-        dispatch(setNodePosition({ id: id, position: position }));
-      }
-    });
-  };
-
-  // EFFECTS
-  useEffect(() => {
-    if (!!designPaneState.activeTab && instance) {
-      instance.setViewport({
-        x: instance.getViewport().x,
-        y: instance.getViewport().y,
-        zoom: 1,
+    const onNodesChange = (changes: any) => {
+      changes.forEach(({ type, id, position }: any) => {
+        if (type === "position" && position) {
+          dispatch(setNodePosition({ id: id, position: position }));
+        }
       });
-    }
-  }, [designPaneState.activeTab, instance]);
+    };
 
-  return (
-    <>
-      <ReactFlow
-        nodes={nodes}
-        nodeTypes={
-          tableNodeTypes as unknown as { [prop: string]: React.FC<NodeProps> }
-        }
-        onNodesChange={onNodesChange}
-        edges={[]}
-        onPaneClick={onPaneClick}
-        defaultViewport={{ zoom: 1, x: 0, y: 0 }}
-        maxZoom={!!designPaneState.activeTab ? 1 : 4}
-        minZoom={!!designPaneState.activeTab ? 1 : 0.25}
-        onMoveStart={(event, vp) => {
-          if (!shouldCalcFrame || designPaneState.activeTab) return;
-          setPanPosFrame((prev) => {
-            const [prevStart, end] = prev;
-            if (
-              prevStart.x === vp.x &&
-              prevStart.y === vp.y &&
-              !!(prevStart.x & prevStart.y)
-            )
-              return prev;
-            return [{ x: vp.x, y: vp.y ? -vp.y : vp.y }, end];
-          });
-        }}
-        onMoveEnd={(_, vp) => {
-          setPanPosFrame((prev) => {
-            const [start, _] = prev;
-            return [start, { x: vp.x, y: vp.y ? -vp.y : vp.y }];
-          });
-        }}
-        onInit={(instance) => {
-          setInstance(instance);
-        }}
-      >
-        <Background />
+    const onConnect: OnConnect = useCallback(
+      (params) =>
+        setEdges((eds) => {
+          const [edge] = eds;
+          const sourceNodeParentID = edge.source.split(":")[0] || "";
+          const targetNodeParentID = edge.target.split(":")[0] || "";
 
-        <DesignPaneProvider value={designPaneValue}>
-          <ChatBubbleView />
-          <CanvasPanel />
-        </DesignPaneProvider>
+          const equivTargetNode =
+            store.getState().nodes.groupNodes[targetNodeParentID]?.nodes[
+              edge.target
+            ];
 
-        <Controls />
-      </ReactFlow>
-    </>
-  );
-});
+          const equivSourceNode =
+            store.getState().nodes.groupNodes[sourceNodeParentID]?.nodes[
+              edge.source
+            ];
+
+          if (!(equivTargetNode && equivSourceNode)) return edges_;
+
+          console.log("source node is ", equivSourceNode);
+          console.log("target node is ", equivTargetNode);
+
+          if (
+            equivTargetNode.data.type === "primary" &&
+            equivSourceNode.data.type === "primary"
+          ) {
+            return edges_;
+          }
+
+          // console.log("equiv target node is ", equivTargetNode);
+          // console.log("eds is ", eds);
+          // console.log("the store is ", store.getState());
+          // if ((eds[0].data as any).type === "primary") {
+          //   eds = eds.reverse();
+          // }
+          return addEdge(params, eds);
+        }),
+      [edgesSelector, nodesSelector]
+    );
+
+    // EFFECTS
+    useEffect(() => {
+      if (!!designPaneState.activeTab && instance) {
+        instance.setViewport({
+          x: instance.getViewport().x,
+          y: instance.getViewport().y,
+          zoom: 1,
+        });
+      }
+    }, [designPaneState.activeTab, instance]);
+
+    return (
+      <>
+        <ReactFlow
+          nodes={nodes}
+          nodeTypes={
+            tableNodeTypes as unknown as { [prop: string]: React.FC<NodeProps> }
+          }
+          onConnect={onConnect}
+          edgeTypes={tableEdgeTypes}
+          onNodesChange={onNodesChange}
+          edges={edges_}
+          onPaneClick={onPaneClick}
+          defaultViewport={{ zoom: 1, x: 0, y: 0 }}
+          maxZoom={!!designPaneState.activeTab ? 1 : 4}
+          minZoom={!!designPaneState.activeTab ? 1 : 0.25}
+          connectionMode={ConnectionMode.Loose}
+          onMoveEnd={(_, vp) => {
+            setPanPosFrame((prev) => {
+              const [end] = prev;
+              if (end.x === vp.x && end.y === vp.y) return prev;
+              return [{ x: vp.x, y: vp.y ? -vp.y : vp.y }];
+            });
+          }}
+          onInit={(instance) => {
+            setInstance(instance);
+          }}
+        >
+          <Background />
+
+          <DesignPaneProvider value={designPaneValue}>
+            <ChatBubbleView />
+            <CanvasPanel />
+          </DesignPaneProvider>
+
+          <Controls />
+        </ReactFlow>
+      </>
+    );
+  },
+  (prev, next) => isEqual(prev, next)
+);
