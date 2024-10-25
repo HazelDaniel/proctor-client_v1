@@ -199,6 +199,10 @@ script {
   .table-node-child {
     @apply relative;
   }
+
+  .table-form-wrapper {
+    max-height: 20rem !important;
+  }
 }
 
 @layer base {

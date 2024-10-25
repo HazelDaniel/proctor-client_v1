@@ -77,6 +77,7 @@ import {
 } from "./ui/dialog";
 import { Copy } from "lucide-react";
 import { BidirectionalEdge } from "./bidirectional-edge";
+import { TableCreationForm } from "./table-creation-form";
 
 export const ChatBubble: React.FC<{ pos: XYPosition }> = ({ pos }) => {
   return (
@@ -172,29 +173,13 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
                 </svg>
               </button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle>Share link</DialogTitle>
-                <DialogDescription>
-                  Anyone who has this link will be able to view this.
-                </DialogDescription>
+            <DialogContent className="w-[80vw] min-w-[95vw] h-[60rem] md:h-[40rem] rounded-lg flex flex-col items-center p-8">
+              <DialogHeader className="h-max mr-auto">
+                <DialogTitle>Add Table</DialogTitle>
               </DialogHeader>
-              <div className="flex items-center space-x-2">
-                <div className="grid flex-1 gap-2">
-                  <label htmlFor="link" className="sr-only">
-                    Link
-                  </label>
-                  <input
-                    id="link"
-                    defaultValue="https://ui.shadcn.com/docs/installation"
-                    readOnly
-                  />
-                </div>
-                <button type="submit" className="px-3">
-                  <span className="sr-only">Copy</span>
-                  <Copy className="h-4 w-4" />
-                </button>
-              </div>
+
+              <TableCreationForm />
+
               <DialogFooter className="sm:justify-start">
                 <DialogClose asChild>
                   <button type="button">Close</button>
