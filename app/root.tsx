@@ -607,7 +607,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
             </svg>
           </symbol>
 
-          <symbol id="file"></symbol>
+          <symbol id="trash">
+            <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M5.47607 7.28577L6.38084 16.3334H13.6189L14.5237 7.28577" stroke="#020617" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M11.1875 12.7708V8.8125" stroke="#020617" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M8.8125 12.7708V8.8125" stroke="#020617" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4.11914 5.47615H7.73819M7.73819 5.47615L8.04065 4.26628C8.12876 3.91386 8.44541 3.66663 8.80868 3.66663H11.1915C11.5548 3.66663 11.8714 3.91386 11.9595 4.26629L12.262 5.47615M7.73819 5.47615H12.262M12.262 5.47615H15.881" stroke="#020617" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </symbol>
 
           <symbol id="google"></symbol>
 

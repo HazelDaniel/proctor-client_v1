@@ -89,11 +89,36 @@ export function FormColumnSelectList() {
       <SelectContent>
         <SelectGroup>
           <SelectLabel>Fruits</SelectLabel>
-          <SelectItem value="apple">Apple</SelectItem>
-          <SelectItem value="banana">Banana</SelectItem>
-          <SelectItem value="blueberry">Blueberry</SelectItem>
-          <SelectItem value="grapes">Grapes</SelectItem>
-          <SelectItem value="pineapple">Pineapple</SelectItem>
+          <SelectItem
+            value="apple"
+            className="hover:bg-outline1 hover:text-canvas"
+          >
+            Apple
+          </SelectItem>
+          <SelectItem
+            value="banana"
+            className="hover:bg-outline1 hover:text-canvas"
+          >
+            Banana
+          </SelectItem>
+          <SelectItem
+            value="blueberry"
+            className="hover:bg-outline1 hover:text-canvas"
+          >
+            Blueberry
+          </SelectItem>
+          <SelectItem
+            value="grapes"
+            className="hover:bg-outline1 hover:text-canvas"
+          >
+            Grapes
+          </SelectItem>
+          <SelectItem
+            value="pineapple"
+            className="hover:bg-outline1 hover:text-canvas"
+          >
+            Pineapple
+          </SelectItem>
         </SelectGroup>
       </SelectContent>
     </Select>
@@ -102,12 +127,12 @@ export function FormColumnSelectList() {
 
 const EnumCreationForm: React.FC = () => {
   return (
-    <Form className="overflow-hidden flex flex-col md:flex-row items-center gap-8 h-[32rem] md:h-[20rem]  w-full">
-      <div className="w-full md:w-max h-[20rem] md:h-max flex items-center justify-start flex-col md:flex-row md:p-4 md:gap-[10%]">
-        <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-between">
+    <Form className="overflow-hidden flex flex-col md:flex-row items-center gap-8 h-[32rem] md:h-[20rem] w-full md:justify-start">
+      <div className="w-full md:w-max h-[20rem] md:h-max flex items-center justify-start flex-col md:flex-row md:p-4 md:gap-[10%] md:mr-[20%]">
+        <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
           <label
             htmlFor="enum-name-column"
-            className=" mr-4 truncate text-muted-foreground"
+            className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
           >
             Name
           </label>
@@ -119,10 +144,10 @@ const EnumCreationForm: React.FC = () => {
           />
         </div>
 
-        <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-between">
+        <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
           <label
             htmlFor="enum-entries-column"
-            className=" mr-4 truncate text-muted-foreground"
+            className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
           >
             Entries (Comma, separated)
           </label>
@@ -135,8 +160,8 @@ const EnumCreationForm: React.FC = () => {
         </div>
 
         <div className="h-full w-max flex items-center justify-center">
-          <button className="h-8 w-[15rem] px-4 flex items-center justify-center">
-            <svg className="h-4 w-4">
+          <button className="h-8 w-8 flex items-center justify-center">
+            <svg className="w-full h-full">
               <use xlinkHref="#trash"></use>
             </svg>
           </button>
@@ -161,7 +186,7 @@ export const TableCreationForm: React.FC = () => {
           name=""
           id=""
           placeholder="input table name"
-          className="w-[20rem] p-2 shadow-input rounded-md h-8 caret-outline1d placeholder:text-outline1 placeholder:italic bg-canvas"
+          className="w-[20rem] p-2 shadow-input shadow-none rounded-md h-8 caret-outline1d placeholder:text-outline1 placeholder:italic bg-canvas"
         />
       </Form>
       <div className="w-full h-max flex flex-col overflow-auto flex-1 table-form-wrapper min-h-[43rem] md:min-h-[25rem]">
@@ -171,8 +196,8 @@ export const TableCreationForm: React.FC = () => {
               <TableHead className="w-[100px]">Name</TableHead>
               <TableHead>Type</TableHead>
               <TableHead>Index</TableHead>
-              <TableHead className="text-right">Nullible?</TableHead>
-              <TableHead className="text-right">Unique?</TableHead>
+              <TableHead className="text-center">Nullible?</TableHead>
+              <TableHead className="text-center">Unique?</TableHead>
               <TableHead className="text-center">DEFAULT</TableHead>
               <TableHead className="text-center">Composite On</TableHead>
               <TableHead className="text-right w-8"></TableHead>
@@ -204,6 +229,14 @@ export const TableCreationForm: React.FC = () => {
 
                 <TableCell className="w-[8rem]">
                   <FormColumnSelectList />
+                </TableCell>
+
+                <TableCell className="w-[8rem] h-[8rem]">
+                  <div className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto">
+                    <svg className="w-full h-full">
+                      <use xlinkHref="#trash"></use>
+                    </svg>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
