@@ -75,7 +75,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { Copy } from "lucide-react";
 import { BidirectionalEdge } from "./bidirectional-edge";
 import { TableCreationForm } from "./table-creation-form";
 
@@ -173,7 +172,7 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
                 </svg>
               </button>
             </DialogTrigger>
-            <DialogContent className="w-[80vw] min-w-[95vw] h-[60rem] md:h-[40rem] rounded-lg flex flex-col items-center p-8">
+            <DialogContent className="w-[80vw] min-w-[95vw] h-[60rem] md:h-[40rem] rounded-lg flex flex-col items-center p-8" aria-describedby="">
               <DialogHeader className="h-max mr-auto">
                 <DialogTitle>Add Table</DialogTitle>
               </DialogHeader>

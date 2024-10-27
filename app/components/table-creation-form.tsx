@@ -1,5 +1,7 @@
 import { Form } from "@remix-run/react";
-import React from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
+import { CheckboxProps } from "@radix-ui/react-checkbox";
+
 import {
   Table,
   TableBody,
@@ -80,6 +82,114 @@ export const TableCheckbox: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
+export const TableCompositeListCheckbox: React.ForwardRefExoticComponent<
+  Omit<CheckboxProps & React.RefAttributes<HTMLButtonElement>, "ref"> &
+    React.RefAttributes<HTMLButtonElement> & {
+      addPlaceholder: (item: string) => void;
+      removePlaceholder: (item: string) => void;
+      optText: string;
+    }
+> = React.forwardRef((prop, ref) => {
+  if (!prop) return null;
+  const { id, addPlaceholder, removePlaceholder, optText } = prop;
+  const [isChecked, setChecked] = useState<boolean>(false);
+
+  return (
+    <div className="flex items-center space-x-2 justify-between w-full">
+      <p className="inline w-max">{optText}</p>
+      <Checkbox
+        id={id}
+        onClick={(e) => {
+          setChecked((prev) => !prev);
+          const { target } = e;
+          const siblingPElement = (
+            target as HTMLInputElement
+          ).parentElement?.querySelector("p")!;
+          if (isChecked) {
+            removePlaceholder(siblingPElement.textContent || "");
+            return;
+          }
+          addPlaceholder(siblingPElement.textContent || "");
+        }}
+        ref={ref}
+        checked={isChecked}
+      />
+    </div>
+  );
+});
+
+export const FormCompositeSelectList: React.FC<{ rowID: string }> = ({
+  rowID,
+}) => {
+  const [itemList, setItemList] = useState([
+    "NONE",
+    "customer_id",
+    "ordered_at",
+  ]);
+  const checkboxRef = useRef<
+    Omit<CheckboxProps & React.RefAttributes<HTMLButtonElement>, "ref"> &
+      React.RefAttributes<HTMLButtonElement>
+  >(null);
+
+  const [selectedItemList, setSelectedItemList] = useState(["NONE"]);
+
+  const handleAddPlaceholder = useCallback(
+    () => (item: string) => {
+      if (selectedItemList.includes(item)) return;
+      if (item === "NONE") {
+        setSelectedItemList(["NONE"]);
+        return;
+      }
+      setSelectedItemList((prev) => [
+        ...prev.filter((e) => e !== "NONE"),
+        item,
+      ]);
+    },
+    [selectedItemList]
+  );
+
+  const handleRemovePlaceholder = useCallback(
+    () => (item: string) => {
+      if (!selectedItemList.includes(item)) return;
+      if (selectedItemList.length === 1 && item === "NONE") {
+        return;
+      }
+      setSelectedItemList((prev) => {
+        const res = prev.filter((e) => e !== item);
+        if (res.length === 0) return ["NONE"];
+        return res;
+      });
+    },
+    [selectedItemList]
+  );
+
+  return (
+    <Select>
+      <SelectTrigger className="w-[180px]">
+        <SelectValue placeholder={selectedItemList.join(", ")} />
+      </SelectTrigger>
+      <SelectContent>
+        <div className="w-full h-max min-h-[4rem]">
+          {itemList.map((el) => (
+            <div
+              className="w-full h-[4rem] flex gap-2 items-center justify-between px-2"
+              key={`${rowID}-${el}`}
+            >
+              <TableCompositeListCheckbox
+                id={`${rowID}-${el}`}
+                ref={checkboxRef as any}
+                addPlaceholder={handleAddPlaceholder()}
+                removePlaceholder={handleRemovePlaceholder()}
+                optText={el}
+              />
+            </div>
+          ))}
+        </div>
+      </SelectContent>
+    </Select>
+  );
+};
+
 export function FormColumnSelectList() {
   return (
     <Select>
@@ -88,7 +198,6 @@ export function FormColumnSelectList() {
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectLabel>Fruits</SelectLabel>
           <SelectItem
             value="apple"
             className="hover:bg-outline1 hover:text-canvas"
@@ -138,7 +247,7 @@ const EnumCreationForm: React.FC = () => {
           </label>
           <input
             type="text"
-            value={"RANDOM_ENUM"}
+            defaultValue={"RANDOM_ENUM"}
             id="enum-name-column"
             className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
           />
@@ -153,7 +262,7 @@ const EnumCreationForm: React.FC = () => {
           </label>
           <input
             type="text"
-            value={"'cup', 'tea', 'coffee'"}
+            defaultValue={"'cup', 'tea', 'coffee'"}
             id="enum-entries-column"
             className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
           />
@@ -228,7 +337,7 @@ export const TableCreationForm: React.FC = () => {
                 </TableCell>
 
                 <TableCell className="w-[8rem]">
-                  <FormColumnSelectList />
+                  <FormCompositeSelectList rowID={column.name} />
                 </TableCell>
 
                 <TableCell className="w-[8rem] h-[8rem]">
