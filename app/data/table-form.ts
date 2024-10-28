@@ -1,5 +1,6 @@
 import { TableFormFieldsType } from "~/types";
 import TableGlobalTypes from "./table-globals";
+
 const typeSupportHash = {
   TIMESTAMPTZ: true,
   "VARCHAR (256)": true,
@@ -41,6 +42,7 @@ export const typeDefaultMappings: Record<
   SERIAL: new Set([]),
   UUID: new Set(["RANDOM_UUID"]),
 };
+
 
 export const tableColumnFields: TableFormFieldsType = {
   type: {

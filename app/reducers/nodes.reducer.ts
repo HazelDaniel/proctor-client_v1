@@ -1,7 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
-import type { Action, PayloadAction, ThunkAction } from "@reduxjs/toolkit";
-import { Edge, MarkerType } from "@xyflow/react";
-import type { StatefulGroupNodeType, StatefulNodeType } from "~/types";
+import { Edge } from "@xyflow/react";
+import type { StatefulGroupNodeType } from "~/types";
 
 export interface NodesStateType {
   groupNodes: StatefulGroupNodeType;

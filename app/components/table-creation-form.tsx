@@ -1,5 +1,11 @@
 import { Form } from "@remix-run/react";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { CheckboxProps } from "@radix-ui/react-checkbox";
 
 import {
@@ -21,6 +27,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
+import { MessageSquareWarningIcon } from "lucide-react";
+import { TableFormColumnSelectType } from "~/types";
+import { tableColumnFields } from "~/data/table-form";
+import { useDebounce } from "~/hooks/usedebounce";
+import { isEqual } from "~/utils/comparison";
 
 const columns = [
   {
@@ -29,6 +40,7 @@ const columns = [
     totalAmount: "$250.00",
     paymentMethod: "Credit Card",
     name: "ID",
+    id: "ID",
   },
   {
     invoice: "INV002",
@@ -36,6 +48,7 @@ const columns = [
     totalAmount: "$150.00",
     paymentMethod: "PayPal",
     name: "date_created",
+    id: "date_created",
   },
   {
     invoice: "INV003",
@@ -43,6 +56,7 @@ const columns = [
     totalAmount: "$350.00",
     paymentMethod: "Bank Transfer",
     name: "date_updated",
+    id: "date_updated",
   },
   {
     invoice: "INV004",
@@ -50,6 +64,7 @@ const columns = [
     totalAmount: "$450.00",
     paymentMethod: "Credit Card",
     name: "price",
+    id: "price",
   },
   {
     invoice: "INV005",
@@ -57,6 +72,7 @@ const columns = [
     totalAmount: "$550.00",
     paymentMethod: "PayPal",
     name: "discount",
+    id: "discount",
   },
   {
     invoice: "INV006",
@@ -64,6 +80,7 @@ const columns = [
     totalAmount: "$200.00",
     paymentMethod: "Bank Transfer",
     name: "user_id",
+    id: "user_id",
   },
   {
     invoice: "INV007",
@@ -71,10 +88,14 @@ const columns = [
     totalAmount: "$300.00",
     paymentMethod: "Credit Card",
     name: "customer_name",
+    id: "customer_name",
   },
 ];
 
-export const TableCheckbox: React.FC<{ id: string }> = ({ id }) => {
+export const TableCheckbox: React.FC<{ id: string; columnID: string }> = ({
+  id,
+  columnID,
+}) => {
   return (
     <div className="flex items-center space-x-2 justify-center">
       <Checkbox id={id} />
@@ -88,11 +109,17 @@ export const TableCompositeListCheckbox: React.ForwardRefExoticComponent<
       addPlaceholder: (item: string) => void;
       removePlaceholder: (item: string) => void;
       optText: string;
+      selectedItemList: string[];
     }
 > = React.forwardRef((prop, ref) => {
   if (!prop) return null;
-  const { id, addPlaceholder, removePlaceholder, optText } = prop;
+  const { id, addPlaceholder, removePlaceholder, optText, selectedItemList } =
+    prop;
   const [isChecked, setChecked] = useState<boolean>(false);
+
+  useEffect(() => {
+    setChecked(selectedItemList.includes(optText));
+  }, [selectedItemList]);
 
   return (
     <div className="flex items-center space-x-2 justify-between w-full">
@@ -118,14 +145,11 @@ export const TableCompositeListCheckbox: React.ForwardRefExoticComponent<
   );
 });
 
-export const FormCompositeSelectList: React.FC<{ rowID: string }> = ({
-  rowID,
-}) => {
-  const [itemList, setItemList] = useState([
-    "NONE",
-    "customer_id",
-    "ordered_at",
-  ]);
+export const FormCompositeSelectList: React.FC<{
+  rowID: string;
+  columnID: string;
+}> = ({ rowID, columnID }) => {
+  const itemList = ["NONE", "customer_id", "ordered_at"];
   const checkboxRef = useRef<
     Omit<CheckboxProps & React.RefAttributes<HTMLButtonElement>, "ref"> &
       React.RefAttributes<HTMLButtonElement>
@@ -180,6 +204,7 @@ export const FormCompositeSelectList: React.FC<{ rowID: string }> = ({
                 ref={checkboxRef as any}
                 addPlaceholder={handleAddPlaceholder()}
                 removePlaceholder={handleRemovePlaceholder()}
+                selectedItemList={selectedItemList}
                 optText={el}
               />
             </div>
@@ -190,49 +215,39 @@ export const FormCompositeSelectList: React.FC<{ rowID: string }> = ({
   );
 };
 
-export function FormColumnSelectList() {
+export const FormColumnSelectList: React.FC<{
+  select: TableFormColumnSelectType;
+  columnID: string;
+}> = ({ select, columnID }) => {
   return (
-    <Select>
+    <Select
+      onValueChange={(e) => {
+        console.log(`selected ${e}`);
+      }}
+    >
       <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder="Select a fruit" />
+        <SelectValue
+          placeholder={select.defaultible ? select.default : select.placeholder}
+        />
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          <SelectItem
-            value="apple"
-            className="hover:bg-outline1 hover:text-canvas"
-          >
-            Apple
-          </SelectItem>
-          <SelectItem
-            value="banana"
-            className="hover:bg-outline1 hover:text-canvas"
-          >
-            Banana
-          </SelectItem>
-          <SelectItem
-            value="blueberry"
-            className="hover:bg-outline1 hover:text-canvas"
-          >
-            Blueberry
-          </SelectItem>
-          <SelectItem
-            value="grapes"
-            className="hover:bg-outline1 hover:text-canvas"
-          >
-            Grapes
-          </SelectItem>
-          <SelectItem
-            value="pineapple"
-            className="hover:bg-outline1 hover:text-canvas"
-          >
-            Pineapple
-          </SelectItem>
+          {select.entries.map((el) => {
+            return (
+              <SelectItem
+                value={el}
+                className="hover:bg-outline1 hover:text-canvas"
+                key={el}
+              >
+                {el}
+              </SelectItem>
+            );
+          })}
         </SelectGroup>
       </SelectContent>
     </Select>
   );
-}
+};
 
 const EnumCreationForm: React.FC = () => {
   return (
@@ -286,10 +301,64 @@ const EnumCreationForm: React.FC = () => {
   );
 };
 
-export const TableCreationForm: React.FC = () => {
+export const TableNameColumn: React.FC<{ name: string; columnID: string }> = ({
+  name,
+}) => {
+  const [colunmName, setColumnName] = useState(name);
+  const debouncedName = useDebounce(colunmName, 3000);
+
+  useEffect(() => {
+    // TODO: run the reducer dispatcher here
+  }, [debouncedName]);
+
   return (
-    <div className="w-full h-full  overflow-hidden">
-      <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-col items-start justify-center pl-[4rem] rounded-md">
+    <>
+      <TableCell className="font-medium w-32">
+        <input
+          type="text"
+          name=""
+          id=""
+          value={colunmName}
+          onChange={(e) => {
+            setColumnName(e.target.value);
+          }}
+          className="w-full p-2 shadow-input shadow-none rounded-md h-8 caret-outline1d placeholder:text-outline1 placeholder:italic bg-canvas"
+        />
+      </TableCell>
+    </>
+  );
+};
+
+export const TableFormCTAArea: React.FC = React.memo(() => {
+  return <>
+    <div className="w-max flex mx-auto h-max gap-8">
+      <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4">
+        Add Column
+        <span className="inline-flex w-4 h-4 items-center justify-center">
+          <svg>
+            <use xlinkHref="#plus"></use>
+          </svg>
+        </span>
+      </button>
+
+      <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4">
+        Create Enum
+        <span className="inline-flex w-4 h-4 items-center justify-center">
+          <svg>
+            <use xlinkHref="#plus"></use>
+          </svg>
+        </span>
+      </button>
+    </div>
+  </>
+}, (prev, next) => isEqual(prev, next));
+
+export const TableCreationForm: React.FC = () => {
+  const [displayErrorText, setDisplayErrorText] = useState<string | null>(null);
+
+  return (
+    <div className="w-full h-full overflow-hidden">
+      <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-row items-center justify-between pl-[4rem] rounded-md">
         <input
           type="text"
           name=""
@@ -297,7 +366,22 @@ export const TableCreationForm: React.FC = () => {
           placeholder="input table name"
           className="w-[20rem] p-2 shadow-input shadow-none rounded-md h-8 caret-outline1d placeholder:text-outline1 placeholder:italic bg-canvas"
         />
+
+        <div
+          className={
+            "w-[60%] flex items-baseline justify-end h-full bg-[#ff1d1d23] px-4" +
+            `${!displayErrorText ? " invisible": ""}`
+          }
+        >
+          <span className="w-8 h-8">
+            <MessageSquareWarningIcon color="#ff2424d2" />
+          </span>
+          <p className="flex-1 text-danger h-full flex items-center pl-8">
+            {displayErrorText}
+          </p>
+        </div>
       </Form>
+
       <div className="w-full h-max flex flex-col overflow-auto flex-1 table-form-wrapper min-h-[43rem] md:min-h-[25rem]">
         <Table className="min-w-[60rem] relative min-h-[45rem]">
           <TableHeader>
@@ -315,29 +399,48 @@ export const TableCreationForm: React.FC = () => {
           <TableBody className="">
             {columns.map((column) => (
               <TableRow key={column.name}>
-                <TableCell className="font-medium ">{column.name}</TableCell>
+                <TableNameColumn name={column.name} columnID={column.id} />
+
                 <TableCell>
-                  <FormColumnSelectList />
+                  <FormColumnSelectList
+                    select={tableColumnFields.type}
+                    columnID={column.id}
+                  />
                 </TableCell>
 
                 <TableCell>
-                  <FormColumnSelectList />
+                  <FormColumnSelectList
+                    select={tableColumnFields.index}
+                    columnID={column.id}
+                  />
                 </TableCell>
 
                 <TableCell className="text-right">
-                  <TableCheckbox id={`${column.name}-nullible`} />
+                  <TableCheckbox
+                    id={`${column.name}-nullible`}
+                    columnID={column.id}
+                  />
                 </TableCell>
 
                 <TableCell className="text-right">
-                  <TableCheckbox id={`${column.name}-unique`} />
+                  <TableCheckbox
+                    id={`${column.name}-unique`}
+                    columnID={column.id}
+                  />
                 </TableCell>
 
                 <TableCell className="w-[8rem]">
-                  <FormColumnSelectList />
+                  <FormColumnSelectList
+                    select={tableColumnFields.default}
+                    columnID={column.id}
+                  />
                 </TableCell>
 
                 <TableCell className="w-[8rem]">
-                  <FormCompositeSelectList rowID={column.name} />
+                  <FormCompositeSelectList
+                    rowID={column.name}
+                    columnID={column.id}
+                  />
                 </TableCell>
 
                 <TableCell className="w-[8rem] h-[8rem]">
@@ -351,26 +454,10 @@ export const TableCreationForm: React.FC = () => {
             ))}
           </TableBody>
         </Table>
-        <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
-        <div className="w-max flex mx-auto h-max gap-8">
-          <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4">
-            Add Column
-            <span className="inline-flex w-4 h-4 items-center justify-center">
-              <svg>
-                <use xlinkHref="#plus"></use>
-              </svg>
-            </span>
-          </button>
 
-          <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4">
-            Create Enum
-            <span className="inline-flex w-4 h-4 items-center justify-center">
-              <svg>
-                <use xlinkHref="#plus"></use>
-              </svg>
-            </span>
-          </button>
-        </div>
+        <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
+
+        <TableFormCTAArea/>
 
         <EnumCreationForm />
       </div>
