@@ -14,7 +14,18 @@ const typeSupportHash = {
   YEAR: true,
 };
 
-export const supportedSQLTypes: (keyof typeof typeSupportHash)[] = [
+const indexSupportHash = {
+  "PRIMARY": true,
+  "FOREIGN": true,
+  "NONE": true,
+  "COMPOSITE_PRIMARY": true,
+  "COMPOSITE_FOREIGN": true,
+}
+
+export type GlobalColumnTypeType = keyof typeof typeSupportHash;
+export type GlobalColumnIndexType = keyof typeof indexSupportHash;
+
+export const supportedSQLTypes: GlobalColumnTypeType[] = [
   "TIMESTAMPTZ",
   "VARCHAR (256)",
   "TEXT",
@@ -24,11 +35,12 @@ export const supportedSQLTypes: (keyof typeof typeSupportHash)[] = [
   "BIGSERIAL",
   "SERIAL",
   "INT",
-  "YEAR"
+  "YEAR",
 ];
 
+
 export const typeDefaultMappings: Record<
-  keyof typeof typeSupportHash,
+  GlobalColumnTypeType,
   Set<string>
 > = {
   TIMESTAMPTZ: new Set(["CURRENT_TIMESTAMP"]),
@@ -43,7 +55,6 @@ export const typeDefaultMappings: Record<
   UUID: new Set(["RANDOM_UUID"]),
 };
 
-
 export const tableColumnFields: TableFormFieldsType = {
   type: {
     placeholder: "select a type",
@@ -54,7 +65,7 @@ export const tableColumnFields: TableFormFieldsType = {
     defaultible: true,
     placeholder: "",
     default: "NONE",
-    entries: ["PRIMARY", "FOREIGN", "NONE"],
+    entries: ["PRIMARY", "FOREIGN", "NONE", "COMPOSITE_PRIMARY"] satisfies GlobalColumnIndexType[],
   },
   default: {
     placeholder: "NONE",

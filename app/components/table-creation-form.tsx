@@ -249,57 +249,60 @@ export const FormColumnSelectList: React.FC<{
   );
 };
 
-const EnumCreationForm: React.FC = () => {
-  return (
-    <Form className="overflow-hidden flex flex-col md:flex-row items-center gap-8 h-[32rem] md:h-[20rem] w-full md:justify-start">
-      <div className="w-full md:w-max h-[20rem] md:h-max flex items-center justify-start flex-col md:flex-row md:p-4 md:gap-[10%] md:mr-[20%]">
-        <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
-          <label
-            htmlFor="enum-name-column"
-            className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
-          >
-            Name
-          </label>
-          <input
-            type="text"
-            defaultValue={"RANDOM_ENUM"}
-            id="enum-name-column"
-            className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
-          />
+const EnumCreationForm: React.FC = React.memo(
+  () => {
+    return (
+      <Form className="overflow-hidden flex flex-col md:flex-row items-center gap-8 h-[32rem] md:h-[20rem] w-full md:justify-start">
+        <div className="w-full md:w-max h-[20rem] md:h-max flex items-center justify-start flex-col md:flex-row md:p-4 md:gap-[10%] md:mr-[20%]">
+          <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
+            <label
+              htmlFor="enum-name-column"
+              className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
+            >
+              Name
+            </label>
+            <input
+              type="text"
+              defaultValue={"RANDOM_ENUM"}
+              id="enum-name-column"
+              className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
+            />
+          </div>
+
+          <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
+            <label
+              htmlFor="enum-entries-column"
+              className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
+            >
+              Entries (Comma, separated)
+            </label>
+            <input
+              type="text"
+              defaultValue={"'cup', 'tea', 'coffee'"}
+              id="enum-entries-column"
+              className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
+            />
+          </div>
+
+          <div className="h-full w-max flex items-center justify-center">
+            <button className="h-8 w-8 flex items-center justify-center">
+              <svg className="w-full h-full">
+                <use xlinkHref="#trash"></use>
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
-          <label
-            htmlFor="enum-entries-column"
-            className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
-          >
-            Entries (Comma, separated)
-          </label>
-          <input
-            type="text"
-            defaultValue={"'cup', 'tea', 'coffee'"}
-            id="enum-entries-column"
-            className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
-          />
-        </div>
-
-        <div className="h-full w-max flex items-center justify-center">
-          <button className="h-8 w-8 flex items-center justify-center">
-            <svg className="w-full h-full">
-              <use xlinkHref="#trash"></use>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <input
-        type="submit"
-        value="create"
-        className="capitalize w-max px-8 h-[3rem] rounded-md bg-fg/90 text-bg cursor-pointer ring-outline1 ring-offset-1 ring-1 mb-2 md:mb-0"
-      />
-    </Form>
-  );
-};
+        <input
+          type="submit"
+          value="create"
+          className="capitalize w-max px-8 h-[3rem] rounded-md bg-fg/90 text-bg cursor-pointer ring-outline1 ring-offset-1 ring-1 mb-2 md:mb-0"
+        />
+      </Form>
+    );
+  },
+  (prev, next) => isEqual(prev, next)
+);
 
 export const TableNameColumn: React.FC<{ name: string; columnID: string }> = ({
   name,
@@ -329,29 +332,34 @@ export const TableNameColumn: React.FC<{ name: string; columnID: string }> = ({
   );
 };
 
-export const TableFormCTAArea: React.FC = React.memo(() => {
-  return <>
-    <div className="w-max flex mx-auto h-max gap-8">
-      <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4">
-        Add Column
-        <span className="inline-flex w-4 h-4 items-center justify-center">
-          <svg>
-            <use xlinkHref="#plus"></use>
-          </svg>
-        </span>
-      </button>
+export const TableFormCTAArea: React.FC = React.memo(
+  () => {
+    return (
+      <>
+        <div className="w-max flex mx-auto h-max gap-8">
+          <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4">
+            Add Column
+            <span className="inline-flex w-4 h-4 items-center justify-center">
+              <svg>
+                <use xlinkHref="#plus"></use>
+              </svg>
+            </span>
+          </button>
 
-      <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4">
-        Create Enum
-        <span className="inline-flex w-4 h-4 items-center justify-center">
-          <svg>
-            <use xlinkHref="#plus"></use>
-          </svg>
-        </span>
-      </button>
-    </div>
-  </>
-}, (prev, next) => isEqual(prev, next));
+          <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4">
+            Create Enum
+            <span className="inline-flex w-4 h-4 items-center justify-center">
+              <svg>
+                <use xlinkHref="#plus"></use>
+              </svg>
+            </span>
+          </button>
+        </div>
+      </>
+    );
+  },
+  (prev, next) => isEqual(prev, next)
+);
 
 export const TableCreationForm: React.FC = () => {
   const [displayErrorText, setDisplayErrorText] = useState<string | null>(null);
@@ -370,7 +378,7 @@ export const TableCreationForm: React.FC = () => {
         <div
           className={
             "w-[60%] flex items-baseline justify-end h-full bg-[#ff1d1d23] px-4" +
-            `${!displayErrorText ? " invisible": ""}`
+            `${!displayErrorText ? " invisible" : ""}`
           }
         >
           <span className="w-8 h-8">
@@ -457,7 +465,7 @@ export const TableCreationForm: React.FC = () => {
 
         <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
 
-        <TableFormCTAArea/>
+        <TableFormCTAArea />
 
         <EnumCreationForm />
       </div>
