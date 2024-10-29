@@ -203,6 +203,21 @@ script {
   .table-form-wrapper {
     max-height: 20rem !important;
   }
+
+  .form-table-cell {
+    vertical-align: top;
+    height: max-content;
+    place-items: center;
+    z-index: 3;
+  }
+  .form-table-cell>* {
+  }
+  .form-table-cell:has(input[type="text"]) {
+    min-width: 15rem !important;
+  }
+  .form-table-cell:has(>div>button>span, >div>button) {
+    padding-top: 1rem;
+  }
 }
 
 @layer base {

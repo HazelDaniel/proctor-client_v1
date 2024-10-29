@@ -25,6 +25,11 @@ const indexSupportHash = {
 export type GlobalColumnTypeType = keyof typeof typeSupportHash;
 export type GlobalColumnIndexType = keyof typeof indexSupportHash;
 
+export const internalIndexMarkers: Omit<Record<GlobalColumnIndexType, string>, "PRIMARY" | "FOREIGN" | "NONE"> = {
+  "COMPOSITE_FOREIGN": "<COMPOSITE_FOREIGN>",
+  "COMPOSITE_PRIMARY": "<COMPOSITE_PRIMARY>"
+}
+
 export const supportedSQLTypes: GlobalColumnTypeType[] = [
   "TIMESTAMPTZ",
   "VARCHAR (256)",
@@ -37,7 +42,6 @@ export const supportedSQLTypes: GlobalColumnTypeType[] = [
   "INT",
   "YEAR",
 ];
-
 
 export const typeDefaultMappings: Record<
   GlobalColumnTypeType,

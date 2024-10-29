@@ -1,8 +1,10 @@
 import { Form } from "@remix-run/react";
 import React, {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -32,6 +34,19 @@ import { TableFormColumnSelectType } from "~/types";
 import { tableColumnFields } from "~/data/table-form";
 import { useDebounce } from "~/hooks/usedebounce";
 import { isEqual } from "~/utils/comparison";
+import {
+  __addColumn,
+  __clearError,
+  __setName,
+  __setTableName,
+  initialTableCreationFormState,
+  tableCreationFormReducer,
+} from "~/reducers/table-creation-form.reducer";
+import {
+  TableCreationContextValueType,
+  TableCreationProvider,
+  tableCreationContext,
+} from "~/contexts/table-creation-form.context";
 
 const columns = [
   {
@@ -92,10 +107,10 @@ const columns = [
   },
 ];
 
-export const TableCheckbox: React.FC<{ id: string; columnID: string }> = ({
-  id,
-  columnID,
-}) => {
+export const TableCheckbox: React.FC<{
+  id: string;
+  columnID: string;
+}> = ({ id, columnID }) => {
   return (
     <div className="flex items-center space-x-2 justify-center">
       <Checkbox id={id} />
@@ -146,9 +161,8 @@ export const TableCompositeListCheckbox: React.ForwardRefExoticComponent<
 });
 
 export const FormCompositeSelectList: React.FC<{
-  rowID: string;
   columnID: string;
-}> = ({ rowID, columnID }) => {
+}> = ({ columnID }) => {
   const itemList = ["NONE", "customer_id", "ordered_at"];
   const checkboxRef = useRef<
     Omit<CheckboxProps & React.RefAttributes<HTMLButtonElement>, "ref"> &
@@ -197,10 +211,10 @@ export const FormCompositeSelectList: React.FC<{
           {itemList.map((el) => (
             <div
               className="w-full h-[4rem] flex gap-2 items-center justify-between px-2"
-              key={`${rowID}-${el}`}
+              key={`${columnID}-${el}`}
             >
               <TableCompositeListCheckbox
-                id={`${rowID}-${el}`}
+                id={`${columnID}-${el}`}
                 ref={checkboxRef as any}
                 addPlaceholder={handleAddPlaceholder()}
                 removePlaceholder={handleRemovePlaceholder()}
@@ -304,19 +318,26 @@ const EnumCreationForm: React.FC = React.memo(
   (prev, next) => isEqual(prev, next)
 );
 
-export const TableNameColumn: React.FC<{ name: string; columnID: string }> = ({
-  name,
-}) => {
+export const TableColumnNameForm: React.FC<{
+  name: string;
+  columnID: string;
+}> = ({ name, columnID }) => {
   const [colunmName, setColumnName] = useState(name);
   const debouncedName = useDebounce(colunmName, 3000);
 
+  const { tableCreationDispatch } = useContext(
+    tableCreationContext
+  ) as TableCreationContextValueType;
+
   useEffect(() => {
     // TODO: run the reducer dispatcher here
+    tableCreationDispatch(__setName(columnID, debouncedName));
   }, [debouncedName]);
 
   return (
     <>
-      <TableCell className="font-medium w-32">
+      <TableCell className="font-medium form-table-cell">
+
         <input
           type="text"
           name=""
@@ -332,12 +353,47 @@ export const TableNameColumn: React.FC<{ name: string; columnID: string }> = ({
   );
 };
 
+export const TableNameForm: React.FC = () => {
+  const [tableName, setTableName] = useState("");
+  const debouncedName = useDebounce(tableName, 1000);
+
+  const { tableCreationDispatch } = useContext(
+    tableCreationContext
+  ) as TableCreationContextValueType;
+
+  useEffect(() => {
+    // TODO: run the reducer dispatcher here
+    tableCreationDispatch(__setTableName(debouncedName));
+  }, [debouncedName]);
+
+  return (
+    <input
+      type="text"
+      name=""
+      value={tableName}
+      id=""
+      placeholder="input table name"
+      className="w-[20rem] p-2 shadow-input shadow-none rounded-md h-8 caret-outline1d placeholder:text-outline1 placeholder:italic bg-canvas"
+      onChange={(e) => {
+        setTableName(e.target.value);
+      }}
+    />
+  );
+};
+
 export const TableFormCTAArea: React.FC = React.memo(
   () => {
+    const { tableCreationDispatch } = useContext(
+      tableCreationContext
+    ) as TableCreationContextValueType;
+
     return (
       <>
         <div className="w-max flex mx-auto h-max gap-8">
-          <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4">
+          <button
+            className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4"
+            onClick={() => tableCreationDispatch(__addColumn())}
+          >
             Add Column
             <span className="inline-flex w-4 h-4 items-center justify-center">
               <svg>
@@ -362,113 +418,140 @@ export const TableFormCTAArea: React.FC = React.memo(
 );
 
 export const TableCreationForm: React.FC = () => {
-  const [displayErrorText, setDisplayErrorText] = useState<string | null>(null);
+  const [setDisplayErrorText] = useState<string | null>(null);
+  const [creationFormState, creationFormDispatch] = useReducer(
+    tableCreationFormReducer,
+    initialTableCreationFormState
+  );
+
+  const creationFormValue: TableCreationContextValueType = useMemo(
+    () => ({
+      tableCreationState: creationFormState,
+      tableCreationDispatch: creationFormDispatch,
+    }),
+    [creationFormState, creationFormDispatch]
+  );
+
+  const columns = useMemo(() => {
+    return Object.entries(creationFormState.columns).map(([k, v]) => {
+      return { id: k, ...v };
+    });
+  }, [creationFormState.columns]);
+
+  console.log("creation form state is ", creationFormState);
+
+  useEffect(() => {
+    if (!creationFormState.errorState) return;
+    let timeoutFn = setTimeout(
+      () => creationFormDispatch(__clearError()),
+      3000
+    );
+    return () => {
+      clearTimeout(timeoutFn);
+    };
+  }, [creationFormState.errorState]);
 
   return (
-    <div className="w-full h-full overflow-hidden">
-      <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-row items-center justify-between pl-[4rem] rounded-md">
-        <input
-          type="text"
-          name=""
-          id=""
-          placeholder="input table name"
-          className="w-[20rem] p-2 shadow-input shadow-none rounded-md h-8 caret-outline1d placeholder:text-outline1 placeholder:italic bg-canvas"
-        />
+    <TableCreationProvider value={creationFormValue}>
+      <div className="w-full h-full overflow-hidden">
+        <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-row items-center justify-between pl-[4rem] rounded-md">
+          <TableNameForm />
 
-        <div
-          className={
-            "w-[60%] flex items-baseline justify-end h-full bg-[#ff1d1d23] px-4" +
-            `${!displayErrorText ? " invisible" : ""}`
-          }
-        >
-          <span className="w-8 h-8">
-            <MessageSquareWarningIcon color="#ff2424d2" />
-          </span>
-          <p className="flex-1 text-danger h-full flex items-center pl-8">
-            {displayErrorText}
-          </p>
-        </div>
-      </Form>
+          <div
+            className={
+              "w-[60%] flex items-baseline justify-end h-full bg-[#ff1d1d23] px-4" +
+              `${!creationFormState.errorState ? " invisible" : ""}`
+            }
+          >
+            <span className="w-8 h-8">
+              <MessageSquareWarningIcon color="#ff2424d2" />
+            </span>
+            <p className="flex-1 text-danger h-full flex items-center pl-8">
+              {creationFormState.errorMessage || ""}
+            </p>
+          </div>
+        </Form>
 
-      <div className="w-full h-max flex flex-col overflow-auto flex-1 table-form-wrapper min-h-[43rem] md:min-h-[25rem]">
-        <Table className="min-w-[60rem] relative min-h-[45rem]">
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[100px]">Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Index</TableHead>
-              <TableHead className="text-center">Nullible?</TableHead>
-              <TableHead className="text-center">Unique?</TableHead>
-              <TableHead className="text-center">DEFAULT</TableHead>
-              <TableHead className="text-center">Composite On</TableHead>
-              <TableHead className="text-right w-8"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody className="">
-            {columns.map((column) => (
-              <TableRow key={column.name}>
-                <TableNameColumn name={column.name} columnID={column.id} />
-
-                <TableCell>
-                  <FormColumnSelectList
-                    select={tableColumnFields.type}
-                    columnID={column.id}
-                  />
-                </TableCell>
-
-                <TableCell>
-                  <FormColumnSelectList
-                    select={tableColumnFields.index}
-                    columnID={column.id}
-                  />
-                </TableCell>
-
-                <TableCell className="text-right">
-                  <TableCheckbox
-                    id={`${column.name}-nullible`}
-                    columnID={column.id}
-                  />
-                </TableCell>
-
-                <TableCell className="text-right">
-                  <TableCheckbox
-                    id={`${column.name}-unique`}
-                    columnID={column.id}
-                  />
-                </TableCell>
-
-                <TableCell className="w-[8rem]">
-                  <FormColumnSelectList
-                    select={tableColumnFields.default}
-                    columnID={column.id}
-                  />
-                </TableCell>
-
-                <TableCell className="w-[8rem]">
-                  <FormCompositeSelectList
-                    rowID={column.name}
-                    columnID={column.id}
-                  />
-                </TableCell>
-
-                <TableCell className="w-[8rem] h-[8rem]">
-                  <div className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto">
-                    <svg className="w-full h-full">
-                      <use xlinkHref="#trash"></use>
-                    </svg>
-                  </div>
-                </TableCell>
+        <div className="w-full h-max flex flex-col overflow-auto flex-1 table-form-wrapper min-h-[43rem] md:min-h-[25rem]">
+          <Table className="min-w-[60rem] relative min-h-[45rem]">
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Name</TableHead>
+                <TableHead>Type</TableHead>
+                <TableHead>Index</TableHead>
+                <TableHead className="text-center">Nullible?</TableHead>
+                <TableHead className="text-center">Unique?</TableHead>
+                <TableHead className="text-center">DEFAULT</TableHead>
+                <TableHead className="text-center">Composite On</TableHead>
+                <TableHead className="text-right w-8"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody className="">
+              {columns.map((column) => (
+                <TableRow key={column.id}>
+                  <TableColumnNameForm
+                    name={column.name || ""}
+                    columnID={column.id || ""}
+                  />
 
-        <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
+                  <TableCell className=" form-table-cell">
+                    <FormColumnSelectList
+                      select={tableColumnFields.type}
+                      columnID={column.id}
+                    />
+                  </TableCell>
 
-        <TableFormCTAArea />
+                  <TableCell className="max-h-[5rem] form-table-cell">
+                    <FormColumnSelectList
+                      select={tableColumnFields.index}
+                      columnID={column.id}
+                    />
+                  </TableCell>
 
-        <EnumCreationForm />
+                  <TableCell className="text-right h-max form-table-cell">
+                    <TableCheckbox
+                      id={`${column.name}-nullible`}
+                      columnID={column.id}
+                    />
+                  </TableCell>
+
+                  <TableCell className="text-right h-max form-table-cell">
+                    <TableCheckbox
+                      id={`${column.name}-unique`}
+                      columnID={column.id}
+                    />
+                  </TableCell>
+
+                  <TableCell className="w-[8rem] h-max form-table-cell">
+                    <FormColumnSelectList
+                      select={tableColumnFields.default}
+                      columnID={column.id}
+                    />
+                  </TableCell>
+
+                  <TableCell className="w-[8rem] h-max form-table-cell">
+                    <FormCompositeSelectList columnID={column.id} />
+                  </TableCell>
+
+                  <TableCell className="w-[8rem] h-[8rem] form-table-cell">
+                    <div className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto">
+                      <svg className="w-full h-full">
+                        <use xlinkHref="#trash"></use>
+                      </svg>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+
+          <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
+
+          <TableFormCTAArea />
+
+          <EnumCreationForm />
+        </div>
       </div>
-    </div>
+    </TableCreationProvider>
   );
 };
