@@ -31,15 +31,29 @@ import {
 } from "~/components/ui/select";
 import { MessageSquareWarningIcon } from "lucide-react";
 import { TableFormColumnSelectType } from "~/types";
-import { tableColumnFields } from "~/data/table-form";
+import {
+  GlobalColumnIndexType,
+  GlobalColumnTypeType,
+  tableColumnFields,
+} from "~/data/table-form";
 import { useDebounce } from "~/hooks/usedebounce";
 import { isEqual } from "~/utils/comparison";
 import {
   __addColumn,
   __clearError,
+  __dropColumn,
+  __setCompositeOn,
+  __setDefault,
+  __setIndex,
   __setName,
   __setTableName,
+  __setType,
+  __toggleNullibility,
+  __toggleUniqueness,
   initialTableCreationFormState,
+  selectCompositeColumns,
+  selectNullibility,
+  selectUniqueness,
   tableCreationFormReducer,
 } from "~/reducers/table-creation-form.reducer";
 import {
@@ -47,73 +61,45 @@ import {
   TableCreationProvider,
   tableCreationContext,
 } from "~/contexts/table-creation-form.context";
-
-const columns = [
-  {
-    invoice: "INV001",
-    paymentStatus: "Paid",
-    totalAmount: "$250.00",
-    paymentMethod: "Credit Card",
-    name: "ID",
-    id: "ID",
-  },
-  {
-    invoice: "INV002",
-    paymentStatus: "Pending",
-    totalAmount: "$150.00",
-    paymentMethod: "PayPal",
-    name: "date_created",
-    id: "date_created",
-  },
-  {
-    invoice: "INV003",
-    paymentStatus: "Unpaid",
-    totalAmount: "$350.00",
-    paymentMethod: "Bank Transfer",
-    name: "date_updated",
-    id: "date_updated",
-  },
-  {
-    invoice: "INV004",
-    paymentStatus: "Paid",
-    totalAmount: "$450.00",
-    paymentMethod: "Credit Card",
-    name: "price",
-    id: "price",
-  },
-  {
-    invoice: "INV005",
-    paymentStatus: "Paid",
-    totalAmount: "$550.00",
-    paymentMethod: "PayPal",
-    name: "discount",
-    id: "discount",
-  },
-  {
-    invoice: "INV006",
-    paymentStatus: "Pending",
-    totalAmount: "$200.00",
-    paymentMethod: "Bank Transfer",
-    name: "user_id",
-    id: "user_id",
-  },
-  {
-    invoice: "INV007",
-    paymentStatus: "Unpaid",
-    totalAmount: "$300.00",
-    paymentMethod: "Credit Card",
-    name: "customer_name",
-    id: "customer_name",
-  },
-];
+import { useContextSelector } from "~/hooks/usecontextselector";
 
 export const TableCheckbox: React.FC<{
   id: string;
   columnID: string;
-}> = ({ id, columnID }) => {
+  intent: "nullibility" | "uniqueness";
+}> = ({ id, columnID, intent }) => {
+  const { tableCreationDispatch } = useContext(
+    tableCreationContext
+  ) as TableCreationContextValueType;
+  const [isChecked, setChecked] = useState<boolean>(false);
+
+  const columnNullibility = useContextSelector<
+    TableCreationContextValueType,
+    boolean
+  >(tableCreationContext as any, selectNullibility, [columnID]);
+
+  const columnUniqueness = useContextSelector<
+    TableCreationContextValueType,
+    boolean
+  >(tableCreationContext as any, selectUniqueness, [columnID]);
+
+  useEffect(() => {
+    if (intent === "nullibility")
+      tableCreationDispatch(__toggleNullibility(columnID));
+    else tableCreationDispatch(__toggleUniqueness(columnID));
+  }, [intent, isChecked]);
+
   return (
     <div className="flex items-center space-x-2 justify-center">
-      <Checkbox id={id} />
+      <Checkbox
+        id={id}
+        onClick={(_) => {
+          setChecked((prev) => !prev);
+        }}
+        checked={
+          (intent === "nullibility" ? columnNullibility : columnUniqueness)
+        }
+      />
     </div>
   );
 };
@@ -124,17 +110,16 @@ export const TableCompositeListCheckbox: React.ForwardRefExoticComponent<
       addPlaceholder: (item: string) => void;
       removePlaceholder: (item: string) => void;
       optText: string;
-      selectedItemList: string[];
+      itemList: string[];
     }
 > = React.forwardRef((prop, ref) => {
   if (!prop) return null;
-  const { id, addPlaceholder, removePlaceholder, optText, selectedItemList } =
-    prop;
+  const { id, addPlaceholder, removePlaceholder, optText, itemList } = prop;
   const [isChecked, setChecked] = useState<boolean>(false);
 
   useEffect(() => {
-    setChecked(selectedItemList.includes(optText));
-  }, [selectedItemList]);
+    setChecked(itemList.includes(optText));
+  }, [itemList]);
 
   return (
     <div className="flex items-center space-x-2 justify-between w-full">
@@ -163,52 +148,75 @@ export const TableCompositeListCheckbox: React.ForwardRefExoticComponent<
 export const FormCompositeSelectList: React.FC<{
   columnID: string;
 }> = ({ columnID }) => {
-  const itemList = ["NONE", "customer_id", "ordered_at"];
   const checkboxRef = useRef<
     Omit<CheckboxProps & React.RefAttributes<HTMLButtonElement>, "ref"> &
       React.RefAttributes<HTMLButtonElement>
   >(null);
 
-  const [selectedItemList, setSelectedItemList] = useState(["NONE"]);
+  const { tableCreationState, tableCreationDispatch } = useContext(
+    tableCreationContext
+  ) as TableCreationContextValueType;
+
+  const itemList = useContextSelector<TableCreationContextValueType, string[]>(
+    tableCreationContext as any,
+    selectCompositeColumns,
+    [columnID]
+  );
+
+  const itemListSelection = useMemo(() => itemList, []);
 
   const handleAddPlaceholder = useCallback(
     () => (item: string) => {
-      if (selectedItemList.includes(item)) return;
+      if (itemList.includes(item)) return;
       if (item === "NONE") {
-        setSelectedItemList(["NONE"]);
+        tableCreationDispatch(__setCompositeOn(columnID, "NONE"));
         return;
       }
-      setSelectedItemList((prev) => [
-        ...prev.filter((e) => e !== "NONE"),
-        item,
-      ]);
+      tableCreationDispatch(
+        __setCompositeOn(
+          columnID,
+          [...(tableCreationState.columns[columnID]!.compositeOn || []), item]
+            .filter((e) => e !== "NONE")
+            .join(", ")
+        )
+      );
     },
-    [selectedItemList]
+    [itemList]
   );
 
   const handleRemovePlaceholder = useCallback(
     () => (item: string) => {
-      if (!selectedItemList.includes(item)) return;
-      if (selectedItemList.length === 1 && item === "NONE") {
+      if (!itemList.includes(item)) return;
+      if (itemList.length === 1 && item === "NONE") {
         return;
       }
-      setSelectedItemList((prev) => {
-        const res = prev.filter((e) => e !== item);
-        if (res.length === 0) return ["NONE"];
-        return res;
-      });
+
+      tableCreationDispatch(
+        __setCompositeOn(
+          columnID,
+          (
+            [
+              ...(tableCreationState.columns[columnID]!.compositeOn || []),
+            ].filter((e) => e !== item) || ["NONE"]
+          ).join(", ")
+        )
+      );
     },
-    [selectedItemList]
+    [itemList]
   );
 
   return (
     <Select>
       <SelectTrigger className="w-[180px]">
-        <SelectValue placeholder={selectedItemList.join(", ")} />
+        <SelectValue
+          placeholder={(
+            tableCreationState.columns[columnID]!.compositeOn || ["NONE"]
+          ).join(", ")}
+        />
       </SelectTrigger>
       <SelectContent>
         <div className="w-full h-max min-h-[4rem]">
-          {itemList.map((el) => (
+          {itemListSelection.map((el) => (
             <div
               className="w-full h-[4rem] flex gap-2 items-center justify-between px-2"
               key={`${columnID}-${el}`}
@@ -218,7 +226,9 @@ export const FormCompositeSelectList: React.FC<{
                 ref={checkboxRef as any}
                 addPlaceholder={handleAddPlaceholder()}
                 removePlaceholder={handleRemovePlaceholder()}
-                selectedItemList={selectedItemList}
+                itemList={
+                  tableCreationState.columns[columnID]!.compositeOn || ["NONE"]
+                }
                 optText={el}
               />
             </div>
@@ -232,11 +242,28 @@ export const FormCompositeSelectList: React.FC<{
 export const FormColumnSelectList: React.FC<{
   select: TableFormColumnSelectType;
   columnID: string;
-}> = ({ select, columnID }) => {
+  intent: "default" | "index" | "type";
+}> = ({ select, columnID, intent }) => {
+  const { tableCreationDispatch } = useContext(
+    tableCreationContext
+  ) as TableCreationContextValueType;
+
   return (
     <Select
-      onValueChange={(e) => {
-        console.log(`selected ${e}`);
+      onValueChange={(e: GlobalColumnTypeType) => {
+        switch (intent) {
+          case "default":
+            tableCreationDispatch(__setDefault(columnID, e));
+            break;
+          case "index":
+            tableCreationDispatch(
+              __setIndex(columnID, e as unknown as GlobalColumnIndexType)
+            );
+            break;
+          case "type":
+            tableCreationDispatch(__setType(columnID, e));
+            break;
+        }
       }}
     >
       <SelectTrigger className="w-[180px]">
@@ -323,7 +350,10 @@ export const TableColumnNameForm: React.FC<{
   columnID: string;
 }> = ({ name, columnID }) => {
   const [colunmName, setColumnName] = useState(name);
-  const debouncedName = useDebounce(colunmName, 3000);
+  const debouncedName = useDebounce(colunmName, 1500);
+
+  const columnNameInputRef = useRef<HTMLInputElement>(null);
+  const [focused, setFocused] = useState<boolean>(false);
 
   const { tableCreationDispatch } = useContext(
     tableCreationContext
@@ -334,15 +364,24 @@ export const TableColumnNameForm: React.FC<{
     tableCreationDispatch(__setName(columnID, debouncedName));
   }, [debouncedName]);
 
+  useEffect(() => {
+    if (focused) return;
+
+    if (columnNameInputRef.current) {
+      columnNameInputRef.current.focus();
+      setFocused(true);
+    }
+  }, [columnNameInputRef, focused]);
+
   return (
     <>
       <TableCell className="font-medium form-table-cell">
-
         <input
           type="text"
           name=""
           id=""
           value={colunmName}
+          ref={columnNameInputRef}
           onChange={(e) => {
             setColumnName(e.target.value);
           }}
@@ -362,7 +401,6 @@ export const TableNameForm: React.FC = () => {
   ) as TableCreationContextValueType;
 
   useEffect(() => {
-    // TODO: run the reducer dispatcher here
     tableCreationDispatch(__setTableName(debouncedName));
   }, [debouncedName]);
 
@@ -418,7 +456,6 @@ export const TableFormCTAArea: React.FC = React.memo(
 );
 
 export const TableCreationForm: React.FC = () => {
-  const [setDisplayErrorText] = useState<string | null>(null);
   const [creationFormState, creationFormDispatch] = useReducer(
     tableCreationFormReducer,
     initialTableCreationFormState
@@ -428,6 +465,7 @@ export const TableCreationForm: React.FC = () => {
     () => ({
       tableCreationState: creationFormState,
       tableCreationDispatch: creationFormDispatch,
+      state: creationFormState,
     }),
     [creationFormState, creationFormDispatch]
   );
@@ -438,18 +476,18 @@ export const TableCreationForm: React.FC = () => {
     });
   }, [creationFormState.columns]);
 
-  console.log("creation form state is ", creationFormState);
-
   useEffect(() => {
     if (!creationFormState.errorState) return;
     let timeoutFn = setTimeout(
       () => creationFormDispatch(__clearError()),
-      3000
+      5000
     );
     return () => {
       clearTimeout(timeoutFn);
     };
   }, [creationFormState.errorState]);
+
+  console.log("creation form state is ", creationFormState);
 
   return (
     <TableCreationProvider value={creationFormValue}>
@@ -459,7 +497,7 @@ export const TableCreationForm: React.FC = () => {
 
           <div
             className={
-              "w-[60%] flex items-baseline justify-end h-full bg-[#ff1d1d23] px-4" +
+              "w-[60%] flex items-center justify-end h-full bg-[#ff1d1d23] px-4" +
               `${!creationFormState.errorState ? " invisible" : ""}`
             }
           >
@@ -498,6 +536,7 @@ export const TableCreationForm: React.FC = () => {
                     <FormColumnSelectList
                       select={tableColumnFields.type}
                       columnID={column.id}
+                      intent="type"
                     />
                   </TableCell>
 
@@ -505,6 +544,7 @@ export const TableCreationForm: React.FC = () => {
                     <FormColumnSelectList
                       select={tableColumnFields.index}
                       columnID={column.id}
+                      intent="index"
                     />
                   </TableCell>
 
@@ -512,6 +552,7 @@ export const TableCreationForm: React.FC = () => {
                     <TableCheckbox
                       id={`${column.name}-nullible`}
                       columnID={column.id}
+                      intent="nullibility"
                     />
                   </TableCell>
 
@@ -519,6 +560,7 @@ export const TableCreationForm: React.FC = () => {
                     <TableCheckbox
                       id={`${column.name}-unique`}
                       columnID={column.id}
+                      intent="uniqueness"
                     />
                   </TableCell>
 
@@ -526,6 +568,7 @@ export const TableCreationForm: React.FC = () => {
                     <FormColumnSelectList
                       select={tableColumnFields.default}
                       columnID={column.id}
+                      intent="default"
                     />
                   </TableCell>
 
@@ -534,7 +577,9 @@ export const TableCreationForm: React.FC = () => {
                   </TableCell>
 
                   <TableCell className="w-[8rem] h-[8rem] form-table-cell">
-                    <div className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto">
+                    <div className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto" onClick={() => {
+                      creationFormDispatch(__dropColumn(column.id));
+                    }}>
                       <svg className="w-full h-full">
                         <use xlinkHref="#trash"></use>
                       </svg>

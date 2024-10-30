@@ -3,6 +3,7 @@ import { TableCreationFormStateType, TableFormEmptyActionType, TableFormUpdateAc
 
 export interface TableCreationContextValueType {
   tableCreationState: TableCreationFormStateType;
+  state: TableCreationFormStateType;
   tableCreationDispatch: React.Dispatch<TableFormUpdateActionType>;
 }
 

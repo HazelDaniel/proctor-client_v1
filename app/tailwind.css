@@ -205,17 +205,16 @@ script {
   }
 
   .form-table-cell {
-    vertical-align: top;
+    vertical-align: top !important;
     height: max-content;
+    max-height: 10rem;
     place-items: center;
     z-index: 3;
-  }
-  .form-table-cell>* {
   }
   .form-table-cell:has(input[type="text"]) {
     min-width: 15rem !important;
   }
-  .form-table-cell:has(>div>button>span, >div>button) {
+  .form-table-cell:has(> div > button > span, > div > button) {
     padding-top: 1rem;
   }
 }

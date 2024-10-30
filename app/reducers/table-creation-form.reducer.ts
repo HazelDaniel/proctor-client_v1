@@ -82,7 +82,7 @@ export const tableCreationFormReducer: (
   switch (action.type) {
     case "clearError": {
       if (state.errorMessage === "" && !state.errorState) return state;
-      return {...state, errorMessage: "", errorState: false};
+      return { ...state, errorMessage: "", errorState: false };
     }
     case "addColumn": {
       const { tableID, columns, tableName } = state;
@@ -90,7 +90,12 @@ export const tableCreationFormReducer: (
       let errorState = !!Object.values(state.columns).find((col) => {
         col.name === "";
       });
-      if (errorState) return { ...state, errorState };
+      if (errorState) {
+        alert("error state happened");
+        let errorMessage =
+          "you cannot create new columns if existing column names are empty, name them and try again!";
+        return { ...state, errorState, errorMessage };
+      }
 
       newState = {
         tableID,
@@ -116,7 +121,7 @@ export const tableCreationFormReducer: (
       if (!columnID) return state;
 
       if (!state.columns[columnID]) return state;
-      newState = { ...state };
+      newState = structuredClone(state);
       delete newState.columns[columnID];
 
       return newState;
@@ -126,19 +131,24 @@ export const tableCreationFormReducer: (
       // TODO: for all the rest of the switch arms, separate the input validation assertions from that of the logical assertions - might be moved else where later
       if (!columnID) return state;
       const index = state.columns[columnID]?.index;
+      console.log("index of the current column was ", index);
 
       let errorState = !(
         index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN"
       );
-      if (errorState) return { ...state, errorState };
+      if (errorState) {
+        let errorMessage =
+          "you cannot set composite columns for a non composite key!";
+        return { ...state, errorState, errorMessage };
+      }
 
-      if (index !== "COMPOSITE_PRIMARY" && index !== "COMPOSITE_FOREIGN")
-        return state;
-      if (!compositeOn) return state;
+      const oldCompositeOn = state.columns[columnID]?.compositeOn;
+
+      if (compositeOn === oldCompositeOn) return state;
 
       const resColumn = state.columns[columnID];
       if (!resColumn) return state;
-      const compositeArrays = compositeOn.split(", ");
+      const compositeArrays = compositeOn?.split(", ") || ["NONE"];
       newState = { ...state };
       newState.columns[columnID].compositeOn = compositeArrays;
 
@@ -151,8 +161,13 @@ export const tableCreationFormReducer: (
       if (!colDefault || !resColumn?.type) return state;
       const supportedDefaultSet = typeDefaultMappings[resColumn?.type];
 
-      const errorState = !supportedDefaultSet.has(colDefault);
-      if (errorState) return { ...state, errorState };
+      let errorState = !supportedDefaultSet.has(colDefault);
+
+      if (errorState) {
+        let errorMessage =
+          "the set default value is not compatible with the column type";
+        return { ...state, errorState, errorMessage };
+      }
 
       newState = { ...state };
       newState.columns[columnID].default = colDefault;
@@ -168,6 +183,7 @@ export const tableCreationFormReducer: (
       if (resColumn.index === index) return state;
       switch (index) {
         case "COMPOSITE_PRIMARY": {
+          console.log("setting composite primary index");
           const errorState = !!Object.values(state.columns).find((col) => {
             col.index === "COMPOSITE_PRIMARY" || col.index === "PRIMARY";
           });
@@ -180,20 +196,31 @@ export const tableCreationFormReducer: (
 
           const newState = { ...state };
 
-          const tableKeys = Object.values(newState.columns)
+          let tableKeys = Object.values(newState.columns)
             .filter((v) => {
               return (
                 v.index !== "COMPOSITE_FOREIGN" &&
                 v.index !== "COMPOSITE_PRIMARY" &&
-                !!v.name
+                !!v.name &&
+                v.name !== internalIndexMarkers.COMPOSITE_FOREIGN &&
+                v.name !== internalIndexMarkers.COMPOSITE_PRIMARY
               );
             })
-            .map((col) => col.name) as string[];
+            .map((col) => {
+              console.log("candidate column is ", col);
+              return col.name;
+            }) as string[];
 
-          const resColumn = newState.columns[columnID];
-          resColumn.index = "COMPOSITE_PRIMARY";
-          resColumn.name = internalIndexMarkers.COMPOSITE_PRIMARY;
-          resColumn.compositeOn = tableKeys;
+          tableKeys = tableKeys.length ? tableKeys : ["NONE"];
+
+          const resColumn = {
+            ...newState.columns[columnID],
+            index: "COMPOSITE_PRIMARY" as GlobalColumnIndexType,
+            name: internalIndexMarkers.COMPOSITE_PRIMARY,
+            compositeOn: tableKeys,
+          };
+
+          newState.columns[columnID] = resColumn;
 
           return newState;
         }
@@ -201,16 +228,38 @@ export const tableCreationFormReducer: (
           return state; // KEYS ARE ONLY ALLOWED TO START FROM FOREIGN ON CREATION so, DO NOTHING
         }
         case "FOREIGN": {
-          resColumn.compositeOn = null;
+          resColumn.compositeOn = ["NONE"];
+          resColumn.index = "FOREIGN";
+          const { COMPOSITE_FOREIGN, COMPOSITE_PRIMARY } = internalIndexMarkers;
+          resColumn.name =
+            resColumn.name === COMPOSITE_FOREIGN ||
+            resColumn.name === COMPOSITE_PRIMARY
+              ? ""
+              : resColumn.name;
           break;
         }
         case "NONE": {
-          resColumn.compositeOn = null;
+          resColumn.compositeOn = ["NONE"];
+          resColumn.index = "NONE";
+          const { COMPOSITE_FOREIGN, COMPOSITE_PRIMARY } = internalIndexMarkers;
+          resColumn.name =
+            resColumn.name === COMPOSITE_FOREIGN ||
+            resColumn.name === COMPOSITE_PRIMARY
+              ? ""
+              : resColumn.name;
           break;
         }
         case "PRIMARY": {
+          resColumn.compositeOn = ["NONE"];
           resColumn.unique = true;
           resColumn.nullable = false;
+          resColumn.index = "PRIMARY";
+          const { COMPOSITE_FOREIGN, COMPOSITE_PRIMARY } = internalIndexMarkers;
+          resColumn.name =
+            resColumn.name === COMPOSITE_FOREIGN ||
+            resColumn.name === COMPOSITE_PRIMARY
+              ? ""
+              : resColumn.name;
           break;
         }
         default: {
@@ -224,11 +273,27 @@ export const tableCreationFormReducer: (
     }
     case "setName": {
       const { columnID, name } = payload;
-      if (!columnID) return state;
+      if (!columnID) {
+        return state;
+      }
+
+      const resColumn = state.columns[columnID];
+      if (!resColumn) return state;
+      if (resColumn.name === name) {
+        return state;
+      }
+
+      const errorState = (name?.split(" ").length || 0) > 1;
+
+      if (errorState) {
+        let errorMessage = "column names are not allowed to have spaces!";
+        return { ...state, errorState, errorMessage };
+      }
+
+      resColumn.name = name;
 
       const newState = { ...state };
-      const resColumn = newState.columns[columnID];
-      if (resColumn.name === name) return state;
+      newState.columns[columnID] = resColumn;
 
       return newState;
     }
@@ -273,7 +338,7 @@ export const tableCreationFormReducer: (
         return state; // you can't override the types of composite keys
 
       const supportedDefaultSet = typeDefaultMappings[colType];
-      const [preferedDefault] = [...supportedDefaultSet];
+      const [preferedDefault] = Array.from(supportedDefaultSet);
 
       newState.columns[columnID].default = preferedDefault;
 
@@ -397,15 +462,46 @@ export const __toggleNullibility: (
 };
 
 // SELECTORS
-// export const selectTableForms: (
-//   state: TableFormStateType
-// ) => (StatefulTableFormType & { id: string })[] = (state) => {
-//   return Object.entries(state.bubbles).reduce(
-//     (acc: (StatefulTableFormType & { id: string })[], curr) => {
-//       const res = { id: curr[0], ...curr[1] };
-//       acc.push(res);
-//       return acc;
-//     },
-//     []
-//   );
-// };
+export const selectCompositeColumns: (
+  state: TableCreationFormStateType,
+  id: string
+) => string[] = (state, id) => {
+  const resColumn = state.columns[id];
+  if (!resColumn) return ["NONE"];
+
+  let tableKeys = Object.values(state.columns)
+    .filter((v) => {
+      return (
+        v.index !== "COMPOSITE_FOREIGN" &&
+        v.index !== "COMPOSITE_PRIMARY" &&
+        !!v.name &&
+        v.name !== internalIndexMarkers.COMPOSITE_FOREIGN &&
+        v.name !== internalIndexMarkers.COMPOSITE_PRIMARY &&
+        v.name !== resColumn.name
+      );
+    })
+    .map((col) => {
+      return col.name;
+    }) as string[];
+
+  return tableKeys || ["NONE"];
+};
+
+export const selectNullibility: (
+  state: TableCreationFormStateType,
+  id: string
+) => boolean = (state, id) => {
+  const resColumn = state.columns[id];
+
+  return resColumn?.nullable || false;
+};
+
+
+export const selectUniqueness: (
+  state: TableCreationFormStateType,
+  id: string
+) => boolean = (state, id) => {
+  const resColumn = state.columns[id];
+
+  return resColumn?.unique || false;
+};

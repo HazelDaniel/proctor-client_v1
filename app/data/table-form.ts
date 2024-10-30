@@ -47,16 +47,16 @@ export const typeDefaultMappings: Record<
   GlobalColumnTypeType,
   Set<string>
 > = {
-  TIMESTAMPTZ: new Set(["CURRENT_TIMESTAMP"]),
-  YEAR: new Set(["CURRENT_YEAR"]),
-  TEXT: new Set(["RANDOM_TEXT"]),
-  "VARCHAR (256)": new Set(["RANDOM_TEXT"]),
-  BIGINT: new Set(["RANDOM_NUMBER"]),
-  BIGSERIAL: new Set([]),
-  INT: new Set(["RANDOM_INT", "RANDOM_NUMBER"]),
-  NUMERIC: new Set(["RANDOM_NUMERIC"]),
-  SERIAL: new Set([]),
-  UUID: new Set(["RANDOM_UUID"]),
+  TIMESTAMPTZ: new Set(["CURRENT_TIMESTAMP", "NONE"]),
+  YEAR: new Set(["CURRENT_YEAR", "NONE"]),
+  TEXT: new Set(["RANDOM_TEXT", "NONE"]),
+  "VARCHAR (256)": new Set(["RANDOM_TEXT", "NONE"]),
+  BIGINT: new Set(["RANDOM_NUMBER", "NONE"]),
+  BIGSERIAL: new Set(["NONE"]),
+  INT: new Set(["RANDOM_INT", "RANDOM_NUMBER", "NONE"]),
+  NUMERIC: new Set(["RANDOM_NUMERIC", "NONE"]),
+  SERIAL: new Set(["NONE"]),
+  UUID: new Set(["RANDOM_UUID", "NONE"]),
 };
 
 export const tableColumnFields: TableFormFieldsType = {
