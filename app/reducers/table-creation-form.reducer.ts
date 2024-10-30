@@ -184,8 +184,8 @@ export const tableCreationFormReducer: (
       switch (index) {
         case "COMPOSITE_PRIMARY": {
           console.log("setting composite primary index");
-          const errorState = !!Object.values(state.columns).find((col) => {
-            col.index === "COMPOSITE_PRIMARY" || col.index === "PRIMARY";
+          const errorState = Object.values(state.columns).some((col) => {
+            return col.index === "COMPOSITE_PRIMARY" || col.index === "PRIMARY";
           });
 
           if (errorState) {
@@ -207,7 +207,6 @@ export const tableCreationFormReducer: (
               );
             })
             .map((col) => {
-              console.log("candidate column is ", col);
               return col.name;
             }) as string[];
 
@@ -250,6 +249,16 @@ export const tableCreationFormReducer: (
           break;
         }
         case "PRIMARY": {
+          const errorState = Object.values(state.columns).some((col) => {
+            return col.index === "COMPOSITE_PRIMARY" || col.index === "PRIMARY";
+          });
+
+          if (errorState) {
+            let errorMessage =
+              "this table already has a primary/composite primary key. if you intend to use another key, you must remove the previous key";
+            return { ...state, errorState, errorMessage };
+          }
+
           resColumn.compositeOn = ["NONE"];
           resColumn.unique = true;
           resColumn.nullable = false;
@@ -496,7 +505,6 @@ export const selectNullibility: (
   return resColumn?.nullable || false;
 };
 
-
 export const selectUniqueness: (
   state: TableCreationFormStateType,
   id: string
@@ -504,4 +512,32 @@ export const selectUniqueness: (
   const resColumn = state.columns[id];
 
   return resColumn?.unique || false;
+};
+
+export const selectIndex: (
+  state: TableCreationFormStateType,
+  id: string
+) => GlobalColumnIndexType = (state, id) => {
+  const resColumn = state.columns[id];
+
+  return resColumn?.index || "NONE";
+};
+
+export const selectType: (
+  state: TableCreationFormStateType,
+  id: string
+) => GlobalColumnTypeType = (state, id) => {
+  const resColumn = state.columns[id];
+
+  return resColumn.type as GlobalColumnTypeType;
+};
+
+
+export const selectDefault: (
+  state: TableCreationFormStateType,
+  id: string
+) => string = (state, id) => {
+  const resColumn = state.columns[id];
+
+  return resColumn.default as string;
 };

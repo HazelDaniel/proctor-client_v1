@@ -1,3 +1,4 @@
+import { v4 as UUIDV4 } from "uuid";
 import { Form } from "@remix-run/react";
 import React, {
   useCallback,
@@ -52,7 +53,10 @@ import {
   __toggleUniqueness,
   initialTableCreationFormState,
   selectCompositeColumns,
+  selectDefault,
+  selectIndex,
   selectNullibility,
+  selectType,
   selectUniqueness,
   tableCreationFormReducer,
 } from "~/reducers/table-creation-form.reducer";
@@ -97,7 +101,7 @@ export const TableCheckbox: React.FC<{
           setChecked((prev) => !prev);
         }}
         checked={
-          (intent === "nullibility" ? columnNullibility : columnUniqueness)
+          intent === "nullibility" ? columnNullibility : columnUniqueness
         }
       />
     </div>
@@ -248,6 +252,21 @@ export const FormColumnSelectList: React.FC<{
     tableCreationContext
   ) as TableCreationContextValueType;
 
+  const columnIndex = useContextSelector<
+    TableCreationContextValueType,
+    GlobalColumnIndexType
+  >(tableCreationContext as any, selectIndex, [columnID]);
+
+  const columnDefault = useContextSelector<
+    TableCreationContextValueType,
+    string
+  >(tableCreationContext as any, selectDefault, [columnID]);
+
+  const columnType = useContextSelector<
+    TableCreationContextValueType,
+    GlobalColumnTypeType
+  >(tableCreationContext as any, selectType, [columnID]);
+
   return (
     <Select
       onValueChange={(e: GlobalColumnTypeType) => {
@@ -263,12 +282,21 @@ export const FormColumnSelectList: React.FC<{
           case "type":
             tableCreationDispatch(__setType(columnID, e));
             break;
+          default:
+            throw new Error("selection intent not implemented yet");
+            break;
         }
       }}
     >
       <SelectTrigger className="w-[180px]">
         <SelectValue
-          placeholder={select.defaultible ? select.default : select.placeholder}
+          placeholder={
+            intent === "index"
+              ? columnIndex
+              : intent === "type"
+              ? columnType
+              : columnDefault
+          }
         />
       </SelectTrigger>
       <SelectContent>
@@ -458,7 +486,8 @@ export const TableFormCTAArea: React.FC = React.memo(
 export const TableCreationForm: React.FC = () => {
   const [creationFormState, creationFormDispatch] = useReducer(
     tableCreationFormReducer,
-    initialTableCreationFormState
+    initialTableCreationFormState,
+    (state) => ({ ...state, tableID: UUIDV4() })
   );
 
   const creationFormValue: TableCreationContextValueType = useMemo(
@@ -577,9 +606,12 @@ export const TableCreationForm: React.FC = () => {
                   </TableCell>
 
                   <TableCell className="w-[8rem] h-[8rem] form-table-cell">
-                    <div className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto" onClick={() => {
-                      creationFormDispatch(__dropColumn(column.id));
-                    }}>
+                    <div
+                      className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto"
+                      onClick={() => {
+                        creationFormDispatch(__dropColumn(column.id));
+                      }}
+                    >
                       <svg className="w-full h-full">
                         <use xlinkHref="#trash"></use>
                       </svg>
