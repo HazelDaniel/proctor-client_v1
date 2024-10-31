@@ -16,18 +16,21 @@ import { default as nodesReducer } from "~/reducers/nodes.reducer";
 import { PersistoreStore } from "./dao/persistor-store.dao";
 import { StatefulGroupNodeType, StatefulNodeType } from "./types";
 import { Edge } from "@xyflow/react";
+import {default as globalTypesReducer } from "./reducers/global-types.reducer";
 
 const rootReducer = combineReducers({
   workspace: workspaceReducer,
   nodes: nodesReducer,
+  types: globalTypesReducer
 });
 
 const persistConfig: PersistConfig<{
   workspace: ReturnType<typeof workspaceReducer>;
   nodes: ReturnType<typeof nodesReducer>;
+  types: ReturnType<typeof globalTypesReducer>
 }> = {
   key: "root",
-  whitelist: ["workspace"],
+  whitelist: ["workspace", "types"],
   storage: new PersistoreStore(),
 };
 

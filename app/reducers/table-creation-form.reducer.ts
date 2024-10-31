@@ -18,6 +18,7 @@ export const tableFormActionTypes = {
   setDefault: "SET_DEFAULT",
   setCompositeOn: "SET_COMPOSITE_ON",
   clearError: "CLEAR_ERROR",
+  setError: "SET_ERROR",
 };
 
 export interface TableFormActionType<T> {
@@ -45,7 +46,9 @@ export interface TableFormUpdatePayloadType {
 }
 
 export type TableFormUpdateActionType = TableFormActionType<
-  Partial<TableFormUpdatePayloadType & { columnID?: string }>
+  Partial<
+    TableFormUpdatePayloadType & { columnID?: string; errorMessage?: string }
+  >
 >;
 
 export interface TableCreationFormStateType {
@@ -53,6 +56,8 @@ export interface TableCreationFormStateType {
   tableName?: string;
   errorState: boolean;
   errorMessage?: string | null;
+  customTypes: {typeName: string; typeEntries: string[]}[];
+  typeMappings: Record<string, string[]>;
   columns: Record<
     string,
     Partial<
@@ -67,6 +72,8 @@ export const initialTableCreationFormState: TableCreationFormStateType = {
   errorState: false,
   errorMessage: null,
   columns: {},
+  customTypes: [],
+  typeMappings: {},
 };
 
 export const tableCreationFormReducer: (
@@ -100,6 +107,8 @@ export const tableCreationFormReducer: (
       newState = {
         tableID,
         errorState: false,
+        customTypes: [],
+        typeMappings: state.typeMappings,
         columns: {
           ...columns,
           [newKey]: {
@@ -161,7 +170,7 @@ export const tableCreationFormReducer: (
       if (!colDefault || !resColumn?.type) return state;
       const supportedDefaultSet = typeDefaultMappings[resColumn?.type];
 
-      let errorState = !supportedDefaultSet.has(colDefault);
+      let errorState = supportedDefaultSet ? !supportedDefaultSet.has(colDefault) : !state.typeMappings[resColumn?.type].includes(colDefault);
 
       if (errorState) {
         let errorMessage =
@@ -183,7 +192,6 @@ export const tableCreationFormReducer: (
       if (resColumn.index === index) return state;
       switch (index) {
         case "COMPOSITE_PRIMARY": {
-          console.log("setting composite primary index");
           const errorState = Object.values(state.columns).some((col) => {
             return col.index === "COMPOSITE_PRIMARY" || col.index === "PRIMARY";
           });
@@ -364,6 +372,12 @@ export const tableCreationFormReducer: (
 
       return newState;
     }
+    case "setError": {
+      const { errorMessage } = payload;
+      if (state.errorMessage && state.errorMessage === errorMessage)
+        return state;
+      return { ...state, errorMessage, errorState: true };
+    }
     default:
       return state;
   }
@@ -377,6 +391,18 @@ export const __clearError: () => TableFormUpdateActionType = () => {
     payload: {},
   };
 };
+
+export const __setError: (errorMessage: string) => TableFormUpdateActionType = (
+  errorMessage
+) => {
+  return {
+    type: "setError",
+    payload: {
+      errorMessage,
+    },
+  };
+};
+
 export const __addColumn: () => TableFormUpdateActionType = () => {
   return {
     type: "addColumn",
@@ -531,7 +557,6 @@ export const selectType: (
 
   return resColumn.type as GlobalColumnTypeType;
 };
-
 
 export const selectDefault: (
   state: TableCreationFormStateType,

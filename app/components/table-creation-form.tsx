@@ -487,7 +487,9 @@ export const TableCreationForm: React.FC = () => {
   const [creationFormState, creationFormDispatch] = useReducer(
     tableCreationFormReducer,
     initialTableCreationFormState,
-    (state) => ({ ...state, tableID: UUIDV4() })
+    (state) => {
+      return { ...state, tableID: UUIDV4() };
+    }
   );
 
   const creationFormValue: TableCreationContextValueType = useMemo(
@@ -515,8 +517,6 @@ export const TableCreationForm: React.FC = () => {
       clearTimeout(timeoutFn);
     };
   }, [creationFormState.errorState]);
-
-  console.log("creation form state is ", creationFormState);
 
   return (
     <TableCreationProvider value={creationFormValue}>
