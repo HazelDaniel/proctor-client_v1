@@ -56,7 +56,6 @@ export interface TableCreationFormStateType {
   tableName?: string;
   errorState: boolean;
   errorMessage?: string | null;
-  customTypes: {typeName: string; typeEntries: string[]}[];
   typeMappings: Record<string, string[]>;
   columns: Record<
     string,
@@ -72,7 +71,6 @@ export const initialTableCreationFormState: TableCreationFormStateType = {
   errorState: false,
   errorMessage: null,
   columns: {},
-  customTypes: [],
   typeMappings: {},
 };
 
@@ -93,21 +91,19 @@ export const tableCreationFormReducer: (
     }
     case "addColumn": {
       const { tableID, columns, tableName } = state;
-      const newKey = UUIDv4();
       let errorState = !!Object.values(state.columns).find((col) => {
         col.name === "";
       });
       if (errorState) {
-        alert("error state happened");
         let errorMessage =
           "you cannot create new columns if existing column names are empty, name them and try again!";
         return { ...state, errorState, errorMessage };
       }
+      const newKey = UUIDv4();
 
       newState = {
         tableID,
         errorState: false,
-        customTypes: [],
         typeMappings: state.typeMappings,
         columns: {
           ...columns,
@@ -354,8 +350,14 @@ export const tableCreationFormReducer: (
       )
         return state; // you can't override the types of composite keys
 
-      const supportedDefaultSet = typeDefaultMappings[colType];
-      const [preferedDefault] = Array.from(supportedDefaultSet);
+      let supportedDefaultSet: string[];
+      if (typeDefaultMappings[colType])
+        supportedDefaultSet = Array.from(typeDefaultMappings[colType]);
+      else {
+        supportedDefaultSet = state.typeMappings[colType];
+      }
+      if (!supportedDefaultSet) return state; // workaround: the typeMappings is only updated from a parent state so, there's a possibility that it won't exist just yet
+      const [preferedDefault] = supportedDefaultSet;
 
       newState.columns[columnID].default = preferedDefault;
 

@@ -34,7 +34,7 @@ export interface TableFormColumnSelectType {
   defaultible?: boolean;
   placeholder: string;
   default: string | number;
-  entries: string[];
+  entries: (string | number) [];
 }
 
 export interface TableFormCompositeSelectType {

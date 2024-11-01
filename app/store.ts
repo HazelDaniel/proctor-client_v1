@@ -16,21 +16,22 @@ import { default as nodesReducer } from "~/reducers/nodes.reducer";
 import { PersistoreStore } from "./dao/persistor-store.dao";
 import { StatefulGroupNodeType, StatefulNodeType } from "./types";
 import { Edge } from "@xyflow/react";
-import {default as globalTypesReducer } from "./reducers/global-types.reducer";
+import { default as globalTypesReducer } from "./reducers/global-types.reducer";
 
 const rootReducer = combineReducers({
   workspace: workspaceReducer,
   nodes: nodesReducer,
-  types: globalTypesReducer
+  types: globalTypesReducer,
 });
 
 const persistConfig: PersistConfig<{
   workspace: ReturnType<typeof workspaceReducer>;
   nodes: ReturnType<typeof nodesReducer>;
-  types: ReturnType<typeof globalTypesReducer>
+  types: ReturnType<typeof globalTypesReducer>;
 }> = {
   key: "root",
-  whitelist: ["workspace", "types"],
+  // whitelist: ["workspace", "types"],
+  whitelist: ["workspace"],
   storage: new PersistoreStore(),
 };
 
@@ -108,7 +109,7 @@ export const nodesSelector = (state: {
       ...value,
       id: key,
       type: "group",
-      data: {...value.data, type: "table", columnName: ""}
+      data: { ...value.data, type: "table", columnName: "" },
     };
     if ("nodes" in res) {
       delete res["nodes"];
@@ -124,7 +125,7 @@ export const edgesSelector: (state: {
 }) => Edge[] = (state) => {
   const result: Edge[] = [];
   for (const [k, v] of [...Object.entries(state.nodes.edges)]) {
-    result.push({...v, id: k})
+    result.push({ ...v, id: k });
   }
   return result;
 };
@@ -171,19 +172,26 @@ export const nodeChildrenLengthSelector =
     return childrenLength;
   };
 
-export const nodesSelectorMemo = createSelector(nodesSelector, (nodes) => {
-  return nodes;
-});
+// TYPES SELECTORS
 
-export const nodeSelectorMemo = (id: string) =>
-  createSelector(nodeSelector(id), (node) => {
-    return node;
-  });
+export const typeDefaultSelector = (state: {
+  types: ReturnType<typeof globalTypesReducer>;
+}) => {
+  return state.types.defaults;
+};
 
-export const subsetNodesSelectorMemo = (ids: Set<string>) =>
-  createSelector(subsetNodesSelector(ids), (state) => {
-    return state;
-  });
+export const typeErrorStateSelector = (state: {
+  types: ReturnType<typeof globalTypesReducer>;
+}) => {
+  const res = {errorState: state.types.errorState, errorMessage: state.types.errorMessage}
+  return res;
+};
+
+export const typeMappingSelector = (state: {
+  types: ReturnType<typeof globalTypesReducer>;
+}) => {
+  return state.types.typeMappings;
+};
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

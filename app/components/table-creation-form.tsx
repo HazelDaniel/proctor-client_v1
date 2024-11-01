@@ -1,6 +1,7 @@
 import { v4 as UUIDV4 } from "uuid";
 import { Form } from "@remix-run/react";
 import React, {
+  ChangeEvent,
   useCallback,
   useContext,
   useEffect,
@@ -66,6 +67,10 @@ import {
   tableCreationContext,
 } from "~/contexts/table-creation-form.context";
 import { useContextSelector } from "~/hooks/usecontextselector";
+import { useDispatch, useSelector } from "react-redux";
+import { typeDefaultSelector, typeMappingSelector } from "~/store";
+import { preview } from "vite";
+import { addType } from "~/reducers/global-types.reducer";
 
 export const TableCheckbox: React.FC<{
   id: string;
@@ -304,7 +309,7 @@ export const FormColumnSelectList: React.FC<{
           {select.entries.map((el) => {
             return (
               <SelectItem
-                value={el}
+                value={`${el}`}
                 className="hover:bg-outline1 hover:text-canvas"
                 key={el}
               >
@@ -318,8 +323,14 @@ export const FormColumnSelectList: React.FC<{
   );
 };
 
-const EnumCreationForm: React.FC = React.memo(
-  () => {
+const EnumCreationForm: React.ForwardRefExoticComponent<React.RefAttributes<HTMLInputElement> > = React.forwardRef(
+  function innerCreationForm (props, ref)  {
+    const [enumFormState, enumFormDispatch] = useState<{
+      typeName: string;
+      typeEntries: string;
+    }>({ typeName: "", typeEntries: "" });
+    const dispatch = useDispatch();
+
     return (
       <Form className="overflow-hidden flex flex-col md:flex-row items-center gap-8 h-[32rem] md:h-[20rem] w-full md:justify-start">
         <div className="w-full md:w-max h-[20rem] md:h-max flex items-center justify-start flex-col md:flex-row md:p-4 md:gap-[10%] md:mr-[20%]">
@@ -332,9 +343,17 @@ const EnumCreationForm: React.FC = React.memo(
             </label>
             <input
               type="text"
-              defaultValue={"RANDOM_ENUM"}
               id="enum-name-column"
               className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
+              value={enumFormState.typeName}
+              ref={ref}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                enumFormDispatch((prev) =>
+                  e.target.value === prev.typeName
+                    ? prev
+                    : { ...prev, typeName: e.target.value }
+                );
+              }}
             />
           </div>
 
@@ -347,14 +366,23 @@ const EnumCreationForm: React.FC = React.memo(
             </label>
             <input
               type="text"
-              defaultValue={"'cup', 'tea', 'coffee'"}
               id="enum-entries-column"
               className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
+              value={enumFormState.typeEntries}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                enumFormDispatch((prev) =>
+                  e.target.value === prev.typeEntries
+                    ? prev
+                    : { ...prev, typeEntries: e.target.value }
+                );
+              }}
             />
           </div>
 
           <div className="h-full w-max flex items-center justify-center">
-            <button className="h-8 w-8 flex items-center justify-center">
+            <button className="h-8 w-8 flex items-center justify-center" onClick={() => {
+              enumFormDispatch({typeEntries: "", typeName: ""})
+            }}>
               <svg className="w-full h-full">
                 <use xlinkHref="#trash"></use>
               </svg>
@@ -363,14 +391,18 @@ const EnumCreationForm: React.FC = React.memo(
         </div>
 
         <input
+          onClick={(e) => {
+            e.preventDefault();
+            dispatch(addType(enumFormState));
+            enumFormDispatch({typeEntries: "", typeName: ""})
+          }}
           type="submit"
           value="create"
           className="capitalize w-max px-8 h-[3rem] rounded-md bg-fg/90 text-bg cursor-pointer ring-outline1 ring-offset-1 ring-1 mb-2 md:mb-0"
         />
       </Form>
     );
-  },
-  (prev, next) => isEqual(prev, next)
+  }
 );
 
 export const TableColumnNameForm: React.FC<{
@@ -447,8 +479,8 @@ export const TableNameForm: React.FC = () => {
   );
 };
 
-export const TableFormCTAArea: React.FC = React.memo(
-  () => {
+export const TableFormCTAArea: React.FC<{setClickAction: React.Dispatch<React.SetStateAction<number>>}> = React.memo(
+  function InnerTableFormCTA ({setClickAction}) {
     const { tableCreationDispatch } = useContext(
       tableCreationContext
     ) as TableCreationContextValueType;
@@ -468,7 +500,9 @@ export const TableFormCTAArea: React.FC = React.memo(
             </span>
           </button>
 
-          <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4">
+          <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4" onClick={() => {
+            setClickAction(prev => prev + 1);
+          }}>
             Create Enum
             <span className="inline-flex w-4 h-4 items-center justify-center">
               <svg>
@@ -484,13 +518,18 @@ export const TableFormCTAArea: React.FC = React.memo(
 );
 
 export const TableCreationForm: React.FC = () => {
+  const globalDefaultsList = useSelector(typeDefaultSelector, isEqual);
+  const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
+
   const [creationFormState, creationFormDispatch] = useReducer(
     tableCreationFormReducer,
     initialTableCreationFormState,
     (state) => {
-      return { ...state, tableID: UUIDV4() };
+      return { ...state, tableID: UUIDV4(), typeMappings: globalTypeMappings };
     }
   );
+
+  const [enumLabelClicks, setEnumLabelClicks] = useState<number>(0);
 
   const creationFormValue: TableCreationContextValueType = useMemo(
     () => ({
@@ -507,6 +546,13 @@ export const TableCreationForm: React.FC = () => {
     });
   }, [creationFormState.columns]);
 
+  const appendedTypes = useMemo(() => {
+    return Object.keys(globalTypeMappings);
+  }, [globalTypeMappings])
+
+  const enumCreationLabelRef = useRef<HTMLInputElement> (null);
+
+
   useEffect(() => {
     if (!creationFormState.errorState) return;
     let timeoutFn = setTimeout(
@@ -517,6 +563,15 @@ export const TableCreationForm: React.FC = () => {
       clearTimeout(timeoutFn);
     };
   }, [creationFormState.errorState]);
+
+  useEffect(() => {
+    if (enumCreationLabelRef.current && enumLabelClicks) {
+      enumCreationLabelRef.current.focus();
+    }
+
+  }, [enumCreationLabelRef, enumLabelClicks])
+
+
 
   return (
     <TableCreationProvider value={creationFormValue}>
@@ -563,7 +618,7 @@ export const TableCreationForm: React.FC = () => {
 
                   <TableCell className=" form-table-cell">
                     <FormColumnSelectList
-                      select={tableColumnFields.type}
+                      select={ {...tableColumnFields.type, entries: [...tableColumnFields.type.entries, ...appendedTypes]} }
                       columnID={column.id}
                       intent="type"
                     />
@@ -595,7 +650,7 @@ export const TableCreationForm: React.FC = () => {
 
                   <TableCell className="w-[8rem] h-max form-table-cell">
                     <FormColumnSelectList
-                      select={tableColumnFields.default}
+                      select={globalDefaultsList}
                       columnID={column.id}
                       intent="default"
                     />
@@ -624,9 +679,9 @@ export const TableCreationForm: React.FC = () => {
 
           <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
 
-          <TableFormCTAArea />
+          <TableFormCTAArea setClickAction={setEnumLabelClicks}/>
 
-          <EnumCreationForm />
+          <EnumCreationForm  ref={enumCreationLabelRef}/>
         </div>
       </div>
     </TableCreationProvider>
