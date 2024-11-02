@@ -69,11 +69,21 @@ import {
 } from "~/contexts/table-creation-form.context";
 import { useContextSelector } from "~/hooks/usecontextselector";
 import { useDispatch, useSelector } from "react-redux";
-import { typeDefaultSelector, typeErrorStateSelector, typeMappingSelector } from "~/store";
+import {
+  typeDefaultSelector,
+  typeErrorStateSelector,
+  typeMappingSelector,
+} from "~/store";
 import { preview } from "vite";
 import { addType, clearError } from "~/reducers/global-types.reducer";
 import { DialogFooter, DialogHeader } from "./ui/dialog";
-import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@radix-ui/react-dialog";
 
 export const TableCheckbox: React.FC<{
   id: string;
@@ -326,111 +336,111 @@ export const FormColumnSelectList: React.FC<{
   );
 };
 
-const EnumCreationForm: React.ForwardRefExoticComponent<React.RefAttributes<HTMLInputElement> > = React.forwardRef(
-  function innerCreationForm (_, ref)  {
+const EnumCreationForm: React.ForwardRefExoticComponent<
+  React.RefAttributes<HTMLInputElement>
+> = React.forwardRef(function innerCreationForm(_, ref) {
+  const [enumFormState, enumFormDispatch] = useState<{
+    typeName: string;
+    typeEntries: string;
+  }>({ typeName: "", typeEntries: "" });
+  const dispatch = useDispatch();
+  const { tableCreationDispatch } = useContext(
+    tableCreationContext
+  ) as TableCreationContextValueType;
 
-    const [enumFormState, enumFormDispatch] = useState<{
-      typeName: string;
-      typeEntries: string;
-    }>({ typeName: "", typeEntries: "" });
-    const dispatch = useDispatch();
-    const { tableCreationDispatch } = useContext(
-      tableCreationContext
-    ) as TableCreationContextValueType;
+  const { errorMessage, errorState } = useSelector(
+    typeErrorStateSelector,
+    isEqual
+  );
 
-    const {errorMessage, errorState} = useSelector(typeErrorStateSelector, isEqual);
-
-    useEffect(() => {
-      if (errorState && errorMessage)
+  useEffect(() => {
+    if (errorState && errorMessage)
       tableCreationDispatch(__setError(errorMessage));
-    }, [errorMessage])
+  }, [errorMessage]);
 
-    useEffect(() => {
-      if (!errorState) return;
-      let timeoutFn = setTimeout(
-        () => dispatch(clearError()),
-        100
-      );
-      return () => {
-        clearTimeout(timeoutFn);
-      };
+  useEffect(() => {
+    if (!errorState) return;
+    let timeoutFn = setTimeout(() => dispatch(clearError()), 100);
+    return () => {
+      clearTimeout(timeoutFn);
+    };
+  }, [errorState]);
 
-    }, [errorState])
-
-
-    return (
-      <Form className="overflow-hidden flex flex-col md:flex-row items-center gap-8 h-[32rem] md:h-[20rem] w-full md:justify-start">
-        <div className="w-full md:w-max h-[20rem] md:h-max flex items-center justify-start flex-col md:flex-row md:p-4 md:gap-[10%] md:mr-[20%]">
-          <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
-            <label
-              htmlFor="enum-name-column"
-              className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
-            >
-              Name
-            </label>
-            <input
-              type="text"
-              id="enum-name-column"
-              className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
-              value={enumFormState.typeName}
-              ref={ref}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                enumFormDispatch((prev) =>
-                  e.target.value === prev.typeName
-                    ? prev
-                    : { ...prev, typeName: e.target.value }
-                );
-              }}
-            />
-          </div>
-
-          <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
-            <label
-              htmlFor="enum-entries-column"
-              className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
-            >
-              Entries (Comma, separated)
-            </label>
-            <input
-              type="text"
-              id="enum-entries-column"
-              className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
-              value={enumFormState.typeEntries}
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                enumFormDispatch((prev) =>
-                  e.target.value === prev.typeEntries
-                    ? prev
-                    : { ...prev, typeEntries: e.target.value }
-                );
-              }}
-            />
-          </div>
-
-          <div className="h-full w-max flex items-center justify-center">
-            <button className="h-8 w-8 flex items-center justify-center" onClick={() => {
-              enumFormDispatch({typeEntries: "", typeName: ""})
-            }}>
-              <svg className="w-full h-full">
-                <use xlinkHref="#trash"></use>
-              </svg>
-            </button>
-          </div>
+  return (
+    <Form className="overflow-hidden flex flex-col md:flex-row items-center gap-8 h-[32rem] md:h-[20rem] w-full md:justify-start">
+      <div className="w-full md:w-max h-[20rem] md:h-max flex items-center justify-start flex-col md:flex-row md:p-4 md:gap-[10%] md:mr-[20%]">
+        <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
+          <label
+            htmlFor="enum-name-column"
+            className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
+          >
+            Name
+          </label>
+          <input
+            type="text"
+            id="enum-name-column"
+            className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
+            value={enumFormState.typeName}
+            ref={ref}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              enumFormDispatch((prev) =>
+                e.target.value === prev.typeName
+                  ? prev
+                  : { ...prev, typeName: e.target.value }
+              );
+            }}
+          />
         </div>
 
-        <input
-          onClick={(e) => {
-            e.preventDefault();
-            dispatch(addType(enumFormState));
-            enumFormDispatch({typeEntries: "", typeName: ""})
-          }}
-          type="submit"
-          value="create"
-          className="capitalize w-max px-8 h-[3rem] rounded-md bg-fg/90 text-bg cursor-pointer ring-outline1 ring-offset-1 ring-1 mb-2 md:mb-0"
-        />
-      </Form>
-    );
-  }
-);
+        <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
+          <label
+            htmlFor="enum-entries-column"
+            className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
+          >
+            Entries (Comma, separated)
+          </label>
+          <input
+            type="text"
+            id="enum-entries-column"
+            className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
+            value={enumFormState.typeEntries}
+            onChange={(e: ChangeEvent<HTMLInputElement>) => {
+              enumFormDispatch((prev) =>
+                e.target.value === prev.typeEntries
+                  ? prev
+                  : { ...prev, typeEntries: e.target.value }
+              );
+            }}
+          />
+        </div>
+
+        <div className="h-full w-max flex items-center justify-center">
+          <button
+            className="h-8 w-8 flex items-center justify-center"
+            onClick={() => {
+              enumFormDispatch({ typeEntries: "", typeName: "" });
+            }}
+          >
+            <svg className="w-full h-full">
+              <use xlinkHref="#trash"></use>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <input
+        onClick={(e) => {
+          e.preventDefault();
+          dispatch(addType(enumFormState));
+          enumFormDispatch({ typeEntries: "", typeName: "" });
+        }}
+        type="submit"
+        value="create"
+        className="capitalize w-max px-8 h-[3rem] rounded-md bg-fg/90 text-bg cursor-pointer ring-outline1 ring-offset-1 ring-1 mb-2 md:mb-0"
+      />
+    </Form>
+  );
+});
 
 export const TableColumnNameForm: React.FC<{
   name: string;
@@ -506,8 +516,10 @@ export const TableNameForm: React.FC = () => {
   );
 };
 
-export const TableFormCTAArea: React.FC<{setClickAction: React.Dispatch<React.SetStateAction<number>>}> = React.memo(
-  function InnerTableFormCTA ({setClickAction}) {
+export const TableFormCTAArea: React.FC<{
+  setClickAction: React.Dispatch<React.SetStateAction<number>>;
+}> = React.memo(
+  function InnerTableFormCTA({ setClickAction }) {
     const { tableCreationDispatch } = useContext(
       tableCreationContext
     ) as TableCreationContextValueType;
@@ -527,9 +539,12 @@ export const TableFormCTAArea: React.FC<{setClickAction: React.Dispatch<React.Se
             </span>
           </button>
 
-          <button className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4" onClick={() => {
-            setClickAction(prev => prev + 1);
-          }}>
+          <button
+            className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4"
+            onClick={() => {
+              setClickAction((prev) => prev + 1);
+            }}
+          >
             Create Enum
             <span className="inline-flex w-4 h-4 items-center justify-center">
               <svg>
@@ -544,182 +559,202 @@ export const TableFormCTAArea: React.FC<{setClickAction: React.Dispatch<React.Se
   (prev, next) => isEqual(prev, next)
 );
 
-export const TableCreationForm: React.FC = React.memo(function innerTableCreationForm() {
-  const globalDefaultsList = useSelector(typeDefaultSelector, isEqual);
-  const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
+export const TableCreationForm: React.FC = React.memo(
+  function innerTableCreationForm() {
+    const globalDefaultsList = useSelector(typeDefaultSelector, isEqual);
+    const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
 
-  const [creationFormState, creationFormDispatch] = useReducer(
-    tableCreationFormReducer,
-    initialTableCreationFormState,
-    (state) => {
-      return { ...state, tableID: UUIDV4(), typeMappings: globalTypeMappings };
-    }
-  );
-
-  const [enumLabelClicks, setEnumLabelClicks] = useState<number>(0);
-
-  const creationFormValue: TableCreationContextValueType = useMemo(
-    () => ({
-      tableCreationState: creationFormState,
-      tableCreationDispatch: creationFormDispatch,
-      state: creationFormState,
-    }),
-    [creationFormState, creationFormDispatch]
-  );
-
-  const columns = useMemo(() => {
-    return Object.entries(creationFormState.columns).map(([k, v]) => {
-      return { id: k, ...v };
-    });
-  }, [creationFormState.columns]);
-
-  const appendedTypes = useMemo(() => {
-    return Object.keys(globalTypeMappings);
-  }, [globalTypeMappings])
-
-  const enumCreationLabelRef = useRef<HTMLInputElement> (null);
-
-
-  useEffect(() => {
-    if (!creationFormState.errorState) return;
-    let timeoutFn = setTimeout(
-      () => creationFormDispatch(__clearError()),
-      5000
+    const [creationFormState, creationFormDispatch] = useReducer(
+      tableCreationFormReducer,
+      initialTableCreationFormState,
+      (state) => {
+        return {
+          ...state,
+          tableID: UUIDV4(),
+          typeMappings: globalTypeMappings,
+        };
+      }
     );
-    return () => {
-      clearTimeout(timeoutFn);
-    };
-  }, [creationFormState.errorState]);
 
-  useEffect(() => {
-    if (enumCreationLabelRef.current && enumLabelClicks) {
-      enumCreationLabelRef.current.focus();
-    }
+    const [enumLabelClicks, setEnumLabelClicks] = useState<number>(0);
 
-  }, [enumCreationLabelRef, enumLabelClicks])
+    const creationFormValue: TableCreationContextValueType = useMemo(
+      () => ({
+        tableCreationState: creationFormState,
+        tableCreationDispatch: creationFormDispatch,
+        state: creationFormState,
+      }),
+      [creationFormState, creationFormDispatch]
+    );
 
-  console.log("the creation form state is: ", creationFormState);
+    const columns = useMemo(() => {
+      return Object.entries(creationFormState.columns).map(([k, v]) => {
+        return { id: k, ...v };
+      });
+    }, [creationFormState.columns]);
 
+    const appendedTypes = useMemo(() => {
+      return Object.keys(globalTypeMappings);
+    }, [globalTypeMappings]);
 
-  return (
-    <>
-      <TableCreationProvider value={creationFormValue}>
-        <div className="w-full h-full overflow-hidden">
-          <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-col md:flex-row items-center justify-between md:pl-[4rem] rounded-md">
-            <TableNameForm />
+    const enumCreationLabelRef = useRef<HTMLInputElement>(null);
 
-            <div
-              className={
-                "md:w-[60%] w-full flex items-center justify-end h-[40%] md:h-full bg-[#ff1d1d23] px-4 order-0 md:order-1" +
-                `${!creationFormState.errorState ? " invisible" : ""}`
-              }
-            >
-              <span className="w-8 h-8">
-                <MessageSquareWarningIcon color="#ff2424d2" />
-              </span>
-              <p className="flex-1 text-danger h-full flex items-center pl-8">
-                {creationFormState.errorMessage || ""}
-              </p>
-            </div>
-          </Form>
+    useEffect(() => {
+      if (!creationFormState.errorState) return;
+      let timeoutFn = setTimeout(
+        () => creationFormDispatch(__clearError()),
+        5000
+      );
+      return () => {
+        clearTimeout(timeoutFn);
+      };
+    }, [creationFormState.errorState]);
 
-          <div className="w-full h-max flex flex-col overflow-auto flex-1 table-form-wrapper min-h-[43rem] md:min-h-[25rem]">
-            <Table className="min-w-[60rem] relative min-h-[45rem]">
-              <TableHeader className="">
-                <TableRow>
-                  <TableHead className="w-[100px]">Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Index</TableHead>
-                  <TableHead className="text-center">Nullible?</TableHead>
-                  <TableHead className="text-center">Unique?</TableHead>
-                  <TableHead className="text-center">DEFAULT</TableHead>
-                  <TableHead className="text-center">Composite On</TableHead>
-                  <TableHead className="text-right w-8"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody className="">
-                {columns.map((column) => (
-                  <TableRow key={column.id}>
-                    <TableColumnNameForm
-                      name={column.name || ""}
-                      columnID={column.id || ""}
-                    />
+    useEffect(() => {
+      if (enumCreationLabelRef.current && enumLabelClicks) {
+        enumCreationLabelRef.current.focus();
+      }
+    }, [enumCreationLabelRef, enumLabelClicks]);
 
-                    <TableCell className=" form-table-cell">
-                      <FormColumnSelectList
-                        select={ {...tableColumnFields.type, entries: [...tableColumnFields.type.entries, ...appendedTypes]} }
-                        columnID={column.id}
-                        intent="type"
-                      />
-                    </TableCell>
+    console.log("the creation form state is: ", creationFormState);
 
-                    <TableCell className="max-h-[5rem] form-table-cell">
-                      <FormColumnSelectList
-                        select={tableColumnFields.index}
-                        columnID={column.id}
-                        intent="index"
-                      />
-                    </TableCell>
+    return (
+      <>
+        <TableCreationProvider value={creationFormValue}>
+          <div className="w-full h-full overflow-hidden">
+            <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-col md:flex-row items-center justify-between md:pl-[4rem] rounded-md">
+              <TableNameForm />
 
-                    <TableCell className="text-right h-max form-table-cell">
-                      <TableCheckbox
-                        id={`${column.name}-nullible`}
-                        columnID={column.id}
-                        intent="nullibility"
-                      />
-                    </TableCell>
+              <div
+                className={
+                  "md:w-[60%] w-full flex items-center justify-end h-[40%] md:h-full bg-[#ff1d1d23] px-4 order-0 md:order-1" +
+                  `${!creationFormState.errorState ? " invisible" : ""}`
+                }
+              >
+                <span className="w-8 h-8">
+                  <MessageSquareWarningIcon color="#ff2424d2" />
+                </span>
+                <p className="flex-1 text-danger h-full flex items-center pl-8">
+                  {creationFormState.errorMessage || ""}
+                </p>
+              </div>
+            </Form>
 
-                    <TableCell className="text-right h-max form-table-cell">
-                      <TableCheckbox
-                        id={`${column.name}-unique`}
-                        columnID={column.id}
-                        intent="uniqueness"
-                      />
-                    </TableCell>
-
-                    <TableCell className="w-[8rem] h-max form-table-cell">
-                      <FormColumnSelectList
-                        select={globalDefaultsList}
-                        columnID={column.id}
-                        intent="default"
-                      />
-                    </TableCell>
-
-                    <TableCell className="w-[8rem] h-max form-table-cell">
-                      <FormCompositeSelectList columnID={column.id} />
-                    </TableCell>
-
-                    <TableCell className="w-[8rem] h-[8rem] form-table-cell">
-                      <div
-                        className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto"
-                        onClick={() => {
-                          creationFormDispatch(__dropColumn(column.id));
-                        }}
-                      >
-                        <svg className="w-full h-full">
-                          <use xlinkHref="#trash"></use>
-                        </svg>
-                      </div>
-                    </TableCell>
+            <div className="w-full h-max flex flex-col overflow-auto flex-1 table-form-wrapper min-h-[43rem] md:min-h-[25rem]">
+              <Table className="min-w-[60rem] relative min-h-[45rem]">
+                <TableHeader className="">
+                  <TableRow>
+                    <TableHead className="w-[100px]">Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Index</TableHead>
+                    <TableHead className="text-center">Nullible?</TableHead>
+                    <TableHead className="text-center">Unique?</TableHead>
+                    <TableHead className="text-center">DEFAULT</TableHead>
+                    <TableHead className="text-center">Composite On</TableHead>
+                    <TableHead className="text-right w-8"></TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {columns.map((column) => (
+                    <TableRow key={column.id}>
+                      <TableColumnNameForm
+                        name={column.name || ""}
+                        columnID={column.id || ""}
+                      />
 
-            <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
+                      <TableCell className=" form-table-cell">
+                        <FormColumnSelectList
+                          select={{
+                            ...tableColumnFields.type,
+                            entries: [
+                              ...tableColumnFields.type.entries,
+                              ...appendedTypes,
+                            ],
+                          }}
+                          columnID={column.id}
+                          intent="type"
+                        />
+                      </TableCell>
 
-            <TableFormCTAArea setClickAction={setEnumLabelClicks}/>
+                      <TableCell className="max-h-[5rem] form-table-cell">
+                        <FormColumnSelectList
+                          select={tableColumnFields.index}
+                          columnID={column.id}
+                          intent="index"
+                        />
+                      </TableCell>
 
-            <EnumCreationForm  ref={enumCreationLabelRef}/>
+                      <TableCell className="text-right h-max form-table-cell">
+                        <TableCheckbox
+                          id={`${column.name}-nullible`}
+                          columnID={column.id}
+                          intent="nullibility"
+                        />
+                      </TableCell>
+
+                      <TableCell className="text-right h-max form-table-cell">
+                        <TableCheckbox
+                          id={`${column.name}-unique`}
+                          columnID={column.id}
+                          intent="uniqueness"
+                        />
+                      </TableCell>
+
+                      <TableCell className="w-[8rem] h-max form-table-cell">
+                        <FormColumnSelectList
+                          select={globalDefaultsList}
+                          columnID={column.id}
+                          intent="default"
+                        />
+                      </TableCell>
+
+                      <TableCell className="w-[8rem] h-max form-table-cell">
+                        <FormCompositeSelectList columnID={column.id} />
+                      </TableCell>
+
+                      <TableCell className="w-[8rem] h-[8rem] form-table-cell">
+                        <div
+                          className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto"
+                          onClick={() => {
+                            creationFormDispatch(__dropColumn(column.id));
+                          }}
+                        >
+                          <svg className="w-full h-full">
+                            <use xlinkHref="#trash"></use>
+                          </svg>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+
+              <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
+
+              <TableFormCTAArea setClickAction={setEnumLabelClicks} />
+
+              <EnumCreationForm ref={enumCreationLabelRef} />
+            </div>
           </div>
-        </div>
-      </TableCreationProvider>
+        </TableCreationProvider>
 
-      <DialogFooter className="sm:justify-start">
-        <DialogClose asChild>
-          <button type="button">Close</button>
-        </DialogClose>
-      </DialogFooter>
-    </>
-  );
-});
+        <DialogFooter className="sm:justify-start w-full">
+          <div className="w-full flex justify-end">
+            <button className="w-[8rem] h-[3.2rem] bg-canvas text-fg mr-8 outline-double rounded-md">
+              Cancel
+            </button>
+              <button
+                type="button"
+                className="w-[8rem] h-[3.2rem] bg-fg text-bg rounded-md hover:ring-fg ring-offset-2 active:border-2"
+              >
+                Continue
+              </button>
+
+              <DialogClose asChild className="w-[8rem] h-[3.2rem] hidden">
+              </DialogClose>
+          </div>
+        </DialogFooter>
+      </>
+    );
+  }
+);

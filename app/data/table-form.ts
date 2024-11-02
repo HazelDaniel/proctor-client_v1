@@ -1,6 +1,33 @@
 import { TableFormFieldsType } from "~/types";
 import TableGlobalTypes from "./table-globals";
 
+const sqlReservedKeywords = [
+  "ADD", "ALL", "ALTER", "AND", "ANY", "AS", "ASC", "BACKUP", "BETWEEN", "BY",
+  "CASE", "CHECK", "COLUMN", "CONSTRAINT", "CREATE", "DATABASE", "DEFAULT", "DELETE",
+  "DESC", "DISTINCT", "DROP", "EXEC", "EXISTS", "FOREIGN", "FROM", "FULL", "GROUP",
+  "HAVING", "IN", "INDEX", "INNER", "INSERT", "INTO", "IS", "JOIN", "KEY", "LEFT",
+  "LIKE", "LIMIT", "NOT", "NULL", "ON", "OR", "ORDER", "OUTER", "PRIMARY", "PROCEDURE",
+  "RIGHT", "ROW", "SELECT", "SET", "TABLE", "TOP", "TRUNCATE", "UNION", "UNIQUE",
+  "UPDATE", "VALUES", "VIEW", "WHERE",
+  
+  // Data Types
+  "BIGINT", "BINARY", "BIT", "BLOB", "BOOLEAN", "CHAR", "DATE", "DECIMAL", "DOUBLE",
+  "ENUM", "FLOAT", "INT", "INTEGER", "MONEY", "NUMBER", "NUMERIC", "REAL", "SERIAL",
+  "SMALLINT", "TEXT", "TIME", "TIMESTAMP", "TINYINT", "VARCHAR", "XML",
+  
+  // Control Statements
+  "BEGIN", "COMMIT", "END", "EXECUTE", "FETCH", "GRANT", "IF", "LOOP", "PRINT",
+  "ROLLBACK", "SAVEPOINT", "SET", "TRANSACTION", "TRIGGER", "WHILE",
+  
+  // Database-Specific Keywords
+  "ANALYZE", "OPTIMIZE", "REPLACE", "SHOW", "LANGUAGE", "RETURNS", "IMMUTABLE",
+  "STABLE", "GO", "OPENQUERY", "PIVOT", "RAISERROR", "FLASHBACK", "MERGE",
+  "NOCOPY", "RAW", "SEQUENCE"
+];
+
+export const reservedSQLKeywords = new Set(sqlReservedKeywords);
+
+
 const typeSupportHash = {
   TIMESTAMPTZ: true,
   "VARCHAR (256)": true,

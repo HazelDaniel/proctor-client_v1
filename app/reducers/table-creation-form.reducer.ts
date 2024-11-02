@@ -2,9 +2,11 @@ import {
   GlobalColumnIndexType,
   GlobalColumnTypeType,
   internalIndexMarkers,
+  reservedSQLKeywords,
   typeDefaultMappings,
 } from "~/data/table-form";
 import { v4 as UUIDv4 } from "uuid";
+import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
 
 export const tableFormActionTypes = {
   dropColumn: "DROP_COLUMN",
@@ -19,6 +21,7 @@ export const tableFormActionTypes = {
   setCompositeOn: "SET_COMPOSITE_ON",
   clearError: "CLEAR_ERROR",
   setError: "SET_ERROR",
+  validate: "VALIDATE",
 };
 
 export interface TableFormActionType<T> {
@@ -166,7 +169,9 @@ export const tableCreationFormReducer: (
       if (!colDefault || !resColumn?.type) return state;
       const supportedDefaultSet = typeDefaultMappings[resColumn?.type];
 
-      let errorState = supportedDefaultSet ? !supportedDefaultSet.has(colDefault) : !state.typeMappings[resColumn?.type].includes(colDefault);
+      let errorState = supportedDefaultSet
+        ? !supportedDefaultSet.has(colDefault)
+        : !state.typeMappings[resColumn?.type].includes(colDefault);
 
       if (errorState) {
         let errorMessage =
@@ -380,12 +385,57 @@ export const tableCreationFormReducer: (
         return state;
       return { ...state, errorMessage, errorState: true };
     }
+    case "validate": {
+      try {
+        validateColumnName(state);
+      } catch (err) {
+        const errorMessage = (err as Error).message;
+        return { ...state, errorState: true, errorMessage };
+      }
+      return state;
+    }
     default:
       return state;
   }
 };
 
+// EXPLICIT STATE VALIDATORS
+function validateColumnName(state: TableCreationFormStateType) {
+  const stateColumns = Array.from(Object.values(state.columns));
+
+  const emptyValidator = (
+    cols: TableCreationFormStateType["columns"][string][]
+  ) => {
+    return cols.every((el) => !!el.name);
+  };
+
+  const reservedValidator = (
+    cols: TableCreationFormStateType["columns"][string][]
+  ) => {
+    return cols.every((el) => !reservedSQLKeywords.has(el.name as string));
+  };
+
+  const tableNameValidator = () => !!state.tableName;
+
+  assertion.construct([tableNameValidator], "the table cannot be empty");
+  assertion.construct(
+    [() => emptyValidator(stateColumns)],
+    "some column names are empty"
+  );
+  assertion.construct(
+    [() => reservedValidator(stateColumns)],
+    "some column names are reserved keywords"
+  );
+}
+
 // ACTION PRODUCERS
+
+export const __validate: () => TableFormUpdateActionType = () => {
+  return {
+    type: "validate",
+    payload: {},
+  };
+};
 
 export const __clearError: () => TableFormUpdateActionType = () => {
   return {
