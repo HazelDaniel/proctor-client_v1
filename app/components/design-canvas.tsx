@@ -7,7 +7,6 @@ import {
   Node,
   NodeProps,
   NodeToolbar,
-  NodeTypes,
   OnConnect,
   Panel,
   Position,
@@ -17,15 +16,9 @@ import {
   XYPosition,
   addEdge,
   useEdgesState,
-  useNodesState,
-  useReactFlow,
-  useUpdateNodeInternals,
 } from "@xyflow/react";
 import React, {
   CSSProperties,
-  ChangeEvent,
-  Children,
-  ReactNode,
   useCallback,
   useContext,
   useEffect,
@@ -44,7 +37,6 @@ import {
   designPaneContext,
 } from "~/contexts/design-pane.context";
 import { handleKeyPress } from "~/event-handlers/workspace.handlers";
-import { useDebounce } from "~/hooks/usedebounce";
 import useEventListener from "~/hooks/useevent";
 import { __addBubble, selectChatBubbles } from "~/reducers/chat-bubble.reducer";
 import {
@@ -57,20 +49,15 @@ import {
   childNodePositionSelector,
   edgesSelector,
   nodeChildrenLengthSelector,
-  nodeSelector,
   nodesSelector,
   settingsSelector,
   store,
-  subsetNodesSelector,
 } from "~/store";
 import { StatefulNodeType, statefulNodeColorType } from "~/types";
 import { isEqual } from "~/utils/comparison";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -172,18 +159,13 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
                 </svg>
               </button>
             </DialogTrigger>
-            <DialogContent className="w-[80vw] min-w-[95vw] h-[60rem] md:h-[40rem] rounded-lg flex flex-col items-center p-8" aria-describedby="">
+            <DialogContent className="w-[80vw] min-w-[95vw] h-[clamp(60rem, 95vh, 60rem)] md:h-[clamp(40rem, 95vh, 99vh)] rounded-lg flex flex-col items-center p-8 form-creation-dialog-content" aria-describedby="">
               <DialogHeader className="h-max mr-auto">
                 <DialogTitle>Add Table</DialogTitle>
               </DialogHeader>
 
               <TableCreationForm />
 
-              <DialogFooter className="sm:justify-start">
-                <DialogClose asChild>
-                  <button type="button">Close</button>
-                </DialogClose>
-              </DialogFooter>
             </DialogContent>
           </Dialog>
         </li>

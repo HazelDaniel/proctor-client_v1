@@ -40,8 +40,9 @@ function parseCSV(input: string): ParsedResult {
 
   switch (expectedType) {
     case "float": {
+      console.log("using float parsing logic");
       return items.map((item, index) => {
-        if (!floatPattern.test(item)) {
+        if (!floatPattern.test(item) || Number.isNaN(+item)) {
           throw new Error(
             `Item at position ${index} is not a valid float: ${item}`
           );
@@ -50,8 +51,9 @@ function parseCSV(input: string): ParsedResult {
       });
     }
     case "number": {
+      console.log("using number parsing logic");
       return items.map((item, index) => {
-        if (!numberPattern.test(item)) {
+        if (!numberPattern.test(item) || Number.isNaN(+item)) {
           throw new Error(
             `Item at position ${index} is not a valid integer: ${item}`
           );
@@ -60,6 +62,7 @@ function parseCSV(input: string): ParsedResult {
       });
     }
     case "string": {
+      console.log("using string parsing logic");
       return items.map((item, index) => {
         const match = item.match(stringPattern);
         if (!match) {

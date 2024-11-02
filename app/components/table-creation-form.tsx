@@ -46,6 +46,7 @@ import {
   __dropColumn,
   __setCompositeOn,
   __setDefault,
+  __setError,
   __setIndex,
   __setName,
   __setTableName,
@@ -68,9 +69,11 @@ import {
 } from "~/contexts/table-creation-form.context";
 import { useContextSelector } from "~/hooks/usecontextselector";
 import { useDispatch, useSelector } from "react-redux";
-import { typeDefaultSelector, typeMappingSelector } from "~/store";
+import { typeDefaultSelector, typeErrorStateSelector, typeMappingSelector } from "~/store";
 import { preview } from "vite";
-import { addType } from "~/reducers/global-types.reducer";
+import { addType, clearError } from "~/reducers/global-types.reducer";
+import { DialogFooter, DialogHeader } from "./ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogTrigger } from "@radix-ui/react-dialog";
 
 export const TableCheckbox: React.FC<{
   id: string;
@@ -324,12 +327,36 @@ export const FormColumnSelectList: React.FC<{
 };
 
 const EnumCreationForm: React.ForwardRefExoticComponent<React.RefAttributes<HTMLInputElement> > = React.forwardRef(
-  function innerCreationForm (props, ref)  {
+  function innerCreationForm (_, ref)  {
+
     const [enumFormState, enumFormDispatch] = useState<{
       typeName: string;
       typeEntries: string;
     }>({ typeName: "", typeEntries: "" });
     const dispatch = useDispatch();
+    const { tableCreationDispatch } = useContext(
+      tableCreationContext
+    ) as TableCreationContextValueType;
+
+    const {errorMessage, errorState} = useSelector(typeErrorStateSelector, isEqual);
+
+    useEffect(() => {
+      if (errorState && errorMessage)
+      tableCreationDispatch(__setError(errorMessage));
+    }, [errorMessage])
+
+    useEffect(() => {
+      if (!errorState) return;
+      let timeoutFn = setTimeout(
+        () => dispatch(clearError()),
+        100
+      );
+      return () => {
+        clearTimeout(timeoutFn);
+      };
+
+    }, [errorState])
+
 
     return (
       <Form className="overflow-hidden flex flex-col md:flex-row items-center gap-8 h-[32rem] md:h-[20rem] w-full md:justify-start">
@@ -471,7 +498,7 @@ export const TableNameForm: React.FC = () => {
       value={tableName}
       id=""
       placeholder="input table name"
-      className="w-[20rem] p-2 shadow-input shadow-none rounded-md h-8 caret-outline1d placeholder:text-outline1 placeholder:italic bg-canvas"
+      className="w-[20rem] p-2 shadow-input shadow-none rounded-md h-8 caret-outline1d placeholder:text-outline1 placeholder:italic bg-canvas order-1 md:order-0"
       onChange={(e) => {
         setTableName(e.target.value);
       }}
@@ -517,7 +544,7 @@ export const TableFormCTAArea: React.FC<{setClickAction: React.Dispatch<React.Se
   (prev, next) => isEqual(prev, next)
 );
 
-export const TableCreationForm: React.FC = () => {
+export const TableCreationForm: React.FC = React.memo(function innerTableCreationForm() {
   const globalDefaultsList = useSelector(typeDefaultSelector, isEqual);
   const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
 
@@ -571,119 +598,128 @@ export const TableCreationForm: React.FC = () => {
 
   }, [enumCreationLabelRef, enumLabelClicks])
 
+  console.log("the creation form state is: ", creationFormState);
 
 
   return (
-    <TableCreationProvider value={creationFormValue}>
-      <div className="w-full h-full overflow-hidden">
-        <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-row items-center justify-between pl-[4rem] rounded-md">
-          <TableNameForm />
+    <>
+      <TableCreationProvider value={creationFormValue}>
+        <div className="w-full h-full overflow-hidden">
+          <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-col md:flex-row items-center justify-between md:pl-[4rem] rounded-md">
+            <TableNameForm />
 
-          <div
-            className={
-              "w-[60%] flex items-center justify-end h-full bg-[#ff1d1d23] px-4" +
-              `${!creationFormState.errorState ? " invisible" : ""}`
-            }
-          >
-            <span className="w-8 h-8">
-              <MessageSquareWarningIcon color="#ff2424d2" />
-            </span>
-            <p className="flex-1 text-danger h-full flex items-center pl-8">
-              {creationFormState.errorMessage || ""}
-            </p>
-          </div>
-        </Form>
+            <div
+              className={
+                "md:w-[60%] w-full flex items-center justify-end h-[40%] md:h-full bg-[#ff1d1d23] px-4 order-0 md:order-1" +
+                `${!creationFormState.errorState ? " invisible" : ""}`
+              }
+            >
+              <span className="w-8 h-8">
+                <MessageSquareWarningIcon color="#ff2424d2" />
+              </span>
+              <p className="flex-1 text-danger h-full flex items-center pl-8">
+                {creationFormState.errorMessage || ""}
+              </p>
+            </div>
+          </Form>
 
-        <div className="w-full h-max flex flex-col overflow-auto flex-1 table-form-wrapper min-h-[43rem] md:min-h-[25rem]">
-          <Table className="min-w-[60rem] relative min-h-[45rem]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Index</TableHead>
-                <TableHead className="text-center">Nullible?</TableHead>
-                <TableHead className="text-center">Unique?</TableHead>
-                <TableHead className="text-center">DEFAULT</TableHead>
-                <TableHead className="text-center">Composite On</TableHead>
-                <TableHead className="text-right w-8"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="">
-              {columns.map((column) => (
-                <TableRow key={column.id}>
-                  <TableColumnNameForm
-                    name={column.name || ""}
-                    columnID={column.id || ""}
-                  />
-
-                  <TableCell className=" form-table-cell">
-                    <FormColumnSelectList
-                      select={ {...tableColumnFields.type, entries: [...tableColumnFields.type.entries, ...appendedTypes]} }
-                      columnID={column.id}
-                      intent="type"
-                    />
-                  </TableCell>
-
-                  <TableCell className="max-h-[5rem] form-table-cell">
-                    <FormColumnSelectList
-                      select={tableColumnFields.index}
-                      columnID={column.id}
-                      intent="index"
-                    />
-                  </TableCell>
-
-                  <TableCell className="text-right h-max form-table-cell">
-                    <TableCheckbox
-                      id={`${column.name}-nullible`}
-                      columnID={column.id}
-                      intent="nullibility"
-                    />
-                  </TableCell>
-
-                  <TableCell className="text-right h-max form-table-cell">
-                    <TableCheckbox
-                      id={`${column.name}-unique`}
-                      columnID={column.id}
-                      intent="uniqueness"
-                    />
-                  </TableCell>
-
-                  <TableCell className="w-[8rem] h-max form-table-cell">
-                    <FormColumnSelectList
-                      select={globalDefaultsList}
-                      columnID={column.id}
-                      intent="default"
-                    />
-                  </TableCell>
-
-                  <TableCell className="w-[8rem] h-max form-table-cell">
-                    <FormCompositeSelectList columnID={column.id} />
-                  </TableCell>
-
-                  <TableCell className="w-[8rem] h-[8rem] form-table-cell">
-                    <div
-                      className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto"
-                      onClick={() => {
-                        creationFormDispatch(__dropColumn(column.id));
-                      }}
-                    >
-                      <svg className="w-full h-full">
-                        <use xlinkHref="#trash"></use>
-                      </svg>
-                    </div>
-                  </TableCell>
+          <div className="w-full h-max flex flex-col overflow-auto flex-1 table-form-wrapper min-h-[43rem] md:min-h-[25rem]">
+            <Table className="min-w-[60rem] relative min-h-[45rem]">
+              <TableHeader className="">
+                <TableRow>
+                  <TableHead className="w-[100px]">Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Index</TableHead>
+                  <TableHead className="text-center">Nullible?</TableHead>
+                  <TableHead className="text-center">Unique?</TableHead>
+                  <TableHead className="text-center">DEFAULT</TableHead>
+                  <TableHead className="text-center">Composite On</TableHead>
+                  <TableHead className="text-right w-8"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody className="">
+                {columns.map((column) => (
+                  <TableRow key={column.id}>
+                    <TableColumnNameForm
+                      name={column.name || ""}
+                      columnID={column.id || ""}
+                    />
 
-          <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
+                    <TableCell className=" form-table-cell">
+                      <FormColumnSelectList
+                        select={ {...tableColumnFields.type, entries: [...tableColumnFields.type.entries, ...appendedTypes]} }
+                        columnID={column.id}
+                        intent="type"
+                      />
+                    </TableCell>
 
-          <TableFormCTAArea setClickAction={setEnumLabelClicks}/>
+                    <TableCell className="max-h-[5rem] form-table-cell">
+                      <FormColumnSelectList
+                        select={tableColumnFields.index}
+                        columnID={column.id}
+                        intent="index"
+                      />
+                    </TableCell>
 
-          <EnumCreationForm  ref={enumCreationLabelRef}/>
+                    <TableCell className="text-right h-max form-table-cell">
+                      <TableCheckbox
+                        id={`${column.name}-nullible`}
+                        columnID={column.id}
+                        intent="nullibility"
+                      />
+                    </TableCell>
+
+                    <TableCell className="text-right h-max form-table-cell">
+                      <TableCheckbox
+                        id={`${column.name}-unique`}
+                        columnID={column.id}
+                        intent="uniqueness"
+                      />
+                    </TableCell>
+
+                    <TableCell className="w-[8rem] h-max form-table-cell">
+                      <FormColumnSelectList
+                        select={globalDefaultsList}
+                        columnID={column.id}
+                        intent="default"
+                      />
+                    </TableCell>
+
+                    <TableCell className="w-[8rem] h-max form-table-cell">
+                      <FormCompositeSelectList columnID={column.id} />
+                    </TableCell>
+
+                    <TableCell className="w-[8rem] h-[8rem] form-table-cell">
+                      <div
+                        className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto"
+                        onClick={() => {
+                          creationFormDispatch(__dropColumn(column.id));
+                        }}
+                      >
+                        <svg className="w-full h-full">
+                          <use xlinkHref="#trash"></use>
+                        </svg>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
+
+            <TableFormCTAArea setClickAction={setEnumLabelClicks}/>
+
+            <EnumCreationForm  ref={enumCreationLabelRef}/>
+          </div>
         </div>
-      </div>
-    </TableCreationProvider>
+      </TableCreationProvider>
+
+      <DialogFooter className="sm:justify-start">
+        <DialogClose asChild>
+          <button type="button">Close</button>
+        </DialogClose>
+      </DialogFooter>
+    </>
   );
-};
+});
