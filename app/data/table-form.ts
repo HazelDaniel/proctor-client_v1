@@ -1,4 +1,4 @@
-import { TableFormFieldsType } from "~/types";
+import { GlobalColumnIndexType, GlobalColumnTypeType, TableFormFieldsType } from "~/types";
 import TableGlobalTypes from "./table-globals";
 
 const sqlReservedKeywords = [
@@ -13,7 +13,8 @@ const sqlReservedKeywords = [
   // Data Types
   "BIGINT", "BINARY", "BIT", "BLOB", "BOOLEAN", "CHAR", "DATE", "DECIMAL", "DOUBLE",
   "ENUM", "FLOAT", "INT", "INTEGER", "MONEY", "NUMBER", "NUMERIC", "REAL", "SERIAL",
-  "SMALLINT", "TEXT", "TIME", "TIMESTAMP", "TINYINT", "VARCHAR", "XML",
+  "SMALLINT", "TEXT", "TIME", "TIMESTAMP", "TINYINT", "VARCHAR", "XML", "TIMESTAMPTZ",
+  "JSONB", "BYTEA", "HSTORE", "JSON",
   
   // Control Statements
   "BEGIN", "COMMIT", "END", "EXECUTE", "FETCH", "GRANT", "IF", "LOOP", "PRINT",
@@ -28,29 +29,6 @@ const sqlReservedKeywords = [
 export const reservedSQLKeywords = new Set(sqlReservedKeywords);
 
 
-const typeSupportHash = {
-  TIMESTAMPTZ: true,
-  "VARCHAR (256)": true,
-  TEXT: true,
-  NUMERIC: true,
-  UUID: true,
-  BIGINT: true,
-  BIGSERIAL: true,
-  SERIAL: true,
-  INT: true,
-  YEAR: true,
-};
-
-const indexSupportHash = {
-  "PRIMARY": true,
-  "FOREIGN": true,
-  "NONE": true,
-  "COMPOSITE_PRIMARY": true,
-  "COMPOSITE_FOREIGN": true,
-}
-
-export type GlobalColumnTypeType = keyof typeof typeSupportHash;
-export type GlobalColumnIndexType = keyof typeof indexSupportHash;
 
 export const internalIndexMarkers: Omit<Record<GlobalColumnIndexType, string>, "PRIMARY" | "FOREIGN" | "NONE"> = {
   "COMPOSITE_FOREIGN": "<COMPOSITE_FOREIGN>",

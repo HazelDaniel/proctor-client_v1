@@ -14,6 +14,7 @@ const initialNodesState: NodesStateType = {
         label: "customers",
         toolbarVisible: true,
         toolbarPosition: "top",
+        type: "table"
       },
       position: { x: 0, y: 0 },
       type: "group",
@@ -76,7 +77,7 @@ const initialNodesState: NodesStateType = {
       },
     },
     "gnode-b": {
-      data: { label: "orders", toolbarVisible: true, type: "table" },
+      data: { label: "orders", toolbarVisible: true, type: "table", },
       position: { x: 520, y: 200 },
       type: "group",
       className: "table-node-group",

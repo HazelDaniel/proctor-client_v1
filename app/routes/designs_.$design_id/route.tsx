@@ -282,7 +282,7 @@ const CommentBoard: React.FC<{
             );
           })
         ) : (
-          <p className="my-auto w-full h-full top-1/2 self-center justify-self-center flex items-center justify-center italic text-outline1">
+          <p className="my-auto w-full h-full top-1/2 self-center justify-self-center flex items-center justify-center italic text-muted-foreground">
             comments for this session will show here.
           </p>
         )}

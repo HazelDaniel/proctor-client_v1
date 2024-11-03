@@ -1,10 +1,9 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import {
-  GlobalColumnTypeType,
   supportedSQLTypes,
   tableColumnFields,
 } from "~/data/table-form";
-import { TableFormColumnSelectType } from "~/types";
+import { TableFormColumnSelectType, GlobalColumnTypeType } from "~/types";
 
 interface GlobalTypeStateType {
   errorState: boolean;
@@ -13,14 +12,14 @@ interface GlobalTypeStateType {
   typeMappings: Record<string, string[]>;
   defaults: TableFormColumnSelectType;
 }
+
 type ParsedResult = number[] | string[];
 
 function parseCSV(input: string): ParsedResult {
   const items = input.split(",").map((item) => item.trim());
 
-  if (items.length === 0) {
-    throw new Error("entries are empty");
-  }
+  if (items.length === 0) throw new Error("entries are empty");
+
   const numberPattern = /^-?\d+$/;
   const floatPattern = /^-?\d*\.\d+$/;
   const stringPattern = /^(['"])(.*?)\1$/;
@@ -40,7 +39,6 @@ function parseCSV(input: string): ParsedResult {
 
   switch (expectedType) {
     case "float": {
-      console.log("using float parsing logic");
       return items.map((item, index) => {
         if (!floatPattern.test(item) || Number.isNaN(+item)) {
           throw new Error(
@@ -51,7 +49,6 @@ function parseCSV(input: string): ParsedResult {
       });
     }
     case "number": {
-      console.log("using number parsing logic");
       return items.map((item, index) => {
         if (!numberPattern.test(item) || Number.isNaN(+item)) {
           throw new Error(
@@ -62,7 +59,6 @@ function parseCSV(input: string): ParsedResult {
       });
     }
     case "string": {
-      console.log("using string parsing logic");
       return items.map((item, index) => {
         const match = item.match(stringPattern);
         if (!match) {

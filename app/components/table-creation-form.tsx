@@ -1,4 +1,4 @@
-import { v4 as UUIDV4 } from "uuid";
+import { v7 as UUIDv7 } from "uuid";
 import { Form } from "@remix-run/react";
 import React, {
   ChangeEvent,
@@ -27,17 +27,12 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
 import { MessageSquareWarningIcon } from "lucide-react";
-import { TableFormColumnSelectType } from "~/types";
-import {
-  GlobalColumnIndexType,
-  GlobalColumnTypeType,
-  tableColumnFields,
-} from "~/data/table-form";
+import { TableFormColumnSelectType, GlobalColumnIndexType, GlobalColumnTypeType } from "~/types";
+import { tableColumnFields } from "~/data/table-form";
 import { useDebounce } from "~/hooks/usedebounce";
 import { isEqual } from "~/utils/comparison";
 import {
@@ -53,6 +48,7 @@ import {
   __setType,
   __toggleNullibility,
   __toggleUniqueness,
+  __validate,
   initialTableCreationFormState,
   selectCompositeColumns,
   selectDefault,
@@ -74,15 +70,10 @@ import {
   typeErrorStateSelector,
   typeMappingSelector,
 } from "~/store";
-import { preview } from "vite";
 import { addType, clearError } from "~/reducers/global-types.reducer";
-import { DialogFooter, DialogHeader } from "./ui/dialog";
+import { DialogFooter } from "./ui/dialog";
 import {
-  Dialog,
   DialogClose,
-  DialogContent,
-  DialogTitle,
-  DialogTrigger,
 } from "@radix-ui/react-dialog";
 
 export const TableCheckbox: React.FC<{
@@ -570,14 +561,17 @@ export const TableCreationForm: React.FC = React.memo(
       (state) => {
         return {
           ...state,
-          tableID: UUIDV4(),
+          tableID: UUIDv7(),
           typeMappings: globalTypeMappings,
         };
       }
     );
 
     const [enumLabelClicks, setEnumLabelClicks] = useState<number>(0);
+    const [tableActionButtonClicks, setTableActionButtonClicks] =
+      useState<number>(0);
 
+    const formCloseButtonRef = useRef<HTMLButtonElement>(null);
     const creationFormValue: TableCreationContextValueType = useMemo(
       () => ({
         tableCreationState: creationFormState,
@@ -599,6 +593,7 @@ export const TableCreationForm: React.FC = React.memo(
 
     const enumCreationLabelRef = useRef<HTMLInputElement>(null);
 
+    // 'FLASHING' THE ERROR STATE
     useEffect(() => {
       if (!creationFormState.errorState) return;
       let timeoutFn = setTimeout(
@@ -610,13 +605,19 @@ export const TableCreationForm: React.FC = React.memo(
       };
     }, [creationFormState.errorState]);
 
+    // WHEN YOU CLICK ON THE 'CREATE ENUM' BUTTON
     useEffect(() => {
       if (enumCreationLabelRef.current && enumLabelClicks) {
         enumCreationLabelRef.current.focus();
       }
     }, [enumCreationLabelRef, enumLabelClicks]);
 
-    console.log("the creation form state is: ", creationFormState);
+    // AFTER FORM HAS BEEN SUCCESSFULLY VALIDATED FOR SUBMISSION
+    useEffect(() => {
+      if (creationFormState.errorState) return;
+      if (formCloseButtonRef.current && tableActionButtonClicks)
+        formCloseButtonRef.current.click();
+    }, [tableActionButtonClicks]);
 
     return (
       <>
@@ -740,21 +741,36 @@ export const TableCreationForm: React.FC = React.memo(
 
         <DialogFooter className="sm:justify-start w-full">
           <div className="w-full flex justify-end">
-            <button className="w-[8rem] h-[3.2rem] bg-canvas text-fg mr-8 outline-double rounded-md">
+            <button
+              className="w-[8rem] h-[3.2rem] bg-canvas text-fg mr-8 outline-double rounded-md"
+              onClick={() => {
+                if (!formCloseButtonRef.current) return;
+                formCloseButtonRef.current.click();
+              }}
+            >
               Cancel
             </button>
-              <button
-                type="button"
-                className="w-[8rem] h-[3.2rem] bg-fg text-bg rounded-md hover:ring-fg ring-offset-2 active:border-2"
-              >
-                Continue
-              </button>
+            <button
+              type="button"
+              className="w-[8rem] h-[3.2rem] bg-fg text-bg rounded-md hover:ring-fg ring-offset-2 active:border-2"
+              onClick={() => {
+                if (creationFormState.errorState) return;
+                if (formCloseButtonRef.current) {
+                  creationFormDispatch(__validate());
+                  setTableActionButtonClicks((prev) => prev + 1);
+                }
+              }}
+            >
+              Continue
+            </button>
 
-              <DialogClose asChild className="w-[8rem] h-[3.2rem] hidden">
-              </DialogClose>
+            <DialogClose asChild className="w-[8rem] h-[3.2rem] hidden">
+              <button ref={formCloseButtonRef}></button>
+            </DialogClose>
           </div>
         </DialogFooter>
       </>
     );
-  }
+  },
+  (prev, next) => isEqual(prev, next)
 );

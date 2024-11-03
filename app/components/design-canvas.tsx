@@ -218,7 +218,7 @@ export type TableNodeType = Node<
   "counter"
 >;
 
-const TableNode: React.FC<NodeProps> = ({ data, id, parentId, type }) => {
+const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({ data, id, parentId, type }) => {
   const currentChildPosition = useSelector(
     childNodePositionSelector(id, parentId),
     isEqual
@@ -231,6 +231,8 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId, type }) => {
         secondary: "bg",
         table: "transparent",
         ordinary: "bg",
+        'composite-primary': "bg",
+        composite: "bg",
       } as statefulNodeColorType),
     []
   );
@@ -284,8 +286,8 @@ const TableNode: React.FC<NodeProps> = ({ data, id, parentId, type }) => {
         </span>
       </p>
 
-      {(data as any).type !== "primary" &&
-      (data as any).type !== "secondary" ? null : (
+      {data.type === "ordinary" ||
+      data.type === "table" ? null : (
         <>
           <Handle
             type={data.type === "primary" ? "target" : "source"}

@@ -15,7 +15,7 @@ import {
 } from "./ui/sheet";
 import { Copy } from "lucide-react";
 import { ResetIcon } from "@radix-ui/react-icons";
-import { workspaceSelectors, } from "~/store";
+import { workspaceSelectors } from "~/store";
 import {
   XOpenOutputPane,
   closeSidePane,
@@ -26,7 +26,11 @@ import { useCallback, useState } from "react";
 import { UnknownAction } from "@reduxjs/toolkit";
 
 export const WorkspaceHeader: React.FC = () => {
-  const {outputPane: outputPaneVisible, sidePane: sidePaneVisible, settings} = useSelector(workspaceSelectors);
+  const {
+    outputPane: outputPaneVisible,
+    sidePane: sidePaneVisible,
+    settings,
+  } = useSelector(workspaceSelectors);
 
   const dispatch = useDispatch<UnknownAction | any>();
   const [outputPaneInteract, setOutputPaneInteract] = useState<boolean>(false);
@@ -64,11 +68,11 @@ export const WorkspaceHeader: React.FC = () => {
           </button>
 
           <div className="md:flex w-max justify-between hidden">
-            <button className="w-8 h-8 mr-8">
+            <button className="w-8 h-8 mr-8 active:scale-90">
               <ResetIcon className="h-full w-full scale-[0.8]" />
             </button>
 
-            <button className="w-8 h-8">
+            <button className="w-8 h-8 active:scale-90">
               <ResetIcon className="h-full w-full scale-x-[-0.8] scale-y-[0.8]" />
             </button>
           </div>

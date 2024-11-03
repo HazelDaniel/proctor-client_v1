@@ -1,12 +1,11 @@
 import {
-  GlobalColumnIndexType,
-  GlobalColumnTypeType,
   internalIndexMarkers,
   reservedSQLKeywords,
   typeDefaultMappings,
 } from "~/data/table-form";
-import { v4 as UUIDv4 } from "uuid";
+import { v7 as UUIDv7 } from "uuid";
 import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
+import { TableCRUDColumnType, TableFormUpdatePayloadType, GlobalColumnIndexType, GlobalColumnTypeType, TableCRUDTableType, } from "~/types";
 
 export const tableFormActionTypes = {
   dropColumn: "DROP_COLUMN",
@@ -38,15 +37,6 @@ export interface TableFormToggleActionType
 export interface TableFormDeletionActionType
   extends TableFormActionType<{ columnID: string }> {}
 
-export interface TableFormUpdatePayloadType {
-  type: GlobalColumnTypeType;
-  index: GlobalColumnIndexType;
-  default: string;
-  nullable: boolean;
-  unique: boolean;
-  name: string;
-  compositeOn: "NONE" | string;
-}
 
 export type TableFormUpdateActionType = TableFormActionType<
   Partial<
@@ -54,20 +44,11 @@ export type TableFormUpdateActionType = TableFormActionType<
   >
 >;
 
-export interface TableCreationFormStateType {
-  tableID?: string;
-  tableName?: string;
+export type TableCreationFormStateType = Partial<TableCRUDTableType> & {
   errorState: boolean;
   errorMessage?: string | null;
   typeMappings: Record<string, string[]>;
-  columns: Record<
-    string,
-    Partial<
-      Omit<TableFormUpdatePayloadType, "compositeOn"> & {
-        compositeOn: ("NONE" | string)[] | null;
-      }
-    >
-  >;
+  columns: Record<string, TableCRUDColumnType>;
 }
 
 export const initialTableCreationFormState: TableCreationFormStateType = {
@@ -102,7 +83,7 @@ export const tableCreationFormReducer: (
           "you cannot create new columns if existing column names are empty, name them and try again!";
         return { ...state, errorState, errorMessage };
       }
-      const newKey = UUIDv4();
+      const newKey = UUIDv7();
 
       newState = {
         tableID,
@@ -167,7 +148,7 @@ export const tableCreationFormReducer: (
       if (!columnID) return state;
       const resColumn = state.columns[columnID];
       if (!colDefault || !resColumn?.type) return state;
-      const supportedDefaultSet = typeDefaultMappings[resColumn?.type];
+      const supportedDefaultSet = typeDefaultMappings[resColumn.type];
 
       let errorState = supportedDefaultSet
         ? !supportedDefaultSet.has(colDefault)
@@ -388,6 +369,8 @@ export const tableCreationFormReducer: (
     case "validate": {
       try {
         validateColumnName(state);
+        validateColumnType(state);
+        validatePrimaryKeyExists(state);
       } catch (err) {
         const errorMessage = (err as Error).message;
         return { ...state, errorState: true, errorMessage };
@@ -400,6 +383,42 @@ export const tableCreationFormReducer: (
 };
 
 // EXPLICIT STATE VALIDATORS
+function validateColumnType(state: TableCreationFormStateType) {
+  const stateColumns = Array.from(Object.values(state.columns));
+
+  const nonCompositeTypeValidator = (
+    cols: TableCreationFormStateType["columns"][string][]
+  ) => {
+    return cols.every(
+      (el) =>
+        (el.index === "PRIMARY" ||
+          el.index === "NONE" ||
+          el.index === "FOREIGN") &&
+        !!el.type
+    );
+  };
+
+  assertion.construct(
+    [() => nonCompositeTypeValidator(stateColumns)],
+    "some non-composite columns do not have types provided"
+  );
+}
+
+function validatePrimaryKeyExists(state: TableCreationFormStateType) {
+  const stateColumns = Array.from(Object.values(state.columns));
+
+  const PKValidator = (
+    cols: TableCreationFormStateType["columns"][string][]
+  ) => {
+    return cols.some((el) => el.index === "PRIMARY");
+  };
+
+  assertion.construct(
+    [() => PKValidator(stateColumns)],
+    "this table doesn't have any primary key!"
+  );
+}
+
 function validateColumnName(state: TableCreationFormStateType) {
   const stateColumns = Array.from(Object.values(state.columns));
 
@@ -417,7 +436,7 @@ function validateColumnName(state: TableCreationFormStateType) {
 
   const tableNameValidator = () => !!state.tableName;
 
-  assertion.construct([tableNameValidator], "the table cannot be empty");
+  assertion.construct([tableNameValidator], "the table name cannot be empty");
   assertion.construct(
     [() => emptyValidator(stateColumns)],
     "some column names are empty"
