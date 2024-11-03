@@ -31,7 +31,11 @@ import {
   SelectValue,
 } from "~/components/ui/select";
 import { MessageSquareWarningIcon } from "lucide-react";
-import { TableFormColumnSelectType, GlobalColumnIndexType, GlobalColumnTypeType } from "~/types";
+import {
+  TableFormColumnSelectType,
+  GlobalColumnIndexType,
+  GlobalColumnTypeType,
+} from "~/types";
 import { tableColumnFields } from "~/data/table-form";
 import { useDebounce } from "~/hooks/usedebounce";
 import { isEqual } from "~/utils/comparison";
@@ -72,9 +76,8 @@ import {
 } from "~/store";
 import { addType, clearError } from "~/reducers/global-types.reducer";
 import { DialogFooter } from "./ui/dialog";
-import {
-  DialogClose,
-} from "@radix-ui/react-dialog";
+import { DialogClose } from "@radix-ui/react-dialog";
+import { setCurrentGroupID, upload } from "~/reducers/table-to-node.reducer";
 
 export const TableCheckbox: React.FC<{
   id: string;
@@ -554,6 +557,7 @@ export const TableCreationForm: React.FC = React.memo(
   function innerTableCreationForm() {
     const globalDefaultsList = useSelector(typeDefaultSelector, isEqual);
     const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
+    const dispatch = useDispatch();
 
     const [creationFormState, creationFormDispatch] = useReducer(
       tableCreationFormReducer,
@@ -614,9 +618,12 @@ export const TableCreationForm: React.FC = React.memo(
 
     // AFTER FORM HAS BEEN SUCCESSFULLY VALIDATED FOR SUBMISSION
     useEffect(() => {
-      if (creationFormState.errorState) return;
-      if (formCloseButtonRef.current && tableActionButtonClicks)
+      if (creationFormState.errorState || !creationFormState.tableID) return;
+      if (formCloseButtonRef.current && tableActionButtonClicks) {
+        dispatch(setCurrentGroupID(creationFormState.tableID as string));
+        dispatch(upload(creationFormState));
         formCloseButtonRef.current.click();
+      }
     }, [tableActionButtonClicks]);
 
     return (

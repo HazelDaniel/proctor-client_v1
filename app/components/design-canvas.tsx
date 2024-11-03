@@ -44,7 +44,7 @@ import {
   designPaneReducer,
   initialDesignPaneState,
 } from "~/reducers/design-pane.reducer";
-import { setNodePosition } from "~/reducers/nodes.reducer";
+import { addNodeGroup, setNodePosition } from "~/reducers/nodes.reducer";
 import {
   childNodePositionSelector,
   edgesSelector,
@@ -159,13 +159,15 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
                 </svg>
               </button>
             </DialogTrigger>
-            <DialogContent className="w-[80vw] min-w-[95vw] h-[clamp(60rem, 95vh, 60rem)] md:h-[clamp(40rem, 95vh, 99vh)] rounded-lg flex flex-col items-center p-8 form-creation-dialog-content" aria-describedby="">
+            <DialogContent
+              className="w-[80vw] min-w-[95vw] h-[clamp(60rem, 95vh, 60rem)] md:h-[clamp(40rem, 95vh, 99vh)] rounded-lg flex flex-col items-center p-8 form-creation-dialog-content"
+              aria-describedby=""
+            >
               <DialogHeader className="h-max mr-auto">
                 <DialogTitle>Add Table</DialogTitle>
               </DialogHeader>
 
               <TableCreationForm />
-
             </DialogContent>
           </Dialog>
         </li>
@@ -218,7 +220,12 @@ export type TableNodeType = Node<
   "counter"
 >;
 
-const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({ data, id, parentId, type }) => {
+const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
+  data,
+  id,
+  parentId,
+  type,
+}) => {
   const currentChildPosition = useSelector(
     childNodePositionSelector(id, parentId),
     isEqual
@@ -231,7 +238,7 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({ data, id, parentId, 
         secondary: "bg",
         table: "transparent",
         ordinary: "bg",
-        'composite-primary': "bg",
+        "composite-primary": "bg",
         composite: "bg",
       } as statefulNodeColorType),
     []
@@ -260,7 +267,7 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({ data, id, parentId, 
             data.type === "primary" ? "rgb(var(--canvas-color))" : "#3c3c3c",
         }}
       >
-        {`${(data as any).columnName || ""}`}
+        {`${data.column?.name || ""}`}
         <span
           className="w-4 h-4 absolute flex items-center justify-end right-2"
           style={
@@ -286,8 +293,7 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({ data, id, parentId, 
         </span>
       </p>
 
-      {data.type === "ordinary" ||
-      data.type === "table" ? null : (
+      {data.type === "ordinary" || data.type === "table" ? null : (
         <>
           <Handle
             type={data.type === "primary" ? "target" : "source"}
@@ -428,10 +434,10 @@ export const DesignCanvas: React.FC<{
         const panPosDeltaX = panPosFrame[0].x;
         const panPosDeltaY = panPosFrame[0].y;
 
-        console.log("pan position frame ", panPosFrame);
-        console.log(
-          `--panPosDeltaX: ${panPosDeltaX}\t panPosDeltaY: ${panPosDeltaY}`
-        );
+        // console.log("pan position frame ", panPosFrame);
+        // console.log(
+        //   `--panPosDeltaX: ${panPosDeltaX}\t panPosDeltaY: ${panPosDeltaY}`
+        // );
 
         const canvasParent = document.getElementById(
           "design-canvas-wrapper"
@@ -465,14 +471,30 @@ export const DesignCanvas: React.FC<{
             const { x, y } = getCanvasPosition(event);
             if (!(x && y)) break;
             chatBubbleDispatch(__addBubble({ x, y }));
+            break;
           }
           case "table": {
-            designPaneDispatch(__setActiveTab(null));
+            const currentTableID = store.getState().contextNodes.currentGroupID;
+            if (!currentTableID) break;
+
+            const position = getCanvasPosition(event) as XYPosition;
+            const currentTable =
+              store.getState().contextNodes.groupNodes[currentTableID];
+            dispatch(
+              addNodeGroup({
+                group: currentTable,
+                groupID: currentTableID,
+                position,
+              })
+            );
+
+            break;
           }
           default: {
             break;
           }
         }
+        designPaneDispatch(__setActiveTab(null));
       },
       [chatBubbleDispatch, instance, panPosFrame, designPaneState.activeTab]
     );

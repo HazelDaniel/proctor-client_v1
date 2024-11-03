@@ -93,7 +93,7 @@ export interface StatefulNodeType extends Node {
         name: string;
         type: GlobalColumnTypeType;
         index: GlobalColumnIndexType;
-        nullible: boolean;
+        nullable: boolean;
         unique: boolean;
         default: string;
         compositeOn: string[] | null;
@@ -112,3 +112,12 @@ export interface StatefulGroupNodeType {
 export interface statefulNodeColorType {
   [prop: StatefulNodeType["data"]["type"]]: string;
 }
+
+export type TableCreationFormStateType = Partial<TableCRUDTableType> & {
+  errorState: boolean;
+  errorMessage?: string | null;
+  typeMappings: Record<string, string[]>;
+  columns: Record<string, TableCRUDColumnType>;
+}
+
+export type TableCRUDFormStateType = TableCreationFormStateType; // & TableUpdateFormStateType

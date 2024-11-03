@@ -1,6 +1,8 @@
-import { createSlice } from "@reduxjs/toolkit";
-import { Edge } from "@xyflow/react";
+import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { Edge, XYPosition } from "@xyflow/react";
 import type { StatefulGroupNodeType } from "~/types";
+
+const NODE_OFFSET_VALUE = 43;
 
 export interface NodesStateType {
   groupNodes: StatefulGroupNodeType;
@@ -8,113 +10,7 @@ export interface NodesStateType {
 }
 
 const initialNodesState: NodesStateType = {
-  groupNodes: {
-    "gnode-a": {
-      data: {
-        label: "customers",
-        toolbarVisible: true,
-        toolbarPosition: "top",
-        type: "table"
-      },
-      position: { x: 0, y: 0 },
-      type: "group",
-      className: "table-node-group",
-      style: {
-        width: "max-content",
-        height: "max-content",
-        padding: "0",
-        backgroundColor: "unset",
-      },
-      nodes: {
-        "gnode-a:1729152101929": {
-          data: { label: "World!", type: "primary", columnName: "customer_id" },
-          position: { x: 0, y: 0 },
-          type: "tableNode",
-          extent: "parent",
-          className: "table-node",
-          draggable: false,
-          style: {
-            width: "var(--node-width-here)",
-            height: "var(--global-node-height)",
-          },
-        },
-        "gnode-a:1729152101939": {
-          data: { label: "", type: "ordinary", columnName: "full_name" },
-          position: { x: 0, y: 43 },
-          type: "tableNode",
-          extent: "parent",
-          className: "table-node",
-          draggable: false,
-          style: {
-            width: "var(--node-width-here)",
-            height: "var(--global-node-height)",
-          },
-        },
-        "gnode-a:1729152101949": {
-          data: { label: "", type: "secondary", columnName: "order_id" },
-          position: { x: 0, y: 86 },
-          type: "tableNode",
-          extent: "parent",
-          className: "table-node",
-          draggable: false,
-          style: {
-            width: "var(--node-width-here)",
-            height: "var(--global-node-height)",
-          },
-        },
-        "gnode-a:1729152100049": {
-          data: { label: "", type: "ordinary", columnName: "order_date" },
-          position: { x: 0, y: 129 },
-          type: "tableNode",
-          extent: "parent",
-          className: "table-node",
-          draggable: false,
-          style: {
-            width: "var(--node-width-here)",
-            height: "var(--global-node-height)",
-          },
-        },
-      },
-    },
-    "gnode-b": {
-      data: { label: "orders", toolbarVisible: true, type: "table", },
-      position: { x: 520, y: 200 },
-      type: "group",
-      className: "table-node-group",
-      style: {
-        width: "max-content",
-        height: "max-content",
-        padding: "0",
-        backgroundColor: "unset",
-      },
-      nodes: {
-        "gnode-b:1729152101949": {
-          data: { label: "World!", type: "primary", columnName: "order_id" },
-          position: { x: 0, y: 0 },
-          type: "tableNode",
-          extent: "parent",
-          className: "table-node",
-          draggable: false,
-          style: {
-            width: "var(--node-width-here)",
-            height: "var(--global-node-height)",
-          },
-        },
-        "gnode-b:1729152101959": {
-          data: { label: "World!", type: "ordinary", columnName: "ordered_at" },
-          position: { x: 0, y: 43 },
-          type: "tableNode",
-          extent: "parent",
-          className: "table-node",
-          draggable: false,
-          style: {
-            width: "var(--node-width-here)",
-            height: "var(--global-node-height)",
-          },
-        },
-      },
-    },
-  },
+  groupNodes: {},
   edges: {},
 };
 
@@ -129,10 +25,78 @@ const nodesSlice = createSlice({
         node.position = position;
       }
     },
+    addNodeGroup: (
+      state,
+      action: PayloadAction<{
+        groupID: string;
+        group: StatefulGroupNodeType[string];
+        position?: XYPosition;
+      }>
+    ) => {
+      let { position, group, groupID } = action.payload;
+      let resultNodes: StatefulGroupNodeType[string]["nodes"];
+      if (position) {
+        resultNodes = Object.fromEntries(
+          Object.entries(group.nodes).map(([key, value], index) => {
+            return [
+              key,
+              {
+                ...value,
+                position: { x: 0, y: index * NODE_OFFSET_VALUE },
+                style: {
+                  width: "var(--node-width-here)",
+                  height: "var(--global-node-height)",
+                },
+                type: "tableNode",
+                extent: "parent" as const,
+                className: "table-node",
+                draggable: false,
+              },
+            ];
+          })
+        );
+        group = {
+          ...group,
+          position,
+        };
+      } 
+
+      resultNodes = Object.fromEntries(
+        Object.entries(group.nodes).map(([key, value], index) => {
+          return [
+            key,
+            {
+              ...value,
+              position: { x: 0, y: index * NODE_OFFSET_VALUE },
+              style: {
+                width: "var(--node-width-here)",
+                height: "var(--global-node-height)",
+              },
+              type: "tableNode",
+              extent: "parent" as const,
+              className: "table-node",
+              draggable: false,
+            },
+          ];
+        })
+      );
+      group = {
+        ...group,
+        nodes: resultNodes,
+        className: "table-node-group",
+        style: {
+          width: "max-content",
+          height: "max-content",
+          padding: "0",
+          backgroundColor: "unset",
+        },
+      };
+      state.groupNodes[groupID] = group;
+    },
   },
 });
 
-export const { setNodePosition } = nodesSlice.actions;
+export const { setNodePosition, addNodeGroup } = nodesSlice.actions;
 
 const nodesReducer = nodesSlice.reducer;
 

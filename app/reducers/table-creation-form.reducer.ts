@@ -5,7 +5,7 @@ import {
 } from "~/data/table-form";
 import { v7 as UUIDv7 } from "uuid";
 import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
-import { TableCRUDColumnType, TableFormUpdatePayloadType, GlobalColumnIndexType, GlobalColumnTypeType, TableCRUDTableType, } from "~/types";
+import { TableCRUDColumnType, TableFormUpdatePayloadType, GlobalColumnIndexType, GlobalColumnTypeType, TableCRUDTableType, TableCreationFormStateType, } from "~/types";
 
 export const tableFormActionTypes = {
   dropColumn: "DROP_COLUMN",
@@ -43,13 +43,6 @@ export type TableFormUpdateActionType = TableFormActionType<
     TableFormUpdatePayloadType & { columnID?: string; errorMessage?: string }
   >
 >;
-
-export type TableCreationFormStateType = Partial<TableCRUDTableType> & {
-  errorState: boolean;
-  errorMessage?: string | null;
-  typeMappings: Record<string, string[]>;
-  columns: Record<string, TableCRUDColumnType>;
-}
 
 export const initialTableCreationFormState: TableCreationFormStateType = {
   errorState: false,
@@ -393,8 +386,8 @@ function validateColumnType(state: TableCreationFormStateType) {
       (el) =>
         (el.index === "PRIMARY" ||
           el.index === "NONE" ||
-          el.index === "FOREIGN") &&
-        !!el.type
+          el.index === "FOREIGN") ?
+        !!el.type : true
     );
   };
 
@@ -410,7 +403,7 @@ function validatePrimaryKeyExists(state: TableCreationFormStateType) {
   const PKValidator = (
     cols: TableCreationFormStateType["columns"][string][]
   ) => {
-    return cols.some((el) => el.index === "PRIMARY");
+    return cols.some((el) => el.index === "PRIMARY" || el.index === "COMPOSITE_PRIMARY");
   };
 
   assertion.construct(

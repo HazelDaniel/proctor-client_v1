@@ -1,4 +1,4 @@
-import { createSelector, createStructuredSelector } from "reselect";
+import { createStructuredSelector } from "reselect";
 import { combineReducers, configureStore } from "@reduxjs/toolkit";
 import {
   persistStore,
@@ -14,20 +14,23 @@ import {
 import { default as workspaceReducer } from "~/reducers/workspace.reducer";
 import { default as nodesReducer } from "~/reducers/nodes.reducer";
 import { PersistoreStore } from "./dao/persistor-store.dao";
-import { StatefulGroupNodeType, StatefulNodeType } from "./types";
+import { StatefulNodeType } from "./types";
 import { Edge } from "@xyflow/react";
 import { default as globalTypesReducer } from "./reducers/global-types.reducer";
+import tableToNodesReducer from "./reducers/table-to-node.reducer";
 
 const rootReducer = combineReducers({
   workspace: workspaceReducer,
   nodes: nodesReducer,
   types: globalTypesReducer,
+  contextNodes: tableToNodesReducer,
 });
 
 const persistConfig: PersistConfig<{
   workspace: ReturnType<typeof workspaceReducer>;
   nodes: ReturnType<typeof nodesReducer>;
   types: ReturnType<typeof globalTypesReducer>;
+  contextNodes: ReturnType<typeof tableToNodesReducer>;
 }> = {
   key: "root",
   // whitelist: ["workspace", "types"],
@@ -191,6 +194,22 @@ export const typeMappingSelector = (state: {
   types: ReturnType<typeof globalTypesReducer>;
 }) => {
   return state.types.typeMappings;
+};
+
+// CONTEXT NODES SELECTORS
+
+export const ContextNodesSelector = (state: {
+  nodes: ReturnType<typeof tableToNodesReducer>;
+}) => {
+  const keyLen = Object.keys(state.nodes.groupNodes).length;
+  return keyLen > 0 ? state.nodes.groupNodes : null;
+};
+
+export const ContextGroupNodeSelector = (groupNodeID: string) => (state: {
+  nodes: ReturnType<typeof tableToNodesReducer>;
+}) => {
+  const result = state.nodes.groupNodes[groupNodeID];
+  return result;
 };
 
 export type RootState = ReturnType<typeof store.getState>;
