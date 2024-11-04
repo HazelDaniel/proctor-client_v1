@@ -169,10 +169,14 @@ export const subsetNodesSelector =
 
 export const nodeChildrenLengthSelector =
   (id: string) => (state: { nodes: ReturnType<typeof nodesReducer> }) => {
-    let childrenLength = [...Object.values(state.nodes.groupNodes[id]?.nodes)]
-      .length;
+    try { // for some unknown reason, this one is erroring in dev mode so i just put it in a try-catch for now
+      let childrenLength = [...Object.values(state.nodes.groupNodes[id]?.nodes)]
+        .length;
+      return childrenLength;
+    } catch (err) {
+      return 0;
+    }
 
-    return childrenLength;
   };
 
 // TYPES SELECTORS

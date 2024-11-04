@@ -238,7 +238,7 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
         secondary: "bg",
         table: "transparent",
         ordinary: "bg",
-        "composite-primary": "bg",
+        "composite-primary": "accent",
         composite: "bg",
       } as statefulNodeColorType),
     []
@@ -529,6 +529,7 @@ export const DesignCanvas: React.FC<{
           if (
             equivTargetNode.data.type !== "primary" ||
             equivSourceNode.data.type !== "secondary" ||
+            // equivSourceNode.data.type !== "" ||
             sourceNodeParentID === targetNodeParentID
           ) {
             return eds;

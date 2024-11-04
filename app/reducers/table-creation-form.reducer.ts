@@ -5,11 +5,18 @@ import {
 } from "~/data/table-form";
 import { v7 as UUIDv7 } from "uuid";
 import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
-import { TableCRUDColumnType, TableFormUpdatePayloadType, GlobalColumnIndexType, GlobalColumnTypeType, TableCRUDTableType, TableCreationFormStateType, } from "~/types";
+import {
+  TableFormUpdatePayloadType,
+  GlobalColumnIndexType,
+  GlobalColumnTypeType,
+  TableCreationFormStateType,
+} from "~/types";
 
 export const tableFormActionTypes = {
   dropColumn: "DROP_COLUMN",
   addColumn: "ADD_COLUMN",
+  addToComposite: "ADD_TO_COMPOSITE",
+  removeFromComposite: "REMOVE_FROM_COMPOSITE",
   setName: "SET_NAME",
   setTableName: "SET_TABLE_NAME",
   setType: "SET_TYPE",
@@ -17,7 +24,6 @@ export const tableFormActionTypes = {
   toggleNullibility: "TOGGLE_NULLIBILITY",
   ToggleUniqueness: "TOGGLE_UNIQUENESS",
   setDefault: "SET_DEFAULT",
-  setCompositeOn: "SET_COMPOSITE_ON",
   clearError: "CLEAR_ERROR",
   setError: "SET_ERROR",
   validate: "VALIDATE",
@@ -36,7 +42,6 @@ export interface TableFormToggleActionType
 
 export interface TableFormDeletionActionType
   extends TableFormActionType<{ columnID: string }> {}
-
 
 export type TableFormUpdateActionType = TableFormActionType<
   Partial<
@@ -108,13 +113,10 @@ export const tableCreationFormReducer: (
 
       return newState;
     }
-    case "setCompositeOn": {
+    case "addToComposite": {
       const { columnID, compositeOn } = payload;
-      // TODO: for all the rest of the switch arms, separate the input validation assertions from that of the logical assertions - might be moved else where later
       if (!columnID) return state;
       const index = state.columns[columnID]?.index;
-      console.log("index of the current column was ", index);
-
       let errorState = !(
         index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN"
       );
@@ -124,15 +126,40 @@ export const tableCreationFormReducer: (
         return { ...state, errorState, errorMessage };
       }
 
-      const oldCompositeOn = state.columns[columnID]?.compositeOn;
+      let oldCompositeOn = state.columns[columnID]?.compositeOn || [];
+      if (oldCompositeOn.includes(compositeOn as string)) return state;
 
-      if (compositeOn === oldCompositeOn) return state;
+      const newState = { ...state };
+      let newCompositeOn = [...oldCompositeOn, compositeOn as string];
+      newState.columns[columnID].compositeOn = newCompositeOn;
 
-      const resColumn = state.columns[columnID];
-      if (!resColumn) return state;
-      const compositeArrays = compositeOn?.split(", ") || ["NONE"];
-      newState = { ...state };
-      newState.columns[columnID].compositeOn = compositeArrays;
+      return newState;
+    }
+    case "removeFromComposite": {
+      const { columnID, compositeOn } = payload;
+      if (!columnID) return state;
+      const index = state.columns[columnID]?.index;
+      let errorState = !(
+        index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN"
+      );
+      if (errorState) {
+        let errorMessage =
+          "you cannot set composite columns for a non composite key!";
+        return { ...state, errorState, errorMessage };
+      }
+
+      let oldCompositeOn = state.columns[columnID]?.compositeOn || [];
+
+      if (!oldCompositeOn.includes(compositeOn as string)) return state;
+
+      const newState = { ...state };
+      let newCompositeOn = oldCompositeOn.filter((el) => {
+        return el !== compositeOn;
+      });
+
+      newCompositeOn = newCompositeOn.length ? newCompositeOn : [];
+
+      newState.columns[columnID].compositeOn = newCompositeOn;
 
       return newState;
     }
@@ -173,23 +200,21 @@ export const tableCreationFormReducer: (
 
           if (errorState) {
             let errorMessage =
-              "this table already has a primary/composite primary key. if you intend to use another key, you must remove the previous key";
+              "this table already has a primary/composite primary key. remove the previous if you intend to use another key.";
             return { ...state, errorState, errorMessage };
           }
 
           const newState = { ...state };
 
-          let tableKeys = Object.values(newState.columns)
-            .filter((v) => {
+          let tableKeys = Object.entries(newState.columns)
+            .filter(([k, v]) => {
               return (
                 v.index !== "COMPOSITE_FOREIGN" &&
                 v.index !== "COMPOSITE_PRIMARY" &&
-                !!v.name &&
-                v.name !== internalIndexMarkers.COMPOSITE_FOREIGN &&
-                v.name !== internalIndexMarkers.COMPOSITE_PRIMARY
+                k !== columnID
               );
             })
-            .map((col) => {
+            .map(([_, col]) => {
               return col.name;
             }) as string[];
 
@@ -197,7 +222,7 @@ export const tableCreationFormReducer: (
 
           const resColumn = {
             ...newState.columns[columnID],
-            index: "COMPOSITE_PRIMARY" as GlobalColumnIndexType,
+            index: "COMPOSITE_PRIMARY" as const,
             name: internalIndexMarkers.COMPOSITE_PRIMARY,
             compositeOn: tableKeys,
           };
@@ -271,9 +296,12 @@ export const tableCreationFormReducer: (
 
       const resColumn = state.columns[columnID];
       if (!resColumn) return state;
-      if (resColumn.name === name) {
-        return state;
-      }
+      if (
+        resColumn.index === "COMPOSITE_FOREIGN" ||
+        resColumn.index === "COMPOSITE_PRIMARY"
+      )
+        return state; // you can't directly edit the name of a composite key
+      if (resColumn.name === name) return state;
 
       const errorState = (name?.split(" ").length || 0) > 1;
 
@@ -382,12 +410,10 @@ function validateColumnType(state: TableCreationFormStateType) {
   const nonCompositeTypeValidator = (
     cols: TableCreationFormStateType["columns"][string][]
   ) => {
-    return cols.every(
-      (el) =>
-        (el.index === "PRIMARY" ||
-          el.index === "NONE" ||
-          el.index === "FOREIGN") ?
-        !!el.type : true
+    return cols.every((el) =>
+      el.index === "PRIMARY" || el.index === "NONE" || el.index === "FOREIGN"
+        ? !!el.type
+        : true
     );
   };
 
@@ -403,7 +429,9 @@ function validatePrimaryKeyExists(state: TableCreationFormStateType) {
   const PKValidator = (
     cols: TableCreationFormStateType["columns"][string][]
   ) => {
-    return cols.some((el) => el.index === "PRIMARY" || el.index === "COMPOSITE_PRIMARY");
+    return cols.some(
+      (el) => el.index === "PRIMARY" || el.index === "COMPOSITE_PRIMARY"
+    );
   };
 
   assertion.construct(
@@ -483,12 +511,22 @@ export const __dropColumn: (columnID: string) => TableFormUpdateActionType = (
   };
 };
 
-export const __setCompositeOn: (
+export const __addToComposite: (
   columnID: string,
   compositeOn: string
 ) => TableFormUpdateActionType = (columnID, compositeOn) => {
   return {
-    type: "setCompositeOn",
+    type: "addToComposite",
+    payload: { columnID, compositeOn },
+  };
+};
+
+export const __removeFromComposite: (
+  columnID: string,
+  compositeOn: string
+) => TableFormUpdateActionType = (columnID, compositeOn) => {
+  return {
+    type: "removeFromComposite",
     payload: { columnID, compositeOn },
   };
 };

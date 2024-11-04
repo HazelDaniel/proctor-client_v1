@@ -37,7 +37,7 @@ export const tableToNodesSlice = createSlice({
         StatefulNodeType["type"]
       > = {
         COMPOSITE_FOREIGN: "composite-foreign",
-        COMPOSITE_PRIMARY: "composite",
+        COMPOSITE_PRIMARY: "composite-primary",
         FOREIGN: "secondary",
         PRIMARY: "primary",
         NONE: "ordinary",
@@ -59,8 +59,12 @@ export const tableToNodesSlice = createSlice({
           if (!index) index = "NONE";
           if (!nullable) nullable = false;
           if (!unique) unique = false;
+          const isComposite = index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN";
+          let colHastype = (isComposite) ? true : !!colType;
 
-          if (!(colType && name)) return acc; // NOTE: WE SIMPLY WON'T PICK UP INCOMPLETE NODES
+          if (!(colHastype && name)) return acc; // NOTE: WE SIMPLY WON'T PICK UP INCOMPLETE NODES
+          // compositeOn = Array.from(new Set(compositeOn));
+          // console.log("composite on is ", compositeOn);
 
           acc[`${tableID}:${key}`] = { // NOTE: ITS IMPORTANT TO HAVE IT IN THIS FORMAT AS THAT'S HOW IT'S USED IN THE CONNECTION LOGIC
             data: {
@@ -71,9 +75,9 @@ export const tableToNodesSlice = createSlice({
                 nullable,
                 unique,
                 type: colType,
-                name,
+                name: !isComposite ? name : compositeOn.join(", "),
               },
-              label: name,
+              label: !isComposite ? name : compositeOn.join(", "),
               type: colToNodeTypeMap[index],
             },
             position: { x: 0, y: 0 },

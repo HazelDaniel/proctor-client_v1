@@ -41,9 +41,10 @@ import { useDebounce } from "~/hooks/usedebounce";
 import { isEqual } from "~/utils/comparison";
 import {
   __addColumn,
+  __addToComposite,
   __clearError,
   __dropColumn,
-  __setCompositeOn,
+  __removeFromComposite,
   __setDefault,
   __setError,
   __setIndex,
@@ -152,6 +153,7 @@ export const TableCompositeListCheckbox: React.ForwardRefExoticComponent<
             removePlaceholder(siblingPElement.textContent || "");
             return;
           }
+          // console.log("checking...", siblingPElement.textContent)
           addPlaceholder(siblingPElement.textContent || "");
         }}
         ref={ref}
@@ -183,40 +185,14 @@ export const FormCompositeSelectList: React.FC<{
 
   const handleAddPlaceholder = useCallback(
     () => (item: string) => {
-      if (itemList.includes(item)) return;
-      if (item === "NONE") {
-        tableCreationDispatch(__setCompositeOn(columnID, "NONE"));
-        return;
-      }
-      tableCreationDispatch(
-        __setCompositeOn(
-          columnID,
-          [...(tableCreationState.columns[columnID]!.compositeOn || []), item]
-            .filter((e) => e !== "NONE")
-            .join(", ")
-        )
-      );
+      tableCreationDispatch(__addToComposite(columnID, item));
     },
     [itemList]
   );
 
   const handleRemovePlaceholder = useCallback(
     () => (item: string) => {
-      if (!itemList.includes(item)) return;
-      if (itemList.length === 1 && item === "NONE") {
-        return;
-      }
-
-      tableCreationDispatch(
-        __setCompositeOn(
-          columnID,
-          (
-            [
-              ...(tableCreationState.columns[columnID]!.compositeOn || []),
-            ].filter((e) => e !== item) || ["NONE"]
-          ).join(", ")
-        )
-      );
+      tableCreationDispatch(__removeFromComposite(columnID, item));
     },
     [itemList]
   );
@@ -226,7 +202,7 @@ export const FormCompositeSelectList: React.FC<{
       <SelectTrigger className="w-[180px]">
         <SelectValue
           placeholder={(
-            tableCreationState.columns[columnID]!.compositeOn || ["NONE"]
+            tableCreationState.columns[columnID].compositeOn || ["NONE"]
           ).join(", ")}
         />
       </SelectTrigger>
@@ -625,6 +601,8 @@ export const TableCreationForm: React.FC = React.memo(
         formCloseButtonRef.current.click();
       }
     }, [tableActionButtonClicks]);
+
+    console.log("form creation state is ", creationFormState);
 
     return (
       <>
