@@ -53,7 +53,11 @@ import {
   settingsSelector,
   store,
 } from "~/store";
-import { StatefulNodeType, statefulNodeColorType } from "~/types";
+import {
+  NodeCompositeID,
+  StatefulNodeType,
+  statefulNodeColorType,
+} from "~/types";
 import { isEqual } from "~/utils/comparison";
 import {
   Dialog,
@@ -64,6 +68,7 @@ import {
 } from "./ui/dialog";
 import { BidirectionalEdge } from "./bidirectional-edge";
 import { TableCreationForm } from "./table-creation-form";
+import { parseNodeID } from "~/utils/node.utils";
 
 export const ChatBubble: React.FC<{ pos: XYPosition }> = ({ pos }) => {
   return (
@@ -261,7 +266,7 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
       }
     >
       <p
-        className="w-full text-center h-full flex items-center justify-center text-canvas relative"
+        className="w-full text-center h-full flex items-center justify-center text-canvas relative truncate"
         style={{
           color:
             data.type === "primary" ? "rgb(var(--canvas-color))" : "#3c3c3c",
@@ -511,8 +516,12 @@ export const DesignCanvas: React.FC<{
       (params) =>
         setEdges((eds) => {
           const edge = params;
-          const sourceNodeParentID = edge.source.split(":")[0] || "";
-          const targetNodeParentID = edge.target.split(":")[0] || "";
+          const [targetNodeParentID] = parseNodeID(
+            edge.target as NodeCompositeID
+          );
+          const [sourceNodeParentID] = parseNodeID(
+            edge.source as NodeCompositeID
+          );
 
           const equivTargetNode =
             store.getState().nodes.groupNodes[targetNodeParentID]?.nodes[
@@ -529,7 +538,7 @@ export const DesignCanvas: React.FC<{
           if (
             equivTargetNode.data.type !== "primary" ||
             equivSourceNode.data.type !== "secondary" ||
-            // equivSourceNode.data.type !== "" ||
+            // equivTargetNode.data.type !== "composite-primary" ||
             sourceNodeParentID === targetNodeParentID
           ) {
             return eds;

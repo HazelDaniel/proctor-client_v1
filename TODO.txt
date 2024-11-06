@@ -1,4 +1,6 @@
 sequence of features
-> table creation pane:
+> table creation state:
 	[implementation]
-	- show up as a drawer
+	- whenever the compositeOn fields of a composite primary key are being set,
+		make sure that it has at least one column, otherwise,
+		error and use previous state

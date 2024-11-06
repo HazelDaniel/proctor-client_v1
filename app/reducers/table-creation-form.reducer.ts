@@ -10,7 +10,9 @@ import {
   GlobalColumnIndexType,
   GlobalColumnTypeType,
   TableCreationFormStateType,
+  NodeCompositeID,
 } from "~/types";
+import { getNodePropFromID } from "~/utils/node.utils";
 
 export const tableFormActionTypes = {
   dropColumn: "DROP_COLUMN",
@@ -81,7 +83,8 @@ export const tableCreationFormReducer: (
           "you cannot create new columns if existing column names are empty, name them and try again!";
         return { ...state, errorState, errorMessage };
       }
-      const newKey = UUIDv7();
+      let newKey = UUIDv7();
+      newKey = `${tableID}:${newKey}`;
 
       newState = {
         tableID,
@@ -126,11 +129,20 @@ export const tableCreationFormReducer: (
         return { ...state, errorState, errorMessage };
       }
 
+      let resColumnID: string | null = null;
+      for (const entry of Object.entries(state.columns)) {
+        const [key, value] = entry;
+        if (value.name === compositeOn) {
+          resColumnID = `${key}:${compositeOn}`;
+        }
+      }
+      if (!resColumnID) return state;
+
       let oldCompositeOn = state.columns[columnID]?.compositeOn || [];
-      if (oldCompositeOn.includes(compositeOn as string)) return state;
+      if (oldCompositeOn.includes(`${resColumnID}`)) return state;
 
       const newState = { ...state };
-      let newCompositeOn = [...oldCompositeOn, compositeOn as string];
+      let newCompositeOn = [...oldCompositeOn, `${resColumnID}`];
       newState.columns[columnID].compositeOn = newCompositeOn;
 
       return newState;
@@ -150,11 +162,30 @@ export const tableCreationFormReducer: (
 
       let oldCompositeOn = state.columns[columnID]?.compositeOn || [];
 
-      if (!oldCompositeOn.includes(compositeOn as string)) return state;
+      let resComposite: string | null = null;
+      for (const entry of state.columns[columnID].compositeOn || []) {
+        if (
+          getNodePropFromID(entry as `${NodeCompositeID}:${string}`) ===
+          compositeOn
+        ) {
+          resComposite = entry;
+          break;
+        }
+      }
+      if (!resComposite) return state;
+
+      if (!oldCompositeOn.includes(`${resComposite}`)) {
+        console.error(
+          "doesn't not have composite ",
+          oldCompositeOn,
+          resComposite
+        );
+        return state;
+      }
 
       const newState = { ...state };
       let newCompositeOn = oldCompositeOn.filter((el) => {
-        return el !== compositeOn;
+        return el !== `${resComposite}`;
       });
 
       newCompositeOn = newCompositeOn.length ? newCompositeOn : [];
@@ -214,8 +245,8 @@ export const tableCreationFormReducer: (
                 k !== columnID
               );
             })
-            .map(([_, col]) => {
-              return col.name;
+            .map(([key, col]) => {
+              return `${key}:${col.name}`;
             }) as string[];
 
           tableKeys = tableKeys.length ? tableKeys : ["NONE"];
@@ -606,8 +637,8 @@ export const selectCompositeColumns: (
   const resColumn = state.columns[id];
   if (!resColumn) return ["NONE"];
 
-  let tableKeys = Object.values(state.columns)
-    .filter((v) => {
+  let tableKeys = Object.entries(state.columns)
+    .filter(([k, v]) => {
       return (
         v.index !== "COMPOSITE_FOREIGN" &&
         v.index !== "COMPOSITE_PRIMARY" &&
@@ -617,8 +648,10 @@ export const selectCompositeColumns: (
         v.name !== resColumn.name
       );
     })
-    .map((col) => {
-      return col.name;
+    .map(([key, col]) => {
+      return getNodePropFromID(
+        `${key}:${col.name}` as `${NodeCompositeID}:${string}`
+      );
     }) as string[];
 
   return tableKeys || ["NONE"];

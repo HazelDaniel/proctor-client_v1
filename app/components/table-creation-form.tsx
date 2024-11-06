@@ -79,6 +79,7 @@ import { addType, clearError } from "~/reducers/global-types.reducer";
 import { DialogFooter } from "./ui/dialog";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { setCurrentGroupID, upload } from "~/reducers/table-to-node.reducer";
+import { getNodePropsFromIDS } from "~/utils/node.utils";
 
 export const TableCheckbox: React.FC<{
   id: string;
@@ -153,7 +154,6 @@ export const TableCompositeListCheckbox: React.ForwardRefExoticComponent<
             removePlaceholder(siblingPElement.textContent || "");
             return;
           }
-          // console.log("checking...", siblingPElement.textContent)
           addPlaceholder(siblingPElement.textContent || "");
         }}
         ref={ref}
@@ -202,7 +202,9 @@ export const FormCompositeSelectList: React.FC<{
       <SelectTrigger className="w-[180px]">
         <SelectValue
           placeholder={(
-            tableCreationState.columns[columnID].compositeOn || ["NONE"]
+            getNodePropsFromIDS(
+              tableCreationState.columns[columnID].compositeOn
+            ) || ["NONE"]
           ).join(", ")}
         />
       </SelectTrigger>
@@ -219,7 +221,9 @@ export const FormCompositeSelectList: React.FC<{
                 addPlaceholder={handleAddPlaceholder()}
                 removePlaceholder={handleRemovePlaceholder()}
                 itemList={
-                  tableCreationState.columns[columnID]!.compositeOn || ["NONE"]
+                  getNodePropsFromIDS(
+                    tableCreationState.columns[columnID].compositeOn
+                  ) || ["NONE"]
                 }
                 optText={el}
               />
@@ -289,7 +293,10 @@ export const FormColumnSelectList: React.FC<{
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-          {select.entries.map((el) => {
+
+          {
+          intent === "index" ?
+          select.entries.filter(el => el !== "COMPOSITE_FOREIGN").map((el) => {
             return (
               <SelectItem
                 value={`${el}`}
@@ -299,7 +306,20 @@ export const FormColumnSelectList: React.FC<{
                 {el}
               </SelectItem>
             );
-          })}
+          })
+          :
+          select.entries.map((el) => {
+            return (
+              <SelectItem
+                value={`${el}`}
+                className="hover:bg-outline1 hover:text-canvas"
+                key={el}
+              >
+                {el}
+              </SelectItem>
+            );
+          })
+          }
         </SelectGroup>
       </SelectContent>
     </Select>
@@ -601,8 +621,6 @@ export const TableCreationForm: React.FC = React.memo(
         formCloseButtonRef.current.click();
       }
     }, [tableActionButtonClicks]);
-
-    console.log("form creation state is ", creationFormState);
 
     return (
       <>

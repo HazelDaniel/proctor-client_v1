@@ -74,7 +74,7 @@ export const tableColumnFields: TableFormFieldsType = {
     defaultible: true,
     placeholder: "",
     default: "NONE",
-    entries: ["PRIMARY", "FOREIGN", "NONE", "COMPOSITE_PRIMARY"] satisfies GlobalColumnIndexType[],
+    entries: ["PRIMARY", "FOREIGN", "NONE", "COMPOSITE_PRIMARY", "COMPOSITE_FOREIGN"] satisfies GlobalColumnIndexType[],
   },
   default: {
     placeholder: "NONE",

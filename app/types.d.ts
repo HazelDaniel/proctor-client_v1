@@ -1,5 +1,6 @@
 import { Node } from "@xyflow/react";
 
+export type NodeCompositeID = `${string}:${string}`;
 
 export interface StatefulChatBubbleType {
   position: { x: number; y: number };
@@ -61,6 +62,7 @@ export interface TableFormUpdatePayloadType {
   unique: boolean;
   name: string;
   compositeOn: "NONE" | string;
+  oldName?: string;
 }
 
 export type TableCRUDColumnType = Partial<
@@ -75,7 +77,6 @@ export interface TableCRUDTableType {
   columns: Record<string, TableCRUDColumnType>;
 }
 
-
 export interface StatefulNodeType extends Node {
   position: { x: number; y: number };
   data: {
@@ -89,22 +90,22 @@ export interface StatefulNodeType extends Node {
       | "composite"
       | "ordinary"
       | "composite-primary";
-      column?: {
-        name: string;
-        type: GlobalColumnTypeType;
-        index: GlobalColumnIndexType;
-        nullable: boolean;
-        unique: boolean;
-        default: string;
-        compositeOn: string[] | null;
-      }
+    column?: {
+      name: string;
+      type: GlobalColumnTypeType;
+      index: GlobalColumnIndexType;
+      nullable: boolean;
+      unique: boolean;
+      default: string;
+      compositeOn: string[] | null;
+    };
     [prop: string]: any;
   };
   type?: string;
 }
 
 export interface StatefulGroupNodeType {
-  [prop: string]: Omit<StatefulNodeType, "id" > & {
+  [prop: string]: Omit<StatefulNodeType, "id"> & {
     nodes: { [prop: string]: Omit<StatefulNodeType, "id"> };
   };
 }
@@ -118,6 +119,6 @@ export type TableCreationFormStateType = Partial<TableCRUDTableType> & {
   errorMessage?: string | null;
   typeMappings: Record<string, string[]>;
   columns: Record<string, TableCRUDColumnType>;
-}
+};
 
 export type TableCRUDFormStateType = TableCreationFormStateType; // & TableUpdateFormStateType

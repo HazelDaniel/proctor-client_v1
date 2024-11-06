@@ -2,10 +2,12 @@ import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { XYPosition } from "@xyflow/react";
 import {
   GlobalColumnIndexType,
+  NodeCompositeID,
   StatefulGroupNodeType,
   StatefulNodeType,
   TableCRUDFormStateType,
 } from "~/types";
+import { getNodePropsFromIDS } from "~/utils/node.utils";
 
 // THIS IS A SHARED, HAPPY-PATH STATE FOR CREATED/UPDATED TABLE DATA AND AS SUCH, THERE WON'T BE MUCH VALIDATIONS DONE
 interface TableToNodeStateType {
@@ -59,14 +61,18 @@ export const tableToNodesSlice = createSlice({
           if (!index) index = "NONE";
           if (!nullable) nullable = false;
           if (!unique) unique = false;
-          const isComposite = index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN";
-          let colHastype = (isComposite) ? true : !!colType;
+          const isComposite =
+            index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN";
+          let colHastype = isComposite ? true : !!colType;
 
           if (!(colHastype && name)) return acc; // NOTE: WE SIMPLY WON'T PICK UP INCOMPLETE NODES
-          // compositeOn = Array.from(new Set(compositeOn));
-          // console.log("composite on is ", compositeOn);
+          let computedComposite = compositeOn;
+          if (isComposite) {
+            computedComposite = getNodePropsFromIDS(compositeOn as `${NodeCompositeID}:${string}`[]) || [];
+          }
 
-          acc[`${tableID}:${key}`] = { // NOTE: ITS IMPORTANT TO HAVE IT IN THIS FORMAT AS THAT'S HOW IT'S USED IN THE CONNECTION LOGIC
+          acc[key] = {
+            // NOTE: ITS IMPORTANT TO HAVE IT IN THIS FORMAT AS THAT'S HOW IT'S USED IN THE CONNECTION LOGIC
             data: {
               column: {
                 compositeOn,
@@ -75,9 +81,9 @@ export const tableToNodesSlice = createSlice({
                 nullable,
                 unique,
                 type: colType,
-                name: !isComposite ? name : compositeOn.join(", "),
+                name: !isComposite ? name : computedComposite.join(", "),
               },
-              label: !isComposite ? name : compositeOn.join(", "),
+              label: !isComposite ? name : computedComposite.join(", "),
               type: colToNodeTypeMap[index],
             },
             position: { x: 0, y: 0 },
