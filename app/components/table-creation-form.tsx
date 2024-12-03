@@ -40,6 +40,10 @@ import { tableColumnFields } from "~/data/table-form";
 import { useDebounce } from "~/hooks/usedebounce";
 import { isEqual } from "~/utils/comparison";
 import {
+  initialTableCreationFormState,
+  tableCreationFormReducer,
+} from "~/reducers/table-creation-form.reducer";
+import {
   __addColumn,
   __addToComposite,
   __clearError,
@@ -54,15 +58,13 @@ import {
   __toggleNullibility,
   __toggleUniqueness,
   __validate,
-  initialTableCreationFormState,
   selectCompositeColumns,
   selectDefault,
   selectIndex,
   selectNullibility,
   selectType,
   selectUniqueness,
-  tableCreationFormReducer,
-} from "~/reducers/table-creation-form.reducer";
+} from "~/reducers/utils/shared-functions";
 import {
   TableCreationContextValueType,
   TableCreationProvider,
@@ -203,7 +205,7 @@ export const FormCompositeSelectList: React.FC<{
         <SelectValue
           placeholder={(
             getNodePropsFromIDS(
-              tableCreationState.columns[columnID].compositeOn
+              tableCreationState.columns[columnID].compositeOn as unknown as []
             ) || ["NONE"]
           ).join(", ")}
         />
@@ -222,7 +224,7 @@ export const FormCompositeSelectList: React.FC<{
                 removePlaceholder={handleRemovePlaceholder()}
                 itemList={
                   getNodePropsFromIDS(
-                    tableCreationState.columns[columnID].compositeOn
+                    tableCreationState.columns[columnID].compositeOn as unknown as []
                   ) || ["NONE"]
                 }
                 optText={el}
