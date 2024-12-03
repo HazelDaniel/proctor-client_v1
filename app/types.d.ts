@@ -1,6 +1,12 @@
 import { Node } from "@xyflow/react";
 
 export type NodeCompositeID = `${string}:${string}`;
+export enum CompositeNodeStringOffset {
+  PARENT_ID_OFFSET,
+  NODE_ID_OFFSET,
+  COMPOSITE_NODE_ID_OFFSET,
+  COMPOSITE_NODE_DATA_OFFSET,
+}
 
 export interface StatefulChatBubbleType {
   position: { x: number; y: number };
@@ -63,6 +69,7 @@ export interface TableFormUpdatePayloadType {
   name: string;
   compositeOn: "NONE" | string;
   oldName?: string;
+  readonly?: boolean;
 }
 
 export type TableCRUDColumnType = Partial<
