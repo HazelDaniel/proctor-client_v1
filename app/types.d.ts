@@ -1,5 +1,13 @@
 import { Node } from "@xyflow/react";
 
+export interface Graph {
+  adjList: Record<string, string[]>;
+  revAdjList: Record<string, string[]>;
+  who: Record<string, string>;
+  whose: Record<string, string[]>;
+}
+
+
 export type NodeCompositeID = `${string}:${string}`;
 export enum CompositeNodeStringOffset {
   PARENT_ID_OFFSET,
