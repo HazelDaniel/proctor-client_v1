@@ -13,6 +13,11 @@ import {
   NodeCompositeID,
 } from "~/types";
 import { getNodePropFromID } from "~/utils/node.utils";
+import {
+  validateColumnName,
+  validateColumnType,
+  validatePrimaryKeyExists,
+} from "./utils/shared-functions";
 
 export const tableFormActionTypes = {
   dropColumn: "DROP_COLUMN",
@@ -162,6 +167,12 @@ export const tableCreationFormReducer: (
 
       let oldCompositeOn = state.columns[columnID]?.compositeOn || [];
 
+      if (oldCompositeOn.length === 1) {
+        let errorMessage =
+          "you must have at least one composite column in a composite";
+        return { ...state, errorState: true, errorMessage };
+      }
+
       let resComposite: string | null = null;
       for (const entry of state.columns[columnID].compositeOn || []) {
         if (
@@ -251,14 +262,15 @@ export const tableCreationFormReducer: (
 
           tableKeys = tableKeys.length ? tableKeys : ["NONE"];
 
-          const resColumn = {
+          const newColumn = {
             ...newState.columns[columnID],
             index: "COMPOSITE_PRIMARY" as const,
             name: internalIndexMarkers.COMPOSITE_PRIMARY,
             compositeOn: tableKeys,
+            oldName: resColumn.name,
           };
 
-          newState.columns[columnID] = resColumn;
+          newState.columns[columnID] = newColumn;
 
           return newState;
         }
@@ -267,6 +279,8 @@ export const tableCreationFormReducer: (
         }
         case "FOREIGN": {
           resColumn.compositeOn = ["NONE"];
+          if (resColumn.index === "COMPOSITE_FOREIGN")
+            resColumn.name = resColumn.oldName;
           resColumn.index = "FOREIGN";
           const { COMPOSITE_FOREIGN, COMPOSITE_PRIMARY } = internalIndexMarkers;
           resColumn.name =
@@ -334,13 +348,21 @@ export const tableCreationFormReducer: (
         return state; // you can't directly edit the name of a composite key
       if (resColumn.name === name) return state;
 
-      const errorState = (name?.split(" ").length || 0) > 1;
+      let errorState = (name?.split(" ").length || 0) > 1;
 
       if (errorState) {
         let errorMessage = "column names are not allowed to have spaces!";
         return { ...state, errorState, errorMessage };
       }
 
+      errorState = !!Object.values(state.columns).find(
+        (el) => el.name === name
+      );
+
+      if (errorState) {
+        let errorMessage = "columns cannot have duplicate names!";
+        return { ...state, errorState, errorMessage };
+      }
       resColumn.name = name;
 
       const newState = { ...state };
@@ -432,272 +454,4 @@ export const tableCreationFormReducer: (
     default:
       return state;
   }
-};
-
-// EXPLICIT STATE VALIDATORS
-function validateColumnType(state: TableCreationFormStateType) {
-  const stateColumns = Array.from(Object.values(state.columns));
-
-  const nonCompositeTypeValidator = (
-    cols: TableCreationFormStateType["columns"][string][]
-  ) => {
-    return cols.every((el) =>
-      el.index === "PRIMARY" || el.index === "NONE" || el.index === "FOREIGN"
-        ? !!el.type
-        : true
-    );
-  };
-
-  assertion.construct(
-    [() => nonCompositeTypeValidator(stateColumns)],
-    "some non-composite columns do not have types provided"
-  );
-}
-
-function validatePrimaryKeyExists(state: TableCreationFormStateType) {
-  const stateColumns = Array.from(Object.values(state.columns));
-
-  const PKValidator = (
-    cols: TableCreationFormStateType["columns"][string][]
-  ) => {
-    return cols.some(
-      (el) => el.index === "PRIMARY" || el.index === "COMPOSITE_PRIMARY"
-    );
-  };
-
-  assertion.construct(
-    [() => PKValidator(stateColumns)],
-    "this table doesn't have any primary key!"
-  );
-}
-
-function validateColumnName(state: TableCreationFormStateType) {
-  const stateColumns = Array.from(Object.values(state.columns));
-
-  const emptyValidator = (
-    cols: TableCreationFormStateType["columns"][string][]
-  ) => {
-    return cols.every((el) => !!el.name);
-  };
-
-  const reservedValidator = (
-    cols: TableCreationFormStateType["columns"][string][]
-  ) => {
-    return cols.every((el) => !reservedSQLKeywords.has(el.name as string));
-  };
-
-  const tableNameValidator = () => !!state.tableName;
-
-  assertion.construct([tableNameValidator], "the table name cannot be empty");
-  assertion.construct(
-    [() => emptyValidator(stateColumns)],
-    "some column names are empty"
-  );
-  assertion.construct(
-    [() => reservedValidator(stateColumns)],
-    "some column names are reserved keywords"
-  );
-}
-
-// ACTION PRODUCERS
-
-export const __validate: () => TableFormUpdateActionType = () => {
-  return {
-    type: "validate",
-    payload: {},
-  };
-};
-
-export const __clearError: () => TableFormUpdateActionType = () => {
-  return {
-    type: "clearError",
-    payload: {},
-  };
-};
-
-export const __setError: (errorMessage: string) => TableFormUpdateActionType = (
-  errorMessage
-) => {
-  return {
-    type: "setError",
-    payload: {
-      errorMessage,
-    },
-  };
-};
-
-export const __addColumn: () => TableFormUpdateActionType = () => {
-  return {
-    type: "addColumn",
-    payload: {},
-  };
-};
-
-export const __dropColumn: (columnID: string) => TableFormUpdateActionType = (
-  columnID
-) => {
-  return {
-    type: "dropColumn",
-    payload: { columnID },
-  };
-};
-
-export const __addToComposite: (
-  columnID: string,
-  compositeOn: string
-) => TableFormUpdateActionType = (columnID, compositeOn) => {
-  return {
-    type: "addToComposite",
-    payload: { columnID, compositeOn },
-  };
-};
-
-export const __removeFromComposite: (
-  columnID: string,
-  compositeOn: string
-) => TableFormUpdateActionType = (columnID, compositeOn) => {
-  return {
-    type: "removeFromComposite",
-    payload: { columnID, compositeOn },
-  };
-};
-
-export const __setDefault: (
-  columnID: string,
-  colDefault: string
-) => TableFormUpdateActionType = (columnID, colDefault) => {
-  return {
-    type: "setDefault",
-    payload: { columnID, default: colDefault },
-  };
-};
-
-export const __setIndex: (
-  columnID: string,
-  index: GlobalColumnIndexType
-) => TableFormUpdateActionType = (columnID, index) => {
-  return {
-    type: "setIndex",
-    payload: { columnID, index },
-  };
-};
-
-export const __setName: (
-  columnID: string,
-  name: string
-) => TableFormUpdateActionType = (columnID, name) => {
-  return {
-    type: "setName",
-    payload: { columnID, name },
-  };
-};
-
-export const __setTableName: (name: string) => TableFormUpdateActionType = (
-  name
-) => {
-  return {
-    type: "setTableName",
-    payload: { name },
-  };
-};
-
-export const __setType: (
-  columnID: string,
-  colType: GlobalColumnTypeType
-) => TableFormUpdateActionType = (columnID, type) => {
-  return {
-    type: "setType",
-    payload: { columnID, type },
-  };
-};
-
-export const __toggleUniqueness: (
-  columnID: string
-) => TableFormUpdateActionType = (columnID) => {
-  return {
-    type: "ToggleUniqueness",
-    payload: { columnID },
-  };
-};
-
-export const __toggleNullibility: (
-  columnID: string
-) => TableFormUpdateActionType = (columnID) => {
-  return {
-    type: "toggleNullibility",
-    payload: { columnID },
-  };
-};
-
-// SELECTORS
-export const selectCompositeColumns: (
-  state: TableCreationFormStateType,
-  id: string
-) => string[] = (state, id) => {
-  const resColumn = state.columns[id];
-  if (!resColumn) return ["NONE"];
-
-  let tableKeys = Object.entries(state.columns)
-    .filter(([k, v]) => {
-      return (
-        v.index !== "COMPOSITE_FOREIGN" &&
-        v.index !== "COMPOSITE_PRIMARY" &&
-        !!v.name &&
-        v.name !== internalIndexMarkers.COMPOSITE_FOREIGN &&
-        v.name !== internalIndexMarkers.COMPOSITE_PRIMARY &&
-        v.name !== resColumn.name
-      );
-    })
-    .map(([key, col]) => {
-      return getNodePropFromID(
-        `${key}:${col.name}` as `${NodeCompositeID}:${string}`
-      );
-    }) as string[];
-
-  return tableKeys || ["NONE"];
-};
-
-export const selectNullibility: (
-  state: TableCreationFormStateType,
-  id: string
-) => boolean = (state, id) => {
-  const resColumn = state.columns[id];
-
-  return resColumn?.nullable || false;
-};
-
-export const selectUniqueness: (
-  state: TableCreationFormStateType,
-  id: string
-) => boolean = (state, id) => {
-  const resColumn = state.columns[id];
-
-  return resColumn?.unique || false;
-};
-
-export const selectIndex: (
-  state: TableCreationFormStateType,
-  id: string
-) => GlobalColumnIndexType = (state, id) => {
-  const resColumn = state.columns[id];
-
-  return resColumn?.index || "NONE";
-};
-
-export const selectType: (
-  state: TableCreationFormStateType,
-  id: string
-) => GlobalColumnTypeType = (state, id) => {
-  const resColumn = state.columns[id];
-
-  return resColumn.type as GlobalColumnTypeType;
-};
-
-export const selectDefault: (
-  state: TableCreationFormStateType,
-  id: string
-) => string = (state, id) => {
-  const resColumn = state.columns[id];
-
-  return resColumn.default as string;
 };

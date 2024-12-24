@@ -54,6 +54,24 @@ export function validateColumnName(state: TableCreationFormStateType) {
     return cols.every((el) => !!el.name);
   };
 
+  const duplicateValidator = (
+    cols: TableCreationFormStateType["columns"][string][]
+  ) => {
+    const occHash: Record<string, number> = {};
+    return !!!cols.find((el) => {
+      if (!el.name) {
+        // handling undefined and empty strings
+        return false;
+      }
+      if (!occHash[el.name as string]) {
+        occHash[el.name as string] = 1;
+      } else {
+        occHash[el.name as string] += 1;
+      }
+      return occHash[el.name as string] > 1;
+    });
+  };
+
   const reservedValidator = (
     cols: TableCreationFormStateType["columns"][string][]
   ) => {
@@ -64,8 +82,11 @@ export function validateColumnName(state: TableCreationFormStateType) {
 
   assertion.construct([tableNameValidator], "the table name cannot be empty");
   assertion.construct(
-    [() => emptyValidator(stateColumns)],
-    "some column names are empty"
+    [
+      () => emptyValidator(stateColumns),
+      () => duplicateValidator(stateColumns),
+    ],
+    "some column names are either empty or duplicated"
   );
   assertion.construct(
     [() => reservedValidator(stateColumns)],
@@ -139,7 +160,10 @@ export const __setDefault = <S, T>(columnID: string, colDefault: string) => {
   };
 };
 
-export const __setIndex = <S, T>(columnID: string, index: GlobalColumnIndexType) => {
+export const __setIndex = <S, T>(
+  columnID: string,
+  index: GlobalColumnIndexType
+) => {
   return {
     type: "setIndex" as S,
     payload: { columnID, index } as T,
@@ -160,7 +184,10 @@ export const __setTableName = <S, T>(name: string) => {
   };
 };
 
-export const __setType = <S, T>(columnID: string, type: GlobalColumnTypeType) => {
+export const __setType = <S, T>(
+  columnID: string,
+  type: GlobalColumnTypeType
+) => {
   return {
     type: "setType" as S,
     payload: { columnID, type } as T,
@@ -252,4 +279,15 @@ export const selectDefault: (
   const resColumn = state.columns[id];
 
   return resColumn.default as string;
+};
+
+export const selectColumnIDFromName: (
+  state: TableCreationFormStateType,
+  name: string
+) => string | null = (state, name) => {
+  const resColumnEntry = Object.entries(state.columns).find(
+    ([key, val]) => val.name === name
+  );
+  if (resColumnEntry) return resColumnEntry[0];
+  return null;
 };

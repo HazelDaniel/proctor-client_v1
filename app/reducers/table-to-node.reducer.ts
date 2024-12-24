@@ -1,5 +1,6 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { XYPosition } from "@xyflow/react";
+import { v7 as UUIDv7 } from "uuid";
 import {
   GlobalColumnIndexType,
   NodeCompositeID,
@@ -7,7 +8,11 @@ import {
   StatefulNodeType,
   TableCRUDFormStateType,
 } from "~/types";
-import { getNodePropsFromIDS } from "~/utils/node.utils";
+import {
+  getNodePropFromID,
+  getNodePropsFromIDS,
+  parseNodeID,
+} from "~/utils/node.utils";
 
 // THIS IS A SHARED, HAPPY-PATH STATE FOR CREATED/UPDATED TABLE DATA AND AS SUCH, THERE WON'T BE MUCH VALIDATIONS DONE
 interface TableToNodeStateType {
@@ -68,7 +73,10 @@ export const tableToNodesSlice = createSlice({
           if (!(colHastype && name)) return acc; // NOTE: WE SIMPLY WON'T PICK UP INCOMPLETE NODES
           let computedComposite = compositeOn;
           if (isComposite) {
-            computedComposite = getNodePropsFromIDS(compositeOn as `${NodeCompositeID}:${string}`[]) || [];
+            computedComposite =
+              getNodePropsFromIDS(
+                compositeOn as `${NodeCompositeID}:${string}`[]
+              ) || [];
           }
 
           acc[key] = {
@@ -107,6 +115,45 @@ export const tableToNodesSlice = createSlice({
       const id = action.payload;
       if (state.currentGroupID === id) return;
       state.currentGroupID = id;
+    },
+    addCompositeColumns: (
+      state,
+      action: PayloadAction<{
+        columns: StatefulNodeType["data"]["column"][];
+        nodeID: NodeCompositeID;
+      }>
+    ) => {
+      const { columns, nodeID } = action.payload;
+      const [parentID, newNodeID] = parseNodeID(nodeID);
+      if (!columns.length) return;
+      columns.forEach((column) => {
+        if (!column) return;
+        let {
+          compositeOn,
+          default: defaultVal,
+          index,
+          name,
+          nullable,
+          type: colType,
+          unique,
+        } = column;
+        if (!compositeOn) compositeOn = [];
+        compositeOn = compositeOn.map((comp) => {
+          const resComp = getNodePropFromID(
+            comp as `${NodeCompositeID}:${string}`
+          );
+          return `${nodeID}:${resComp}`;
+        });
+        const generatedUUID = UUIDv7();
+        const resColumn =
+          state.groupNodes[parentID].nodes[newNodeID].data.column;
+        if (!resColumn) return;
+
+        state.groupNodes[parentID].nodes[newNodeID].data.column = {
+          ...resColumn,
+          compositeOn: [...(resColumn?.compositeOn || [])],
+        };
+      });
     },
   },
 });

@@ -1,6 +1,2 @@
 sequence of features
 > table creation state:
-	[implementation]
-	- whenever the compositeOn fields of a composite primary key are being set,
-		make sure that it has at least one column, otherwise,
-		error and use previous state

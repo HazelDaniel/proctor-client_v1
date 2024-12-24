@@ -35,6 +35,7 @@ import {
   TableFormColumnSelectType,
   GlobalColumnIndexType,
   GlobalColumnTypeType,
+  NodeCompositeID,
 } from "~/types";
 import { tableColumnFields } from "~/data/table-form";
 import { useDebounce } from "~/hooks/usedebounce";
@@ -58,6 +59,7 @@ import {
   __toggleNullibility,
   __toggleUniqueness,
   __validate,
+  selectColumnIDFromName,
   selectCompositeColumns,
   selectDefault,
   selectIndex,
@@ -82,6 +84,12 @@ import { DialogFooter } from "./ui/dialog";
 import { DialogClose } from "@radix-ui/react-dialog";
 import { setCurrentGroupID, upload } from "~/reducers/table-to-node.reducer";
 import { getNodePropsFromIDS } from "~/utils/node.utils";
+import {
+  addComposition,
+  addCompositions,
+  removeComposition,
+  removeCompositionParent,
+} from "~/reducers/composition.reducer";
 
 export const TableCheckbox: React.FC<{
   id: string;
@@ -172,6 +180,7 @@ export const FormCompositeSelectList: React.FC<{
     Omit<CheckboxProps & React.RefAttributes<HTMLButtonElement>, "ref"> &
       React.RefAttributes<HTMLButtonElement>
   >(null);
+  const dispatch = useDispatch();
 
   const { tableCreationState, tableCreationDispatch } = useContext(
     tableCreationContext
@@ -183,11 +192,29 @@ export const FormCompositeSelectList: React.FC<{
     [columnID]
   );
 
+  useEffect(() => {
+    const prevItems =
+      getNodePropsFromIDS(
+        tableCreationState.columns[columnID].compositeOn as unknown as []
+      ) || [];
+    const resItems = prevItems.map(
+      (el) => selectColumnIDFromName(tableCreationState, el) || ""
+    );
+    if (!resItems.length) return;
+    dispatch(
+      addCompositions([columnID as unknown as NodeCompositeID, resItems])
+    );
+  }, [tableCreationState, columnID]);
+
   const itemListSelection = useMemo(() => itemList, []);
 
   const handleAddPlaceholder = useCallback(
     () => (item: string) => {
       tableCreationDispatch(__addToComposite(columnID, item));
+      const resItemID = selectColumnIDFromName(tableCreationState, item);
+      dispatch(
+        addComposition([columnID as NodeCompositeID, resItemID as string])
+      );
     },
     [itemList]
   );
@@ -195,6 +222,10 @@ export const FormCompositeSelectList: React.FC<{
   const handleRemovePlaceholder = useCallback(
     () => (item: string) => {
       tableCreationDispatch(__removeFromComposite(columnID, item));
+      const resItemID = selectColumnIDFromName(tableCreationState, item);
+      dispatch(
+        removeComposition([columnID as NodeCompositeID, resItemID as string as NodeCompositeID])
+      );
     },
     [itemList]
   );
@@ -224,7 +255,8 @@ export const FormCompositeSelectList: React.FC<{
                 removePlaceholder={handleRemovePlaceholder()}
                 itemList={
                   getNodePropsFromIDS(
-                    tableCreationState.columns[columnID].compositeOn as unknown as []
+                    tableCreationState.columns[columnID]
+                      .compositeOn as unknown as []
                   ) || ["NONE"]
                 }
                 optText={el}
@@ -245,6 +277,7 @@ export const FormColumnSelectList: React.FC<{
   const { tableCreationDispatch } = useContext(
     tableCreationContext
   ) as TableCreationContextValueType;
+  const dispatch = useDispatch();
 
   const columnIndex = useContextSelector<
     TableCreationContextValueType,
@@ -269,6 +302,13 @@ export const FormColumnSelectList: React.FC<{
             tableCreationDispatch(__setDefault(columnID, e));
             break;
           case "index":
+            if (
+              (e as unknown as GlobalColumnIndexType) !== "COMPOSITE_FOREIGN" &&
+              (e as unknown as GlobalColumnIndexType) !== "COMPOSITE_PRIMARY"
+            )
+              dispatch(
+                removeCompositionParent(columnID as unknown as NodeCompositeID)
+              );
             tableCreationDispatch(
               __setIndex(columnID, e as unknown as GlobalColumnIndexType)
             );
@@ -295,33 +335,31 @@ export const FormColumnSelectList: React.FC<{
       </SelectTrigger>
       <SelectContent>
         <SelectGroup>
-
-          {
-          intent === "index" ?
-          select.entries.filter(el => el !== "COMPOSITE_FOREIGN").map((el) => {
-            return (
-              <SelectItem
-                value={`${el}`}
-                className="hover:bg-outline1 hover:text-canvas"
-                key={el}
-              >
-                {el}
-              </SelectItem>
-            );
-          })
-          :
-          select.entries.map((el) => {
-            return (
-              <SelectItem
-                value={`${el}`}
-                className="hover:bg-outline1 hover:text-canvas"
-                key={el}
-              >
-                {el}
-              </SelectItem>
-            );
-          })
-          }
+          {intent === "index"
+            ? select.entries
+                .filter((el) => el !== "COMPOSITE_FOREIGN")
+                .map((el) => {
+                  return (
+                    <SelectItem
+                      value={`${el}`}
+                      className="hover:bg-outline1 hover:text-canvas"
+                      key={el}
+                    >
+                      {el}
+                    </SelectItem>
+                  );
+                })
+            : select.entries.map((el) => {
+                return (
+                  <SelectItem
+                    value={`${el}`}
+                    className="hover:bg-outline1 hover:text-canvas"
+                    key={el}
+                  >
+                    {el}
+                  </SelectItem>
+                );
+              })}
         </SelectGroup>
       </SelectContent>
     </Select>
@@ -723,6 +761,11 @@ export const TableCreationForm: React.FC = React.memo(
                           className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto"
                           onClick={() => {
                             creationFormDispatch(__dropColumn(column.id));
+                            dispatch(
+                              removeCompositionParent(
+                                column.id as unknown as NodeCompositeID
+                              )
+                            );
                           }}
                         >
                           <svg className="w-full h-full">

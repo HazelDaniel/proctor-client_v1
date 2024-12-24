@@ -3,7 +3,7 @@ import { NodeCompositeID } from "~/types";
 import { parseNodeID } from "~/utils/node.utils";
 
 interface CompositionStateType {
-  [key: string]: { [key: NodeCompositeID]: { [key: string]: number } };
+  [key: string]: { [key: NodeCompositeID]: { [key: NodeCompositeID]: number } };
 }
 
 const initialCompositionState: CompositionStateType = {};
@@ -19,9 +19,12 @@ export const compositionSlice = createSlice({
       const [nodeID, compositeColumnID] = action.payload;
       const [parentID, _2] = parseNodeID(nodeID);
       if (!state[parentID])
-      state[parentID] = { [nodeID]: { [compositeColumnID]: 1 } };
+        state[parentID] = { [nodeID]: { [compositeColumnID]: 1 } };
       else
-      state[parentID] = {...state[parentID], [nodeID]: { ...state[parentID][nodeID],[compositeColumnID]: 1 } };
+        state[parentID] = {
+          ...state[parentID],
+          [nodeID]: { ...state[parentID][nodeID], [compositeColumnID]: 1 },
+        };
     },
     addCompositions: (
       state,
@@ -31,9 +34,12 @@ export const compositionSlice = createSlice({
       const [parentID, _2] = parseNodeID(nodeID);
       for (const compositeColumnID of compositeColumnIDs) {
         if (!state[parentID])
-        state[parentID] = { [nodeID]: { [compositeColumnID]: 1 } };
+          state[parentID] = { [nodeID]: { [compositeColumnID]: 1 } };
         else
-        state[parentID] = {...state[parentID], [nodeID]: { ...state[parentID][nodeID],[compositeColumnID]: 1 }}
+          state[parentID] = {
+            ...state[parentID],
+            [nodeID]: { ...state[parentID][nodeID], [compositeColumnID]: 1 },
+          };
       }
     },
     removeCompositionParent: (
@@ -47,7 +53,7 @@ export const compositionSlice = createSlice({
     },
     removeComposition: (
       state,
-      action: PayloadAction<[NodeCompositeID, string]>
+      action: PayloadAction<[NodeCompositeID, NodeCompositeID]>
     ) => {
       const [nodeID, compositeColumnID] = action.payload;
       const [parentID, _2] = parseNodeID(action.payload[0]);

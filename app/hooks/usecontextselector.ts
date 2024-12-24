@@ -9,7 +9,7 @@ export function useContextSelector<C extends {state: any}, V>(
   const {state} = useContext(context);
   const selectedValue = useMemo(() => {
     return selector(state, ...args);
-  }, [selector, state, args])
+  }, [selector, state, ...args])
 
   return selectedValue;
 }
