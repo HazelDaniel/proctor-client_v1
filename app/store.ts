@@ -14,16 +14,19 @@ import {
 import { default as workspaceReducer } from "~/reducers/workspace.reducer";
 import { default as nodesReducer } from "~/reducers/nodes.reducer";
 import { PersistoreStore } from "./dao/persistor-store.dao";
-import { StatefulNodeType } from "./types";
+import { NodeCompositeID, StatefulNodeType } from "./types";
 import { Edge } from "@xyflow/react";
 import { default as globalTypesReducer } from "./reducers/global-types.reducer";
 import tableToNodesReducer from "./reducers/table-to-node.reducer";
+import compositionReducer from "./reducers/composition.reducer";
+import { parseNodeID } from "./utils/node.utils";
 
 const rootReducer = combineReducers({
   workspace: workspaceReducer,
   nodes: nodesReducer,
   types: globalTypesReducer,
   contextNodes: tableToNodesReducer,
+  composition: compositionReducer,
 });
 
 const persistConfig: PersistConfig<{
@@ -31,6 +34,7 @@ const persistConfig: PersistConfig<{
   nodes: ReturnType<typeof nodesReducer>;
   types: ReturnType<typeof globalTypesReducer>;
   contextNodes: ReturnType<typeof tableToNodesReducer>;
+  composition: ReturnType<typeof compositionReducer>;
 }> = {
   key: "root",
   // whitelist: ["workspace", "types"],
@@ -83,6 +87,11 @@ export const commentsSelector = (state: {
   return state.workspace.commentBoard.currentID;
 };
 
+export const compositionSelector = (state: {
+  composition: ReturnType<typeof compositionReducer>;
+}) => {
+  return state.composition;
+};
 export const settingsSelector = (state: {
   workspace: ReturnType<typeof workspaceReducer>;
 }) => {
@@ -169,14 +178,14 @@ export const subsetNodesSelector =
 
 export const nodeChildrenLengthSelector =
   (id: string) => (state: { nodes: ReturnType<typeof nodesReducer> }) => {
-    try { // for some unknown reason, this one is erroring in dev mode so i just put it in a try-catch for now
+    try {
+      // for some unknown reason, this one is erroring in dev mode so i just put it in a try-catch for now
       let childrenLength = [...Object.values(state.nodes.groupNodes[id]?.nodes)]
         .length;
       return childrenLength;
     } catch (err) {
       return 0;
     }
-
   };
 
 // TYPES SELECTORS
@@ -190,7 +199,10 @@ export const typeDefaultSelector = (state: {
 export const typeErrorStateSelector = (state: {
   types: ReturnType<typeof globalTypesReducer>;
 }) => {
-  const res = {errorState: state.types.errorState, errorMessage: state.types.errorMessage}
+  const res = {
+    errorState: state.types.errorState,
+    errorMessage: state.types.errorMessage,
+  };
   return res;
 };
 
@@ -209,12 +221,27 @@ export const ContextNodesSelector = (state: {
   return keyLen > 0 ? state.nodes.groupNodes : null;
 };
 
-export const ContextGroupNodeSelector = (groupNodeID: string) => (state: {
-  nodes: ReturnType<typeof tableToNodesReducer>;
-}) => {
-  const result = state.nodes.groupNodes[groupNodeID];
-  return result;
-};
+export const ContextGroupNodeSelector =
+  (groupNodeID: string) =>
+  (state: { nodes: ReturnType<typeof tableToNodesReducer> }) => {
+    const result = state.nodes.groupNodes[groupNodeID];
+    return result;
+  };
+
+
+// COMPOSITION SELECTORS
+
+export const selectCompositionRep = (compositeID: NodeCompositeID) => {
+  const [parentID, _2] = parseNodeID(compositeID);
+  const state = store.getState();
+  if (!state.composition[parentID]) return null;
+  const nodesVal = Object.entries(state.composition[parentID]);
+  for (const [key, val] of nodesVal) {
+    if (compositeID in val) return key;
+  }
+  return null;
+}
+
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
