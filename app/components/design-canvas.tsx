@@ -534,17 +534,30 @@ export const DesignCanvas: React.FC<{
             ];
 
           if (!(equivTargetNode && equivSourceNode)) return eds;
+          if (sourceNodeParentID === targetNodeParentID) return eds; // NOTE: FOR SELF-REFERENTIAL TABLES, REMOVE THIS CONSTRAINT IF YOU ARE READY TO HANDLE IT
 
           if (
-            equivTargetNode.data.type !== "primary" ||
-            equivSourceNode.data.type !== "secondary" ||
-            // equivTargetNode.data.type !== "composite-primary" ||
-            sourceNodeParentID === targetNodeParentID
+            equivTargetNode.data.type === "primary" ||
+            equivSourceNode.data.type === "secondary"
           ) {
-            return eds;
+            // TODO: (check) the secondary column doesn't already have an outbound edge
+            // TODO: (check)
+            if (
+              equivTargetNode.data.type === "primary" &&
+              equivSourceNode.data.type === "secondary"
+            ) {
+              return addEdge(params, eds);
+            }
+            if (
+              equivTargetNode.data.type === "composite-primary" &&
+              equivSourceNode.data.type === "secondary"
+            ) {
+              return addEdge(params, eds);
+            }
           }
+          console.log(store.getState().nodes.groupNodes);
 
-          return addEdge(params, eds);
+          return eds;
         }),
       []
     );
