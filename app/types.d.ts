@@ -140,7 +140,7 @@ export type TableUpdateFormStateType = Record<string, Partial<TableCRUDTableType
   errorState: boolean;
   errorMessage?: string | null;
   typeMappings: Record<string, string[]>;
-  columns: Record<string, TableCRUDColumnType>;
+  columns: Record<string, TableCRUDColumnType | undefined>;
 }>;
 
 export type TableCRUDFormStateType = TableCreationFormStateType; // & TableUpdateFormStateType
