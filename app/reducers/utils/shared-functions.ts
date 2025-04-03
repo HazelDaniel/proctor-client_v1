@@ -1,8 +1,10 @@
+/* eslint-disable no-extra-boolean-cast */
 import {
   GlobalColumnIndexType,
   GlobalColumnTypeType,
   NodeCompositeID,
   TableCreationFormStateType,
+  TableUpdateFormStateType,
 } from "~/types";
 import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
 import { internalIndexMarkers, reservedSQLKeywords } from "~/data/table-form";
@@ -126,168 +128,295 @@ export const __addColumn = <S, T>() => {
   };
 };
 
-export const __dropColumn = <S, T>(columnID: string) => {
+export const __dropColumn = <S, T>(columnID: string, tableID?: string) => {
   return {
     type: "dropColumn" as S,
-    payload: { columnID } as T,
+    payload: { columnID, tableID } as T,
   };
 };
 
 export const __addToComposite = <S, T>(
   columnID: string,
-  compositeOn: string
+  compositeOn: string,
+  tableID?: string
 ) => {
   return {
     type: "addToComposite" as S,
-    payload: { columnID, compositeOn } as T,
+    payload: { columnID, compositeOn, tableID } as T,
   };
 };
 
 export const __removeFromComposite = <S, T>(
   columnID: string,
-  compositeOn: string
+  compositeOn: string,
+  tableID?: string
 ) => {
   return {
     type: "removeFromComposite" as S,
-    payload: { columnID, compositeOn } as T,
+    payload: { columnID, compositeOn, tableID } as T,
   };
 };
 
-export const __setDefault = <S, T>(columnID: string, colDefault: string) => {
+export const __setDefault = <S, T>(
+  columnID: string,
+  colDefault: string,
+  tableID?: string
+) => {
   return {
     type: "setDefault" as S,
-    payload: { columnID, default: colDefault } as T,
+    payload: { columnID, default: colDefault, tableID } as T,
   };
 };
 
 export const __setIndex = <S, T>(
   columnID: string,
-  index: GlobalColumnIndexType
+  index: GlobalColumnIndexType,
+  tableID?: string
 ) => {
   return {
     type: "setIndex" as S,
-    payload: { columnID, index } as T,
+    payload: { columnID, index, tableID } as T,
   };
 };
 
-export const __setName = <S, T>(columnID: string, name: string) => {
+export const __setName = <S, T>(
+  columnID: string,
+  name: string,
+  tableID?: string
+) => {
   return {
     type: "setName" as S,
-    payload: { columnID, name } as T,
+    payload: { columnID, name, tableID } as T,
   };
 };
 
-export const __setTableName = <S, T>(name: string) => {
+export const __setTableName = <S, T>(name: string, tableID?: string) => {
   return {
     type: "setTableName" as S,
-    payload: { name } as T,
+    payload: { name, tableID } as T,
   };
 };
 
 export const __setType = <S, T>(
   columnID: string,
-  type: GlobalColumnTypeType
+  type: GlobalColumnTypeType,
+  tableID?: string
 ) => {
   return {
     type: "setType" as S,
-    payload: { columnID, type } as T,
+    payload: { columnID, type, tableID } as T,
   };
 };
 
-export const __toggleUniqueness = <S, T>(columnID: string) => {
+export const __toggleUniqueness = <S, T>(
+  columnID: string,
+  tableID?: string
+) => {
   return {
     type: "ToggleUniqueness" as S,
-    payload: { columnID } as T,
+    payload: { columnID, tableID } as T,
   };
 };
 
-export const __toggleNullibility = <S, T>(columnID: string) => {
+export const __toggleNullibility = <S, T>(
+  columnID: string,
+  tableID?: string
+) => {
   return {
     type: "toggleNullibility" as S,
-    payload: { columnID } as T,
+    payload: { columnID, tableID } as T,
+  };
+};
+
+export const __replaceTable = <S, T>(
+  tableID?: string,
+  tableBody?: TableUpdateFormStateType[string]
+) => {
+  return {
+    type: "replaceTable" as S,
+    payload: { tableID, tableBody } as T,
   };
 };
 
 // SELECTORS
 export const selectCompositeColumns: (
-  state: TableCreationFormStateType,
-  id: string
-) => string[] = (state, id) => {
-  const resColumn = state.columns[id];
-  if (!resColumn) return ["NONE"];
+  state: TableCreationFormStateType | TableUpdateFormStateType,
+  id: string,
+  tableID?: string
+) => string[] = (state, id, tableID) => {
+  if ("columns" in state) {
+    const resColumn = (state as TableCreationFormStateType).columns[id];
+    if (!resColumn) return ["NONE"];
 
-  let tableKeys = Object.entries(state.columns)
-    .filter(([k, v]) => {
-      return (
-        v.index !== "COMPOSITE_FOREIGN" &&
-        v.index !== "COMPOSITE_PRIMARY" &&
-        !!v.name &&
-        v.name !== internalIndexMarkers.COMPOSITE_FOREIGN &&
-        v.name !== internalIndexMarkers.COMPOSITE_PRIMARY &&
-        v.name !== resColumn.name
-      );
-    })
-    .map(([key, col]) => {
-      return getNodePropFromID(
-        `${key}:${col.name}` as `${NodeCompositeID}:${string}`
-      );
-    }) as string[];
+    const tableKeys = Object.entries(state.columns)
+      .filter(([k, v]) => {
+        void k;
+        return (
+          v.index !== "COMPOSITE_FOREIGN" &&
+          v.index !== "COMPOSITE_PRIMARY" &&
+          !!v.name &&
+          v.name !== internalIndexMarkers.COMPOSITE_FOREIGN &&
+          v.name !== internalIndexMarkers.COMPOSITE_PRIMARY &&
+          v.name !== resColumn.name
+        );
+      })
+      .map(([key, col]) => {
+        return getNodePropFromID(
+          `${key}:${col.name}` as `${NodeCompositeID}:${string}`
+        );
+      }) as string[];
 
-  return tableKeys || ["NONE"];
+    return tableKeys || ["NONE"];
+  } else if (`${tableID}` in state) {
+    const resColumn = (state as TableUpdateFormStateType)[`${tableID}`].columns[
+      id
+    ];
+    if (!resColumn) return ["NONE"];
+
+    const tableKeys = Object.entries(
+      (state as TableUpdateFormStateType)[`${tableID}`].columns
+    )
+      .filter(([k, v]) => {
+        void k;
+        return (
+          v.index !== "COMPOSITE_FOREIGN" &&
+          v.index !== "COMPOSITE_PRIMARY" &&
+          !!v.name &&
+          v.name !== internalIndexMarkers.COMPOSITE_FOREIGN &&
+          v.name !== internalIndexMarkers.COMPOSITE_PRIMARY &&
+          v.name !== resColumn.name
+        );
+      })
+      .map(([key, col]) => {
+        return getNodePropFromID(
+          `${key}:${col.name}` as `${NodeCompositeID}:${string}`
+        );
+      }) as string[];
+
+    return tableKeys || ["NONE"];
+  } else {
+    throw new Error("TypeMismatch");
+  }
 };
 
 export const selectNullibility: (
-  state: TableCreationFormStateType,
-  id: string
-) => boolean = (state, id) => {
-  const resColumn = state.columns[id];
+  state: TableCreationFormStateType | TableUpdateFormStateType,
+  id: string,
+  tableID?: string
+) => boolean = (state, id, tableID) => {
+  if ("columns" in state) {
+    const resColumn = (state as TableCreationFormStateType).columns[id];
+    return resColumn?.nullable || false;
+  } else if (`${tableID}` in state) {
+    const resColumn = (state as TableUpdateFormStateType)[`${tableID}`].columns[
+      id
+    ];
 
-  return resColumn?.nullable || false;
+    return resColumn?.nullable || false;
+  } else {
+    throw new Error("TypeMismatch");
+  }
 };
 
 export const selectUniqueness: (
-  state: TableCreationFormStateType,
-  id: string
-) => boolean = (state, id) => {
-  const resColumn = state.columns[id];
+  state: TableCreationFormStateType | TableUpdateFormStateType,
+  id: string,
+  tableID?: string
+) => boolean = (state, id, tableID) => {
+  if ("columns" in state) {
+    const resColumn = (state as TableCreationFormStateType).columns[id];
+    return resColumn?.unique || false;
+  } else if (`${tableID}` in state) {
+    const resColumn = (state as TableUpdateFormStateType)[`${tableID}`].columns[
+      id
+    ];
 
-  return resColumn?.unique || false;
+    return resColumn?.unique || false;
+  } else {
+    throw new Error("TypeMismatch");
+  }
 };
 
 export const selectIndex: (
-  state: TableCreationFormStateType,
-  id: string
-) => GlobalColumnIndexType = (state, id) => {
-  const resColumn = state.columns[id];
+  state: TableCreationFormStateType | TableUpdateFormStateType,
+  id: string,
+  tableID?: string
+) => GlobalColumnIndexType = (state, id, tableID) => {
+  if ("columns" in state) {
+    const resColumn = (state as TableCreationFormStateType).columns[id];
+    return resColumn?.index || "NONE";
+  } else if (`${tableID}` in state) {
 
-  return resColumn?.index || "NONE";
+    const resColumn = (state as TableUpdateFormStateType)[`${tableID}`]
+      ?.columns[id];
+
+    return resColumn?.index || "NONE";
+  } else {
+    throw new Error("TypeMismatch");
+  }
 };
 
 export const selectType: (
-  state: TableCreationFormStateType,
-  id: string
-) => GlobalColumnTypeType = (state, id) => {
-  const resColumn = state.columns[id];
-
-  return resColumn.type as GlobalColumnTypeType;
+  state: TableCreationFormStateType | TableUpdateFormStateType,
+  id: string,
+  tableID?: string
+) => GlobalColumnTypeType = (state, id, tableID) => {
+  if ("columns" in state) {
+    const resColumn = (state as TableCreationFormStateType).columns[id];
+    return resColumn.type! as GlobalColumnTypeType;
+  } else if (`${tableID}` in state) {
+    const resColumn = (state as TableUpdateFormStateType)[`${tableID}`].columns[
+      id
+    ];
+    return resColumn.type! as GlobalColumnTypeType;
+  } else {
+    throw new Error("TypeMismatch");
+  }
 };
 
 export const selectDefault: (
-  state: TableCreationFormStateType,
-  id: string
-) => string = (state, id) => {
-  const resColumn = state.columns[id];
-
-  return resColumn.default as string;
+  state: TableCreationFormStateType | TableUpdateFormStateType,
+  id: string,
+  tableID?: string
+) => string = (state, id, tableID) => {
+  if ("columns" in state) {
+    const resColumn = (state as TableCreationFormStateType).columns[id];
+    return resColumn.default as string;
+  } else if (`${tableID}` in state) {
+    const resColumn = (state as TableUpdateFormStateType)[`${tableID}`].columns[
+      id
+    ];
+    return resColumn.default as string;
+  } else {
+    throw new Error("TypeMismatch");
+  }
 };
 
 export const selectColumnIDFromName: (
-  state: TableCreationFormStateType,
-  name: string
-) => string | null = (state, name) => {
-  const resColumnEntry = Object.entries(state.columns).find(
-    ([key, val]) => val.name === name
-  );
-  if (resColumnEntry) return resColumnEntry[0];
+  state: TableCreationFormStateType | TableUpdateFormStateType,
+  name: string,
+  tableID?: string
+) => string | null = (state, name, tableID?: string) => {
+  if ("columns" in state) {
+    const resColumnEntry = Object.entries(
+      (state as TableCreationFormStateType).columns
+    ).find(([key, val]) => {
+      void key;
+      return val.name === name;
+    });
+    if (resColumnEntry) return resColumnEntry[0];
+  } else if (`${tableID}` in state) {
+    const resColumnEntry = Object.entries(
+      (state as TableUpdateFormStateType)[`${tableID}`].columns
+    ).find(([key, val]) => {
+      void key;
+      return val.name === name;
+    });
+
+    if (resColumnEntry) return resColumnEntry[0];
+  } else {
+    throw new Error("TypeMismatch");
+  }
+
   return null;
 };
