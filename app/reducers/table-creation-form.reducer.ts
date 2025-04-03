@@ -71,7 +71,7 @@ export const tableCreationFormReducer: (
   action
 ) => {
   let newState: TableCreationFormStateType;
-  let { payload } = action;
+  const { payload } = action;
 
   switch (action.type) {
     case "clearError": {
@@ -80,11 +80,11 @@ export const tableCreationFormReducer: (
     }
     case "addColumn": {
       const { tableID, columns, tableName } = state;
-      let errorState = !!Object.values(state.columns).find((col) => {
+      const errorState = !!Object.values(state.columns).find((col) => {
         col.name === "";
       });
       if (errorState) {
-        let errorMessage =
+        const errorMessage =
           "you cannot create new columns if existing column names are empty, name them and try again!";
         return { ...state, errorState, errorMessage };
       }
@@ -125,11 +125,11 @@ export const tableCreationFormReducer: (
       const { columnID, compositeOn } = payload;
       if (!columnID) return state;
       const index = state.columns[columnID]?.index;
-      let errorState = !(
+      const errorState = !(
         index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN"
       );
       if (errorState) {
-        let errorMessage =
+        const errorMessage =
           "you cannot set composite columns for a non composite key!";
         return { ...state, errorState, errorMessage };
       }
@@ -143,11 +143,11 @@ export const tableCreationFormReducer: (
       }
       if (!resColumnID) return state;
 
-      let oldCompositeOn = state.columns[columnID]?.compositeOn || [];
+      const oldCompositeOn = state.columns[columnID]?.compositeOn || [];
       if (oldCompositeOn.includes(`${resColumnID}`)) return state;
 
       const newState = { ...state };
-      let newCompositeOn = [...oldCompositeOn, `${resColumnID}`];
+      const newCompositeOn = [...oldCompositeOn, `${resColumnID}`];
       newState.columns[columnID].compositeOn = newCompositeOn;
 
       return newState;
@@ -156,19 +156,19 @@ export const tableCreationFormReducer: (
       const { columnID, compositeOn } = payload;
       if (!columnID) return state;
       const index = state.columns[columnID]?.index;
-      let errorState = !(
+      const errorState = !(
         index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN"
       );
       if (errorState) {
-        let errorMessage =
+        const errorMessage =
           "you cannot set composite columns for a non composite key!";
         return { ...state, errorState, errorMessage };
       }
 
-      let oldCompositeOn = state.columns[columnID]?.compositeOn || [];
+      const oldCompositeOn = state.columns[columnID]?.compositeOn || [];
 
       if (oldCompositeOn.length === 1) {
-        let errorMessage =
+        const errorMessage =
           "you must have at least one composite column in a composite";
         return { ...state, errorState: true, errorMessage };
       }
@@ -187,7 +187,7 @@ export const tableCreationFormReducer: (
 
       if (!oldCompositeOn.includes(`${resComposite}`)) {
         console.error(
-          "doesn't not have composite ",
+          "doesn't have composite ",
           oldCompositeOn,
           resComposite
         );
@@ -212,12 +212,12 @@ export const tableCreationFormReducer: (
       if (!colDefault || !resColumn?.type) return state;
       const supportedDefaultSet = typeDefaultMappings[resColumn.type];
 
-      let errorState = supportedDefaultSet
+      const errorState = supportedDefaultSet
         ? !supportedDefaultSet.has(colDefault)
         : !state.typeMappings[resColumn?.type].includes(colDefault);
 
       if (errorState) {
-        let errorMessage =
+        const errorMessage =
           "the set default value is not compatible with the column type";
         return { ...state, errorState, errorMessage };
       }
@@ -241,7 +241,7 @@ export const tableCreationFormReducer: (
           });
 
           if (errorState) {
-            let errorMessage =
+            const errorMessage =
               "this table already has a primary/composite primary key. remove the previous if you intend to use another key.";
             return { ...state, errorState, errorMessage };
           }
@@ -261,6 +261,7 @@ export const tableCreationFormReducer: (
             }) as string[];
 
           tableKeys = tableKeys.length ? tableKeys : ["NONE"];
+          console.log("composite on ", tableKeys);
 
           const newColumn = {
             ...newState.columns[columnID],
@@ -307,7 +308,7 @@ export const tableCreationFormReducer: (
           });
 
           if (errorState) {
-            let errorMessage =
+            const errorMessage =
               "this table already has a primary/composite primary key. if you intend to use another key, you must remove the previous key";
             return { ...state, errorState, errorMessage };
           }
@@ -351,7 +352,7 @@ export const tableCreationFormReducer: (
       let errorState = (name?.split(" ").length || 0) > 1;
 
       if (errorState) {
-        let errorMessage = "column names are not allowed to have spaces!";
+        const errorMessage = "column names are not allowed to have spaces!";
         return { ...state, errorState, errorMessage };
       }
 
@@ -360,7 +361,7 @@ export const tableCreationFormReducer: (
       );
 
       if (errorState) {
-        let errorMessage = "columns cannot have duplicate names!";
+        const errorMessage = "columns cannot have duplicate names!";
         return { ...state, errorState, errorMessage };
       }
       resColumn.name = name;
@@ -377,7 +378,7 @@ export const tableCreationFormReducer: (
       const errorState = (name?.split(" ").length || 0) > 1;
 
       if (errorState) {
-        let errorMessage = "table name cannot contain spaces!";
+        const errorMessage = "table name cannot contain spaces!";
         return { ...state, errorState, errorMessage };
       }
 

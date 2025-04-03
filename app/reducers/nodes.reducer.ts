@@ -7,11 +7,13 @@ const NODE_OFFSET_VALUE = 43;
 export interface NodesStateType {
   groupNodes: StatefulGroupNodeType;
   edges: { [prop: string]: Omit<Edge, "id"> };
+  activeNode: string | null;
 }
 
 const initialNodesState: NodesStateType = {
   groupNodes: {},
   edges: {},
+  activeNode: null,
 };
 
 const nodesSlice = createSlice({
@@ -24,6 +26,10 @@ const nodesSlice = createSlice({
       if (node) {
         node.position = position;
       }
+    },
+    setActiveNode: (state, action) => {
+      const { activeNodeID } = action.payload;
+      state.activeNode = activeNodeID;
     },
     addNodeGroup: (
       state,
@@ -96,7 +102,7 @@ const nodesSlice = createSlice({
   },
 });
 
-export const { setNodePosition, addNodeGroup } = nodesSlice.actions;
+export const { setNodePosition, setActiveNode, addNodeGroup } = nodesSlice.actions;
 
 const nodesReducer = nodesSlice.reducer;
 

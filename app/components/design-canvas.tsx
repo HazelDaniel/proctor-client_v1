@@ -1,3 +1,8 @@
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable no-extra-boolean-cast */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable react/prop-types */
 import {
   Background,
   ConnectionMode,
@@ -24,6 +29,7 @@ import React, {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
   useState,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -44,14 +50,21 @@ import {
   designPaneReducer,
   initialDesignPaneState,
 } from "~/reducers/design-pane.reducer";
-import { addNodeGroup, setNodePosition } from "~/reducers/nodes.reducer";
 import {
+  addNodeGroup,
+  setActiveNode,
+  setNodePosition,
+} from "~/reducers/nodes.reducer";
+import {
+  activeNodeSelector,
   childNodePositionSelector,
   edgesSelector,
   nodeChildrenLengthSelector,
   nodesSelector,
+  savedTableSelector,
   settingsSelector,
   store,
+  typeMappingSelector,
 } from "~/store";
 import {
   NodeCompositeID,
@@ -69,6 +82,8 @@ import {
 import { BidirectionalEdge } from "./bidirectional-edge";
 import { TableCreationForm } from "./table-creation-form";
 import { parseNodeID } from "~/utils/node.utils";
+import { TableUpdateForm } from "./table-update-form";
+import { download } from "~/reducers/table-to-node.reducer";
 
 export const ChatBubble: React.FC<{ pos: XYPosition }> = ({ pos }) => {
   return (
@@ -79,7 +94,7 @@ export const ChatBubble: React.FC<{ pos: XYPosition }> = ({ pos }) => {
   );
 };
 
-export const ChatBubbleView = React.memo(() => {
+export const ChatBubbleView = React.memo(function ChatBubbleViewInner() {
   const { chatBubbleState } = useContext(
     chatBubbleContext
   ) as ChatBubbleContextValueType;
@@ -101,6 +116,15 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
   const { designPaneDispatch, designPaneState } = useContext(
     designPaneContext
   ) as DesignPaneContextValueType;
+  const dispatch = useDispatch();
+
+  const activeNode = useSelector(activeNodeSelector);
+
+  useEffect(() => {
+    if (activeNode) {
+      designPaneDispatch(__setActiveTab(null));
+    }
+  }, [activeNode]);
 
   return (
     <div className="design-panel w-max min-w-[25rem] md:min-w-[35rem] h-32 align-center relative z-[2] mx-auto flex px-8 border-x-[10px] md:border-r-[20px] md:border-l-[20px] border-accent rounded-lg bg-canvas shadow-md drop-shadow-md shadow-outline1 py-4 z-5">
@@ -124,6 +148,7 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
           }
           onClick={(e) => {
             e.stopPropagation();
+            dispatch(setActiveNode({ activeNodeID: null }));
             designPaneDispatch(__setActiveTab("text"));
           }}
         >
@@ -146,6 +171,7 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
           }
           onClick={(e) => {
             e.stopPropagation();
+            dispatch(setActiveNode({ activeNodeID: null }));
             designPaneDispatch(__setActiveTab("table"));
           }}
         >
@@ -183,6 +209,7 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
           }
           onClick={(e) => {
             e.stopPropagation();
+            dispatch(setActiveNode({ activeNodeID: null }));
             designPaneDispatch(__setActiveTab("comment"));
           }}
         >
@@ -329,6 +356,14 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
 
 const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
   const childrenCount = useSelector(nodeChildrenLengthSelector(id));
+  const dispatch = useDispatch();
+  const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
+  const savedTable = useSelector(savedTableSelector);
+
+  useEffect(() => {
+    dispatch(download({ groupID: id, mappings: globalTypeMappings }));
+  }, [id]);
+
   return (
     <div
       className="flex flex-col table-node-group relative overflow-y-visible"
@@ -348,11 +383,32 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
           <span className="w-1 h-1 rounded-full bg-outline1d "></span>
           <span className="w-1 h-1 rounded-full bg-outline1d ml-[-5px]"></span>
         </div>
-        <button className="w-[10px] h-[10px]">
-          <svg className="w-full h-full stroke-outline1d">
-            <use xlinkHref="#pencil"></use>
-          </svg>
-        </button>
+        <Dialog>
+          <DialogTrigger asChild className="">
+            <button
+              className="w-[10px] h-[10px]"
+              onClick={() => {
+                dispatch(setActiveNode({ activeNodeID: id }));
+              }}
+            >
+              <svg className="w-full h-full stroke-outline1d">
+                <use xlinkHref="#pencil"></use>
+              </svg>
+            </button>
+          </DialogTrigger>
+          {savedTable ? (
+            <DialogContent
+              className="w-[80vw] min-w-[95vw] h-[clamp(60rem, 95vh, 60rem)] md:h-[clamp(40rem, 95vh, 99vh)] rounded-lg flex flex-col items-center p-8 form-creation-dialog-content"
+              aria-describedby=""
+            >
+              <DialogHeader className="h-max mr-auto">
+                <DialogTitle>Edit Table</DialogTitle>
+              </DialogHeader>
+
+              <TableUpdateForm id={id} />
+            </DialogContent>
+          ) : null}
+        </Dialog>
       </div>
 
       <NodeToolbar
@@ -538,10 +594,10 @@ export const DesignCanvas: React.FC<{
 
           if (
             equivTargetNode.data.type === "primary" ||
-            equivSourceNode.data.type === "secondary"
+            equivSourceNode.data.type === "secondary" ||
+            equivSourceNode.data.type === "composite"
           ) {
             // TODO: (check) the secondary column doesn't already have an outbound edge
-            // TODO: (check)
             if (
               equivTargetNode.data.type === "primary" &&
               equivSourceNode.data.type === "secondary"
@@ -550,8 +606,9 @@ export const DesignCanvas: React.FC<{
             }
             if (
               equivTargetNode.data.type === "composite-primary" &&
-              equivSourceNode.data.type === "secondary"
+              equivSourceNode.data.type === "composite"
             ) {
+              // TODO: (check) before adding edge, make sure that the cardinality of the composite column matches the referenced composite primary column
               return addEdge(params, eds);
             }
           }

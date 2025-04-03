@@ -153,6 +153,18 @@ export const nodeSelector =
     return resNode;
   };
 
+export const savedTableSelector = (state: {
+  contextNodes: ReturnType<typeof tableToNodesReducer>;
+}) => {
+  return state.contextNodes.savedTable;
+};
+
+export const activeNodeSelector = (state: {
+  nodes: ReturnType<typeof nodesReducer>;
+}) => {
+  return state.nodes.activeNode;
+};
+
 export const childNodePositionSelector =
   (id: string, parentID: string | undefined) =>
   (state: { nodes: ReturnType<typeof nodesReducer> }) => {
@@ -228,7 +240,6 @@ export const ContextGroupNodeSelector =
     return result;
   };
 
-
 // COMPOSITION SELECTORS
 
 export const selectCompositionRep = (compositeID: NodeCompositeID) => {
@@ -240,8 +251,7 @@ export const selectCompositionRep = (compositeID: NodeCompositeID) => {
     if (compositeID in val) return key;
   }
   return null;
-}
-
+};
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

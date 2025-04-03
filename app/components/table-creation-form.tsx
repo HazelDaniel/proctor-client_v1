@@ -1,3 +1,6 @@
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { v7 as UUIDv7 } from "uuid";
 import { Form } from "@remix-run/react";
 import React, {
@@ -140,14 +143,15 @@ export const TableCompositeListCheckbox: React.ForwardRefExoticComponent<
       optText: string;
       itemList: string[];
     }
-> = React.forwardRef((prop, ref) => {
-  if (!prop) return null;
+> = React.forwardRef(function TableCompositeListCheckboxInner(prop, ref) {
   const { id, addPlaceholder, removePlaceholder, optText, itemList } = prop;
   const [isChecked, setChecked] = useState<boolean>(false);
 
   useEffect(() => {
     setChecked(itemList.includes(optText));
   }, [itemList]);
+
+  if (!prop) return null;
 
   return (
     <div className="flex items-center space-x-2 justify-between w-full">
@@ -159,12 +163,12 @@ export const TableCompositeListCheckbox: React.ForwardRefExoticComponent<
           const { target } = e;
           const siblingPElement = (
             target as HTMLInputElement
-          ).parentElement?.querySelector("p")!;
+          ).parentElement?.querySelector("p");
           if (isChecked) {
-            removePlaceholder(siblingPElement.textContent || "");
+            removePlaceholder(siblingPElement?.textContent || "");
             return;
           }
-          addPlaceholder(siblingPElement.textContent || "");
+          addPlaceholder(siblingPElement?.textContent || "");
         }}
         ref={ref}
         checked={isChecked}
@@ -224,7 +228,10 @@ export const FormCompositeSelectList: React.FC<{
       tableCreationDispatch(__removeFromComposite(columnID, item));
       const resItemID = selectColumnIDFromName(tableCreationState, item);
       dispatch(
-        removeComposition([columnID as NodeCompositeID, resItemID as string as NodeCompositeID])
+        removeComposition([
+          columnID as NodeCompositeID,
+          resItemID as string as NodeCompositeID,
+        ])
       );
     },
     [itemList]
@@ -368,7 +375,7 @@ export const FormColumnSelectList: React.FC<{
 
 const EnumCreationForm: React.ForwardRefExoticComponent<
   React.RefAttributes<HTMLInputElement>
-> = React.forwardRef(function innerCreationForm(_, ref) {
+> = React.forwardRef(function InnerCreationForm(_, ref) {
   const [enumFormState, enumFormDispatch] = useState<{
     typeName: string;
     typeEntries: string;
@@ -390,7 +397,7 @@ const EnumCreationForm: React.ForwardRefExoticComponent<
 
   useEffect(() => {
     if (!errorState) return;
-    let timeoutFn = setTimeout(() => dispatch(clearError()), 100);
+    const timeoutFn = setTimeout(() => dispatch(clearError()), 100);
     return () => {
       clearTimeout(timeoutFn);
     };
@@ -590,7 +597,7 @@ export const TableFormCTAArea: React.FC<{
 );
 
 export const TableCreationForm: React.FC = React.memo(
-  function innerTableCreationForm() {
+  function InnerTableCreationForm() {
     const globalDefaultsList = useSelector(typeDefaultSelector, isEqual);
     const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
     const dispatch = useDispatch();

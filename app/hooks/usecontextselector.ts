@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useContext, useMemo } from "react";
 
 // generic Types: C: context, V: value

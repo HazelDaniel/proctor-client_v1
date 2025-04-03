@@ -1,12 +1,15 @@
+/* eslint-disable prefer-const */
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { XYPosition } from "@xyflow/react";
 import { v7 as UUIDv7 } from "uuid";
 import {
   GlobalColumnIndexType,
+  GlobalColumnTypeType,
   NodeCompositeID,
   StatefulGroupNodeType,
   StatefulNodeType,
   TableCRUDFormStateType,
+  TableCRUDTableType,
 } from "~/types";
 import {
   getNodePropFromID,
@@ -18,11 +21,13 @@ import {
 interface TableToNodeStateType {
   currentGroupID: string | null;
   groupNodes: StatefulGroupNodeType;
+  savedTable: TableCRUDFormStateType | null;
 }
 
 const initialTableToNodeState: TableToNodeStateType = {
   currentGroupID: null,
   groupNodes: {},
+  savedTable: null,
 };
 
 export const tableToNodesSlice = createSlice({
@@ -84,18 +89,18 @@ export const tableToNodesSlice = createSlice({
             data: {
               column: {
                 compositeOn,
-                default: colDefault,
+                default: colDefault as string,
                 index: index,
                 nullable,
                 unique,
-                type: colType,
+                type: colType as GlobalColumnTypeType,
                 name: !isComposite ? name : computedComposite.join(", "),
               },
               label: !isComposite ? name : computedComposite.join(", "),
-              type: colToNodeTypeMap[index],
+              type: colToNodeTypeMap[index] as "primary",
             },
             position: { x: 0, y: 0 },
-          } as Omit<StatefulNodeType, "id">;
+          } satisfies Omit<StatefulNodeType, "id">;
           return acc;
         }, {} as { [prop: string]: Omit<StatefulNodeType, "id"> });
 
@@ -103,6 +108,57 @@ export const tableToNodesSlice = createSlice({
         ...state.groupNodes[tableID],
         nodes: resNodes,
       };
+    },
+    download: (
+      state,
+      action: PayloadAction<{
+        groupID: string;
+        mappings: Record<string, string[]>;
+      }>
+    ) => {
+      // we are going to set the savedTable property of the state to a newly constructed TableCRUDFormStateType derived from the groupNode with the current groupID
+      const { groupID, mappings } = action.payload;
+      const groupNode = state.groupNodes[groupID];
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const colToNodeTypeMap: Record<
+        Exclude<StatefulNodeType["type"], undefined>,
+        GlobalColumnIndexType
+      > = {
+        "composite-foreign": "COMPOSITE_FOREIGN",
+        "composite-primary": "COMPOSITE_PRIMARY",
+        secondary: "FOREIGN",
+        primary: "PRIMARY",
+        ordinary: "NONE",
+      };
+
+      if (!groupNode) return;
+      // console.log("got here");
+      const resTableFormState: TableCRUDFormStateType = {
+        tableID: groupID,
+        tableName: groupNode.data.label,
+        errorState: false,
+        errorMessage: null,
+        typeMappings: mappings,
+        columns: (Object.entries(groupNode.nodes).reduce((acc, curr) => {
+          const [columnID, node] = curr;
+          acc[columnID] = {
+            type: node.data.column?.type,
+            nullable: node.data.column?.nullable,
+            unique: node.data.column?.unique,
+            default: node.data.column?.default,
+            index: colToNodeTypeMap[node.data.type],
+            compositeOn: node.data.column?.compositeOn,
+            oldName: node.data.column?.name,
+            name: node.data.label,
+          } as TableCRUDFormStateType["columns"][string];
+
+          return acc as TableCRUDTableType["columns"];
+        }, {} as TableCRUDTableType["columns"]) as unknown as TableCRUDFormStateType["columns"]),
+      };
+      // console.log("result table form is ", resTableFormState);
+
+      state.savedTable = resTableFormState;
     },
     updatePosition: (
       state,
@@ -158,7 +214,7 @@ export const tableToNodesSlice = createSlice({
   },
 });
 
-export const { upload, updatePosition, setCurrentGroupID } =
+export const { upload, download, updatePosition, setCurrentGroupID } =
   tableToNodesSlice.actions;
 const tableToNodesReducer = tableToNodesSlice.reducer;
 

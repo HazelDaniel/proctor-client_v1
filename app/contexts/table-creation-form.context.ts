@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-types */
 import React from "react";
 import { TableFormUpdateActionType } from "~/reducers/table-creation-form.reducer";
 import { TableCreationFormStateType } from "~/types";
