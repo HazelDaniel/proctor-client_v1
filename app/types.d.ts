@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Node } from "@xyflow/react";
 
 export interface Graph {
@@ -6,7 +7,6 @@ export interface Graph {
   who: Record<string, string>;
   whose: Record<string, string[]>;
 }
-
 
 export type NodeCompositeID = `${string}:${string}`;
 export enum CompositeNodeStringOffset {
@@ -136,11 +136,14 @@ export type TableCreationFormStateType = Partial<TableCRUDTableType> & {
   columns: Record<string, TableCRUDColumnType>;
 };
 
-export type TableUpdateFormStateType = Record<string, Partial<TableCRUDTableType> & {
-  errorState: boolean;
-  errorMessage?: string | null;
-  typeMappings: Record<string, string[]>;
-  columns: Record<string, TableCRUDColumnType | undefined>;
-}>;
+export type TableUpdateFormStateType = Record<
+  string,
+  Partial<TableCRUDTableType> & {
+    errorState: boolean;
+    errorMessage?: string | null;
+    typeMappings: Record<string, string[]>;
+    columns: Record<string, TableCRUDColumnType | undefined>;
+  }
+>;
 
-export type TableCRUDFormStateType = TableCreationFormStateType; // & TableUpdateFormStateType
+export interface TableCRUDFormStateType extends TableCreationFormStateType {} // & TableUpdateFormStateType
