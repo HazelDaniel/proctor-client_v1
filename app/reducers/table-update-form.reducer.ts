@@ -1,10 +1,10 @@
 import { internalIndexMarkers, typeDefaultMappings } from "~/data/table-form";
 import { v7 as UUIDv7 } from "uuid";
-import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
+// import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
 import {
   TableFormUpdatePayloadType,
-  GlobalColumnIndexType,
-  GlobalColumnTypeType,
+  // GlobalColumnIndexType,
+  // GlobalColumnTypeType,
   NodeCompositeID,
   TableUpdateFormStateType,
 } from "~/types";
@@ -30,6 +30,7 @@ export const tableFormActionTypes = {
   clearError: "CLEAR_ERROR",
   setError: "SET_ERROR",
   validate: "VALIDATE",
+  replaceTable: "REPLACE_TABLE"
 };
 
 export interface TableFormActionType<T> {
@@ -53,7 +54,7 @@ export type TableFormUpdateActionType = TableFormActionType<
       errorMessage?: string;
       compositeOn: string[];
     }
-  > & { tableID: string }
+  > & { tableID: string, tableBody?: TableUpdateFormStateType[string]}
 >;
 
 export type TableFormBatchUpdateActionType = TableFormActionType<
@@ -68,17 +69,17 @@ export type TableFormBatchUpdateActionType = TableFormActionType<
 export interface TableFormBatchColumnActionType
   extends TableFormActionType<string[]> {}
 
-export const initialTableCreationFormState: TableUpdateFormStateType = {};
+export const initialTableUpdateFormState: TableUpdateFormStateType = {};
 
 export const tableUpdateFormReducer: (
   state: TableUpdateFormStateType,
   action: TableFormUpdateActionType
 ) => TableUpdateFormStateType = (
-  state = initialTableCreationFormState,
+  state = initialTableUpdateFormState,
   action
 ) => {
   let newState: TableUpdateFormStateType;
-  let { payload } = action;
+  const { payload } = action;
 
   const { tableID } = payload;
 
@@ -93,11 +94,11 @@ export const tableUpdateFormReducer: (
     }
     case "addColumn": {
       const { columns, tableName } = state[tableID];
-      let errorState = !!Object.values(state[tableID].columns).find((col) => {
+      const errorState = !!Object.values(state[tableID].columns).find((col) => {
         col.name === "";
       });
       if (errorState) {
-        let errorMessage =
+        const errorMessage =
           "you cannot create new columns if existing column names are empty, name them and try again!";
         return {
           ...state,
@@ -149,11 +150,11 @@ export const tableUpdateFormReducer: (
       const { columnID, compositeOn } = payload;
       if (!columnID) return state;
       const index = state[tableID].columns[columnID]?.index;
-      let errorState = !(
+      const errorState = !(
         index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN"
       );
       if (errorState) {
-        let errorMessage =
+        const errorMessage =
           "you cannot set composite columns for a non composite key!";
         return {
           ...state,
@@ -170,11 +171,12 @@ export const tableUpdateFormReducer: (
       }
       if (!resColumnID) return state;
 
-      let oldCompositeOn = state[tableID].columns[columnID]?.compositeOn || [];
+      const oldCompositeOn =
+        state[tableID].columns[columnID]?.compositeOn || [];
       if (oldCompositeOn.includes(`${resColumnID}`)) return state;
 
-      newState = { ...state };
-      let newCompositeOn = [...oldCompositeOn, `${resColumnID}`];
+      newState = structuredClone(state);
+      const newCompositeOn = [...oldCompositeOn, `${resColumnID}`];
       newState[tableID].columns[columnID].compositeOn = newCompositeOn;
 
       return newState;
@@ -183,11 +185,11 @@ export const tableUpdateFormReducer: (
       const { columnID, compositeOn } = payload;
       if (!columnID) return state;
       const index = state[tableID].columns[columnID]?.index;
-      let errorState = !(
+      const errorState = !(
         index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN"
       );
       if (errorState) {
-        let errorMessage =
+        const errorMessage =
           "you cannot set composite columns for a non composite key!";
         return {
           ...state,
@@ -195,7 +197,8 @@ export const tableUpdateFormReducer: (
         };
       }
 
-      let oldCompositeOn = state[tableID].columns[columnID]?.compositeOn || [];
+      const oldCompositeOn =
+        state[tableID].columns[columnID]?.compositeOn || [];
 
       let resComposite: string | null = null;
       for (const entry of state[tableID].columns[columnID].compositeOn || []) {
@@ -218,7 +221,7 @@ export const tableUpdateFormReducer: (
         return state;
       }
 
-      newState = { ...state };
+      newState = structuredClone(state);
       let newCompositeOn = oldCompositeOn.filter((el) => {
         return el !== `${resComposite}`;
       });
@@ -237,12 +240,12 @@ export const tableUpdateFormReducer: (
       if (!colDefault || !resColumn?.type) return state;
       const supportedDefaultSet = typeDefaultMappings[resColumn.type];
 
-      let errorState = supportedDefaultSet
+      const errorState = supportedDefaultSet
         ? !supportedDefaultSet.has(colDefault)
         : !state[tableID].typeMappings[resColumn?.type].includes(colDefault);
 
       if (errorState) {
-        let errorMessage =
+        const errorMessage =
           "the set default value is not compatible with the column type";
         return {
           ...state,
@@ -250,14 +253,14 @@ export const tableUpdateFormReducer: (
         };
       }
 
-      newState = { ...state };
+      newState = structuredClone(state);
       newState[tableID].columns[columnID].default = colDefault;
 
       return newState;
     }
     case "setIndex": {
       const { columnID, index } = payload;
-      newState = { ...state };
+      newState = structuredClone(state);
       if (!columnID) return state;
       const resColumn = newState[tableID].columns[columnID];
       if (resColumn.readonly) return state;
@@ -273,7 +276,7 @@ export const tableUpdateFormReducer: (
           );
 
           if (errorState) {
-            let errorMessage =
+            const errorMessage =
               "this table already has a primary/composite primary key. remove the previous if you intend to use another key.";
             return {
               ...state,
@@ -281,7 +284,7 @@ export const tableUpdateFormReducer: (
             };
           }
 
-          newState = { ...state };
+          newState = structuredClone(state);
 
           let tableKeys = Object.entries(newState[tableID].columns)
             .filter(([k, v]) => {
@@ -346,7 +349,7 @@ export const tableUpdateFormReducer: (
           );
 
           if (errorState) {
-            let errorMessage =
+            const errorMessage =
               "this table already has a primary/composite primary key. if you intend to use another key, you must remove the previous key";
             return {
               ...state,
@@ -394,16 +397,16 @@ export const tableUpdateFormReducer: (
       const errorState = (name?.split(" ").length || 0) > 1;
 
       if (errorState) {
-        let errorMessage = "column names are not allowed to have spaces!";
-            return {
-              ...state,
-              [tableID]: { ...state[tableID], errorState, errorMessage },
-            };
+        const errorMessage = "column names are not allowed to have spaces!";
+        return {
+          ...state,
+          [tableID]: { ...state[tableID], errorState, errorMessage },
+        };
       }
 
       resColumn.name = name;
 
-      newState = { ...state };
+      newState = structuredClone(state);
       newState[tableID].columns[columnID] = resColumn;
 
       return newState;
@@ -415,14 +418,14 @@ export const tableUpdateFormReducer: (
       const errorState = (name?.split(" ").length || 0) > 1;
 
       if (errorState) {
-        let errorMessage = "table name cannot contain spaces!";
-            return {
-              ...state,
-              [tableID]: { ...state[tableID], errorState, errorMessage },
-            };
+        const errorMessage = "table name cannot contain spaces!";
+        return {
+          ...state,
+          [tableID]: { ...state[tableID], errorState, errorMessage },
+        };
       }
 
-      newState = { ...state };
+      newState = structuredClone(state);
       newState[tableID].tableName = name;
 
       return newState;
@@ -430,7 +433,7 @@ export const tableUpdateFormReducer: (
     case "toggleNullibility": {
       const { columnID } = payload;
       if (!columnID) return state;
-      newState = { ...state };
+      newState = structuredClone(state);
       newState[tableID].columns[columnID].nullable =
         !newState[tableID].columns[columnID].nullable;
 
@@ -440,7 +443,7 @@ export const tableUpdateFormReducer: (
       const { columnID, type: colType } = payload;
       if (!columnID) return state;
 
-      newState = { ...state };
+      newState = structuredClone(state);
       const resColumn = newState[tableID].columns[columnID];
       if (resColumn.readonly) return state;
       if (!colType) return state;
@@ -472,7 +475,7 @@ export const tableUpdateFormReducer: (
       if (!columnID) return state;
       if (state[tableID].columns[columnID]?.readonly) return state;
 
-      newState = { ...state };
+      newState = structuredClone(state);
       newState[tableID].columns[columnID].unique =
         !newState[tableID].columns[columnID].unique;
 
@@ -485,10 +488,10 @@ export const tableUpdateFormReducer: (
         state[tableID].errorMessage === errorMessage
       )
         return state;
-        return {
-          ...state,
-          [tableID]: { ...state[tableID], errorState: true, errorMessage },
-        };
+      return {
+        ...state,
+        [tableID]: { ...state[tableID], errorState: true, errorMessage },
+      };
     }
     case "validate": {
       try {
@@ -504,67 +507,14 @@ export const tableUpdateFormReducer: (
       }
       return state;
     }
+    case "replaceTable": {
+      const {tableID, tableBody} = payload;
+      if (!tableBody) return state;
+      const newState = {...state, ...({[tableID]: tableBody})}
+
+      return newState;
+    }
     default:
       return state;
   }
 };
-
-// addCompositeColumns: "ADD_COLUMNS",
-// setMultiCompositeOn: "SET_MULTI_COMPOSITE_ON",
-// removeCompositeColumns: "REMOVE_COLUMNS",
-// removeMultiCompositeOn: "REMOVE_MULTI_COMPOSITE_ON",
-
-// case "addCompositeColumns": {
-//   const payloads = (action as TableFormBatchUpdateActionType).payload;
-//   if (!payloads.length) return state;
-
-//   newState = { ...state };
-//   payloads.forEach((payload) => {
-//     const {
-//       compositeOn,
-//       default: defaultVal,
-//       index,
-//       name,
-//       nullable,
-//       type: colType,
-//       unique,
-//     } = payload;
-//     const generatedUUID = UUIDv7();
-//     newState[tableID].columns[`${state[tableID].tableID}:${generatedUUID}`] = {
-//       compositeOn,
-//       default: defaultVal,
-//       index,
-//       name,
-//       nullable,
-//       type: colType,
-//       unique,
-//     };
-//   });
-//   return newState;
-// }
-// case "removeCompositeColumns": {
-//   const payloads = (action as TableFormBatchColumnActionType).payload;
-//   return state;
-// }
-// case "setMultiCompositeOn": {
-//   const { columnID, columns } = (
-//     action as TableFormActionType<{ columnID: string; columns: string[] }>
-//   ).payload;
-
-//   const resColumn = state[tableID].columns[columnID];
-//   // if (resColumn.index !== "COMPOSITE_FOREIGN") return state; // TODO: error with message
-//   // NOTE: we could do the above check but this is a part of a batch update wherein the index is set to composite foreign. this check'll be counter intuitive in that case
-//   if (!resColumn) return state;
-
-//   newState = { ...state };
-
-//   newState[tableID].columns[columnID].compositeOn = [
-//     ...(resColumn.compositeOn || []),
-//     ...columns.map((el) => `${columnID}:${el}`),
-//   ];
-
-//   return newState;
-// }
-// case "removeMultiCompositeOn": {
-//   return state;
-// }
