@@ -76,3 +76,16 @@ export const {
 
 export const compositionReducer = compositionSlice.reducer;
 export default compositionReducer;
+
+
+export const getCompositeRep: (state: CompositionStateType, candidate: string) => string = (state, candidate) => {
+  void candidate;
+
+  for (const [k, v] of Object.entries(state)) {
+    if (candidate in v) {
+      return k;
+    }
+  }
+
+  return "";
+};

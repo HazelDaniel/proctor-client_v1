@@ -3,6 +3,7 @@ import {
   GlobalColumnIndexType,
   GlobalColumnTypeType,
   NodeCompositeID,
+  StatefulGroupNodeType,
   TableCreationFormStateType,
   TableUpdateFormStateType,
 } from "~/types";
@@ -121,10 +122,10 @@ export const __setError = <S, T>(errorMessage: string) => {
   };
 };
 
-export const __addColumn = <S, T>() => {
+export const __addColumn = <S, T>(tableID?: string) => {
   return {
     type: "addColumn" as S,
-    payload: {} as T,
+    payload: { tableID } as T,
   };
 };
 
@@ -238,6 +239,17 @@ export const __replaceTable = <S, T>(
   };
 };
 
+export const __addNodeTable = <S, T>(
+  tableID?: string,
+  nodeBody?: StatefulGroupNodeType[string],
+  mappings?: Record<string, string[]>
+) => {
+  return {
+    type: "addTableNode" as S,
+    payload: { tableID, nodeBody, mappings } as T,
+  };
+};
+
 // SELECTORS
 export const selectCompositeColumns: (
   state: TableCreationFormStateType | TableUpdateFormStateType,
@@ -346,7 +358,6 @@ export const selectIndex: (
     const resColumn = (state as TableCreationFormStateType).columns[id];
     return resColumn?.index || "NONE";
   } else if (`${tableID}` in state) {
-
     const resColumn = (state as TableUpdateFormStateType)[`${tableID}`]
       ?.columns[id];
 
@@ -368,6 +379,7 @@ export const selectType: (
     const resColumn = (state as TableUpdateFormStateType)[`${tableID}`].columns[
       id
     ];
+
     return resColumn.type! as GlobalColumnTypeType;
   } else {
     throw new Error("TypeMismatch");
@@ -386,6 +398,9 @@ export const selectDefault: (
     const resColumn = (state as TableUpdateFormStateType)[`${tableID}`].columns[
       id
     ];
+    if (!resColumn) {
+      return ""
+    }
     return resColumn.default as string;
   } else {
     throw new Error("TypeMismatch");

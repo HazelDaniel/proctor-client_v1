@@ -18,8 +18,9 @@ import { NodeCompositeID, StatefulNodeType } from "./types";
 import { Edge } from "@xyflow/react";
 import { default as globalTypesReducer } from "./reducers/global-types.reducer";
 import tableToNodesReducer from "./reducers/table-to-node.reducer";
-import compositionReducer from "./reducers/composition.reducer";
+import { compositionReducer } from "./reducers/composition.reducer";
 import { parseNodeID } from "./utils/node.utils";
+import { graphReducer } from "./reducers/graph.reducer";
 
 const rootReducer = combineReducers({
   workspace: workspaceReducer,
@@ -27,6 +28,7 @@ const rootReducer = combineReducers({
   types: globalTypesReducer,
   contextNodes: tableToNodesReducer,
   composition: compositionReducer,
+  graphs: graphReducer,
 });
 
 const persistConfig: PersistConfig<{
@@ -35,6 +37,7 @@ const persistConfig: PersistConfig<{
   types: ReturnType<typeof globalTypesReducer>;
   contextNodes: ReturnType<typeof tableToNodesReducer>;
   composition: ReturnType<typeof compositionReducer>;
+  graphs: ReturnType<typeof graphReducer>;
 }> = {
   key: "root",
   // whitelist: ["workspace", "types"],
@@ -105,6 +108,13 @@ export const workspaceSelectors = createStructuredSelector({
   settings: settingsSelector,
 });
 
+// GRAPH SELECTORS
+export const graphSelector = (state: {
+  graphs: ReturnType<typeof graphReducer>;
+}) => {
+  return state.graphs;
+};
+
 // NODES SELECTORS
 export const nodesSelector = (state: {
   nodes: ReturnType<typeof nodesReducer>;
@@ -112,12 +122,13 @@ export const nodesSelector = (state: {
   const gnodeEntries = [...Object.entries(state.nodes.groupNodes)];
   const resultGnodes: StatefulNodeType[] = [];
   const resultNodes: StatefulNodeType[] = [];
+  console.log("computing nodes");
 
   for (const [key, value] of gnodeEntries) {
     for (const [k, v] of [...Object.entries(value.nodes)]) {
       resultNodes.push({ ...v, id: k, parentId: key });
     }
-    let res: StatefulNodeType = {
+    const res: StatefulNodeType = {
       ...value,
       id: key,
       type: "group",
@@ -142,10 +153,17 @@ export const edgesSelector: (state: {
   return result;
 };
 
+export const groupNodeSelector =
+  (id: string) => (state: { nodes: ReturnType<typeof nodesReducer> }) => {
+    const gNode = state.nodes.groupNodes[id];
+
+    return gNode;
+  };
+
 export const nodeSelector =
   (id: string) => (state: { nodes: ReturnType<typeof nodesReducer> }) => {
-    let gNode = state.nodes.groupNodes[id];
-    let resNode = Object.fromEntries(
+    const gNode = state.nodes.groupNodes[id];
+    const resNode = Object.fromEntries(
       Object.entries(gNode).filter(([k, v]) => {
         return k !== "nodes";
       })
@@ -169,7 +187,8 @@ export const childNodePositionSelector =
   (id: string, parentID: string | undefined) =>
   (state: { nodes: ReturnType<typeof nodesReducer> }) => {
     if (!parentID) return -1;
-    let gNode = state.nodes.groupNodes[parentID];
+    const gNode = state.nodes.groupNodes[parentID];
+    if (!gNode) return -1;
     const gNodeKeys = Object.keys(gNode.nodes).sort((a, b) => +a - +b);
 
     return gNodeKeys.indexOf(id);
@@ -192,8 +211,9 @@ export const nodeChildrenLengthSelector =
   (id: string) => (state: { nodes: ReturnType<typeof nodesReducer> }) => {
     try {
       // for some unknown reason, this one is erroring in dev mode so i just put it in a try-catch for now
-      let childrenLength = [...Object.values(state.nodes.groupNodes[id]?.nodes)]
-        .length;
+      const childrenLength = [
+        ...Object.values(state.nodes.groupNodes[id]?.nodes),
+      ].length;
       return childrenLength;
     } catch (err) {
       return 0;
@@ -255,3 +275,6 @@ export const selectCompositionRep = (compositeID: NodeCompositeID) => {
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
+
+// NOTES
+// NOTE: - only the column.id fields of the nodes are used in the business logic

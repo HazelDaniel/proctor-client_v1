@@ -7,8 +7,10 @@ import {
   // GlobalColumnTypeType,
   NodeCompositeID,
   TableUpdateFormStateType,
+  TableCRUDColumnType,
+  StatefulGroupNodeType,
 } from "~/types";
-import { getNodePropFromID } from "~/utils/node.utils";
+import { getNodePropFromID, parseNodeID } from "~/utils/node.utils";
 import {
   validateColumnName,
   validateColumnType,
@@ -30,8 +32,32 @@ export const tableFormActionTypes = {
   clearError: "CLEAR_ERROR",
   setError: "SET_ERROR",
   validate: "VALIDATE",
-  replaceTable: "REPLACE_TABLE"
+  replaceTable: "REPLACE_TABLE",
+  addTableNode: "ADD_TABLE_NODE",
+  passComposites: "PASS_COMPOSITES",
+  retractComposites: "RETRACT_COMPOSITES",
 };
+
+export interface ValidatorConfig {
+  isReferenced?: boolean; // Is this column referenced by other tables?
+  isPrimaryKeyReferenced?: boolean; // Is table's primary key referenced?
+
+  // Composite Key Validations
+  isCompositePrimaryMember?: boolean; // Is part of composite primary key?
+  isCompositeForeignMember?: boolean; // Is part of composite foreign key?
+
+  hasCompositeMembers?: boolean; // Does this composite have members?
+
+  // Foreign Key Validations
+  isReferencing?: boolean; // Does this column reference other tables?
+  // hasCircularReference?: boolean; // Would this create circular reference?
+
+  // Type Validations
+  isTypeCompatible?: boolean; // Is new type compatible with references?
+
+  // Column State
+  isLastColumn?: boolean; // Is this the last column in table?
+}
 
 export interface TableFormActionType<T> {
   type: keyof typeof tableFormActionTypes;
@@ -54,7 +80,14 @@ export type TableFormUpdateActionType = TableFormActionType<
       errorMessage?: string;
       compositeOn: string[];
     }
-  > & { tableID: string, tableBody?: TableUpdateFormStateType[string]}
+  > & {
+    tableID: string;
+    tableBody?: TableUpdateFormStateType[string];
+    nodeBody?: StatefulGroupNodeType[string];
+    mappings?: Record<string, string[]>;
+    sourceCompositeID?: NodeCompositeID;
+    targetSecondaryID?: string;
+  }
 >;
 
 export type TableFormBatchUpdateActionType = TableFormActionType<
@@ -123,6 +156,7 @@ export const tableUpdateFormReducer: (
               name: "",
               unique: true,
               compositeOn: null,
+              isSurrogate: false
             },
           },
           tableName,
@@ -145,6 +179,100 @@ export const tableUpdateFormReducer: (
       delete newState[tableID]?.columns[columnID];
 
       return newState;
+    }
+    case "passComposites": {
+      const { sourceCompositeID, targetSecondaryID } = action.payload;
+      if (!sourceCompositeID || !targetSecondaryID) return state;
+      const [sourceTableID] = parseNodeID(sourceCompositeID);
+      const [targetTableID] = parseNodeID(targetSecondaryID as NodeCompositeID);
+
+      if (!state[sourceTableID]?.columns[sourceCompositeID]) {
+        return {
+          ...state,
+          [targetTableID]: {
+            ...state[targetTableID],
+            errorState: true,
+            errorMessage: "Source composite primary key not found",
+          },
+        };
+      }
+
+      const sourceNode = state[sourceTableID].columns[sourceCompositeID];
+      const compositeEntries = sourceNode.compositeOn || [];
+
+      const newColumns = compositeEntries.reduce((acc, entry) => {
+        const [parentId, colId, _3] = entry.split(":");
+        const sourceColumn = state[parentId].columns[`${parentId}:${colId}`];
+
+        acc[`${parentId}:${colId}`] = {
+          ...sourceColumn,
+          isSurrogate: true,
+          surrogationTimestamp: new Date().toISOString(),
+        };
+
+
+        return acc;
+      }, {} as Record<string, TableCRUDColumnType>);
+
+
+      return {
+        ...state,
+        [targetTableID]: {
+          ...state[targetTableID],
+          columns: {
+            ...state[targetTableID].columns,
+            ...newColumns,
+            [targetSecondaryID]: {
+              ...state[targetTableID].columns[targetSecondaryID],
+              index: "COMPOSITE_FOREIGN",
+              compositeOn: compositeEntries,
+            },
+          },
+        },
+      };
+    }
+    case "retractComposites": {
+      const { columnID } = action.payload;
+      if (!columnID) return state;
+      const [tableID] = parseNodeID(columnID as NodeCompositeID);
+
+      const targetNode = state[tableID]?.columns[columnID];
+      if (!targetNode || targetNode.index !== "COMPOSITE_FOREIGN") {
+        return {
+          ...state,
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage: "Invalid composite foreign key",
+          },
+        };
+      }
+
+      const compositeEntries = targetNode.compositeOn || [];
+      const newColumns = { ...state[tableID].columns };
+
+      compositeEntries.forEach((entry) => {
+        const [parentId, colId] = entry.split(":");
+        for (const key of Object.keys(newColumns)) {
+          if (key.startsWith(`${parentId}:${colId}`)) {
+            delete newColumns[key];
+          }
+        }
+      });
+
+      newColumns[columnID] = {
+        ...newColumns[columnID],
+        index: "FOREIGN",
+        compositeOn: [],
+      };
+
+      return {
+        ...state,
+        [tableID]: {
+          ...state[tableID],
+          columns: newColumns,
+        },
+      };
     }
     case "addToComposite": {
       const { columnID, compositeOn } = payload;
@@ -508,13 +636,55 @@ export const tableUpdateFormReducer: (
       return state;
     }
     case "replaceTable": {
-      const {tableID, tableBody} = payload;
+      const { tableID, tableBody } = payload;
       if (!tableBody) return state;
-      const newState = {...state, ...({[tableID]: tableBody})}
+      const newState = { ...state, ...{ [tableID]: tableBody } };
+
+      return newState;
+    }
+    case "addTableNode": {
+      const { nodeBody, mappings } = payload;
+      if (!nodeBody) return state;
+
+      const tableBody: TableUpdateFormStateType[string] = {
+        columns: Object.entries(nodeBody.nodes).reduce((acc, [k, v]) => {
+          const {
+            data: { column, isSurrogate, surrogationTimestamp },
+          } = v;
+          acc[k as NodeCompositeID] = { ...column, isSurrogate, surrogationTimestamp } as TableCRUDColumnType;
+          return acc;
+        }, {} as Record<NodeCompositeID, TableCRUDColumnType>),
+        errorState: false,
+        errorMessage: "",
+        tableName: nodeBody.data.label,
+        tableID: nodeBody.id,
+        typeMappings: mappings!,
+      };
+      const newState = {
+        ...state,
+        ...{ [nodeBody.id]: tableBody },
+      };
 
       return newState;
     }
     default:
       return state;
   }
+};
+
+export const __passComposites = <S, T>(
+  sourceCompositeID: NodeCompositeID,
+  targetSecondaryID: string
+) => {
+  return {
+    type: "passComposites" as S,
+    payload: { sourceCompositeID, targetSecondaryID } as T,
+  };
+};
+
+export const __retractComposites = <S, T>(columnID: NodeCompositeID) => {
+  return {
+    type: "retractComposites" as S,
+    payload: { columnID } as T,
+  };
 };

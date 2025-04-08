@@ -107,11 +107,11 @@ export function createGraph(): Graph {
 }
 
 const createRepresentatives = (sccs: string[][]) => {
-  let resWho: Record<string, string> = {};
+  const resWho: Record<string, string> = {};
   for (let i = 0; i < sccs.length; i++) {
-    let componentSet = sccs[i];
+    const componentSet = sccs[i];
     for (let j = 0; j < componentSet.length; j++) {
-      let component = componentSet[j];
+      const component = componentSet[j];
       if (j === 0) {
         resWho[component] = component;
       } else {
@@ -123,12 +123,12 @@ const createRepresentatives = (sccs: string[][]) => {
 };
 
 const createMembers = (sccs: string[][]) => {
-  let resWhose: Record<string, string[]> = {};
+  const resWhose: Record<string, string[]> = {};
 
   for (let i = 0; i < sccs.length; i++) {
-    let componentSet = sccs[i];
+    const componentSet = sccs[i];
     for (let j = 0; j < componentSet.length; j++) {
-      let component = componentSet[j];
+      const component = componentSet[j];
       if (j === 0) {
         resWhose[component] = [component];
       } else {

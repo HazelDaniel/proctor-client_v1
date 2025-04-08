@@ -1,2 +1,1 @@
-sequence of features
-> table creation state:
+> remove the composite foreign index in the table  creation form drop down

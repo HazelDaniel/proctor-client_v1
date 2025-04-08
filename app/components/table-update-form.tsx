@@ -40,7 +40,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "~/components/ui/select";
-import { MessageSquareWarningIcon } from "lucide-react";
+import { Check, MessageSquareWarningIcon, X } from "lucide-react";
 import {
   TableFormColumnSelectType,
   GlobalColumnIndexType,
@@ -51,7 +51,10 @@ import {
 } from "~/types";
 import { tableColumnFields } from "~/data/table-form";
 import { useDebounce } from "~/hooks/usedebounce";
-import { tableUpdateFormReducer } from "~/reducers/table-update-form.reducer";
+import {
+  initialTableUpdateFormState,
+  tableUpdateFormReducer,
+} from "~/reducers/table-update-form.reducer";
 import {
   __addColumn,
   __addToComposite,
@@ -83,11 +86,7 @@ import { useContextSelector } from "~/hooks/usecontextselector";
 
 import { DialogFooter } from "./ui/dialog";
 import { DialogClose } from "@radix-ui/react-dialog";
-import {
-  download,
-  setCurrentGroupID,
-  upload,
-} from "~/reducers/table-to-node.reducer";
+import { setCurrentGroupID, upload } from "~/reducers/table-to-node.reducer";
 import { getNodePropsFromIDS } from "~/utils/node.utils";
 import {
   addComposition,
@@ -97,49 +96,27 @@ import {
 } from "~/reducers/composition.reducer";
 
 export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
-  // eslint-disable-next-line react/prop-types
   function InnerTableUpdateForm({ id }: { id: string }) {
     const globalDefaultsList = useSelector(typeDefaultSelector, isEqual);
     const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
-    const savedTable = useSelector(savedTableSelector);
-
     const dispatch = useDispatch();
-
-    const [updateFormState, updateFormDispatch] = useReducer(
-      tableUpdateFormReducer,
-      {
-        [savedTable?.tableID as string]: {
-          ...(savedTable as TableCRUDFormStateType),
-        },
-      }
-    );
-
-
-    useEffect(() => {
-      updateFormDispatch(
-        __replaceTable(id, savedTable as TableCRUDFormStateType)
-      );
-    }, [savedTable, id]);
+    const {
+      tableUpdateState: updateFormState,
+      tableUpdateDispatch: updateFormDispatch,
+    } = useContext(tableUpdateContext) as TableUpdateContextValueType;
 
     const [tableActionButtonClicks, setTableActionButtonClicks] =
       useState<number>(0);
 
     const formCloseButtonRef = useRef<HTMLButtonElement>(null);
-    const updateFormValue: TableUpdateContextValueType = useMemo(
-      () => ({
-        tableUpdateState: updateFormState,
-        tableUpdateDispatch: updateFormDispatch,
-        state: updateFormState,
-      }),
-      [updateFormState, updateFormDispatch]
-    );
 
     const columns: (TableCRUDColumnType & { id: string })[] = useMemo(() => {
       if (!updateFormState[id]) {
         return [];
       }
       return Object.entries(updateFormState[id]?.columns)?.map(([k, v]) => {
-        return { id: k, ...v };
+        const key: NodeCompositeID = k as NodeCompositeID;
+        return { id: key, ...v };
       });
     }, [id, updateFormState]);
 
@@ -162,57 +139,118 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
     // AFTER FORM HAS BEEN SUCCESSFULLY VALIDATED FOR SUBMISSION
     useEffect(() => {
       if (updateFormState.errorState || !updateFormState.tableID) return;
-      if (formCloseButtonRef.current && tableActionButtonClicks) {
-        dispatch(setCurrentGroupID(updateFormState[id]?.tableID as string));
+      if (
+        formCloseButtonRef.current &&
+        tableActionButtonClicks &&
+        updateFormState[id]
+      ) {
+        dispatch(setCurrentGroupID(updateFormState[id].tableID as string));
         dispatch(upload(updateFormState[id]));
         formCloseButtonRef.current.click();
       }
     }, [tableActionButtonClicks, id]);
 
-    if (!updateFormState[id]) {
-      return null;
-    }
+    console.log("columns are ", columns);
 
     return (
       <>
-        <TableUpdateProvider value={updateFormValue}>
-          <div className="w-full h-full overflow-hidden">
-            <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-col md:flex-row items-center justify-between md:pl-[4rem] rounded-md">
-              <p className="w-[20rem] p-2 shadow-none rounded-md h-8 caret-outline1d bg-canvas order-1 md:order-0">
-                {"Table: " + updateFormState[id].tableName || ""}
+        <div className="w-full h-full overflow-hidden">
+          <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-col md:flex-row items-center justify-between md:pl-[4rem] rounded-md">
+            <p className="w-[20rem] p-2 shadow-none rounded-md h-8 caret-outline1d bg-canvas order-1 md:order-0">
+              {"Table: " + updateFormState[id]?.tableName || ""}
+            </p>
+
+            <div
+              className={
+                "md:w-[60%] w-full flex items-center justify-end h-[40%] md:h-full bg-[#ff1d1d23] px-4 order-0 md:order-1" +
+                `${!updateFormState.errorState ? " invisible" : ""}`
+              }
+            >
+              <span className="w-8 h-8">
+                <MessageSquareWarningIcon color="#ff2424d2" />
+              </span>
+              <p className="flex-1 text-danger h-full flex items-center pl-8">
+                {updateFormState[id]?.errorMessage || ""}
               </p>
+            </div>
+          </Form>
 
-              <div
-                className={
-                  "md:w-[60%] w-full flex items-center justify-end h-[40%] md:h-full bg-[#ff1d1d23] px-4 order-0 md:order-1" +
-                  `${!updateFormState.errorState ? " invisible" : ""}`
-                }
-              >
-                <span className="w-8 h-8">
-                  <MessageSquareWarningIcon color="#ff2424d2" />
-                </span>
-                <p className="flex-1 text-danger h-full flex items-center pl-8">
-                  {updateFormState[id].errorMessage || ""}
-                </p>
-              </div>
-            </Form>
+          <div className="w-full h-max flex flex-col overflow-auto flex-1 table-form-wrapper min-h-[43rem] md:min-h-[25rem]">
+            <Table className="min-w-[60rem] relative min-h-[45rem]">
+              <TableHeader className="">
+                <TableRow>
+                  <TableHead className="w-[100px]">Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Index</TableHead>
+                  <TableHead className="text-center">Nullible?</TableHead>
+                  <TableHead className="text-center">Unique?</TableHead>
+                  <TableHead className="text-center">DEFAULT</TableHead>
+                  <TableHead className="text-center">Composite On</TableHead>
+                  <TableHead className="text-right w-8"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {columns?.map((column) =>
+                  column.isSurrogate ? (
+                    // <TableRow>
+                    // </TableRow>
+                    <>
+                    <TableRow key={column.id} className="h-8 bg-secondary/80 opacity-55">
+                      <TableCell className=" form-table-cell">
+                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 my-auto rounded-sm">
+                          <p className="text-red w-full flex items-center justify-center">{column.name || ""}</p>
+                        </div>
+                      </TableCell>
 
-            <div className="w-full h-max flex flex-col overflow-auto flex-1 table-form-wrapper min-h-[43rem] md:min-h-[25rem]">
-              <Table className="min-w-[60rem] relative min-h-[45rem]">
-                <TableHeader className="">
-                  <TableRow>
-                    <TableHead className="w-[100px]">Name</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Index</TableHead>
-                    <TableHead className="text-center">Nullible?</TableHead>
-                    <TableHead className="text-center">Unique?</TableHead>
-                    <TableHead className="text-center">DEFAULT</TableHead>
-                    <TableHead className="text-center">Composite On</TableHead>
-                    <TableHead className="text-right w-8"></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {columns.map((column) => (
+                      <TableCell className=" form-table-cell">
+                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                          <p className="text-red w-full flex items-center justify-center">
+                            {column.type || ""}
+                          </p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="max-h-[5rem] form-table-cell">
+                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                          <p className="text-red w-full flex items-center justify-center">
+                            {column.index || ""}
+                          </p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="text-right h-max form-table-cell">
+                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                          {column.nullable ? <Check/> : <X/>}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="text-right h-max form-table-cell">
+                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                          {column.unique ? <Check/> : <X/>}
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="w-[8rem] h-max form-table-cell">
+                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                          <p className="text-red w-full flex items-center justify-center">
+                            {column.default || ""}
+                          </p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="w-[8rem] h-max form-table-cell">
+                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                          <p className="text-red w-full flex items-center justify-center">
+                            {"NONE"}
+                          </p>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="w-[8rem] h-[8rem] form-table-cell"></TableCell>
+                    </TableRow>
+                    </>
+
+                  ) : (
                     <TableRow key={column.id}>
                       <TableColumnNameForm
                         name={column.name || ""}
@@ -296,16 +334,16 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                  )
+                )}
+              </TableBody>
+            </Table>
 
-              <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
+            <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
 
-              <TableFormCTAArea setClickAction={() => {}} />
-            </div>
+            <TableFormCTAArea setClickAction={() => {}} tableID={id} />
           </div>
-        </TableUpdateProvider>
+        </div>
 
         <DialogFooter className="sm:justify-start w-full">
           <div className="w-full flex justify-end">
@@ -322,7 +360,7 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
               type="button"
               className="w-[8rem] h-[3.2rem] bg-fg text-bg rounded-md hover:ring-fg ring-offset-2 active:border-2"
               onClick={() => {
-                if (updateFormState.errorState) return;
+                if (updateFormState[id]?.errorState) return;
                 if (formCloseButtonRef.current) {
                   updateFormDispatch(__validate());
                   setTableActionButtonClicks((prev) => prev + 1);
@@ -393,11 +431,14 @@ export const TableColumnNameForm: React.FC<{
 
 export const TableFormCTAArea: React.FC<{
   setClickAction: React.Dispatch<React.SetStateAction<number>>;
+  tableID: string;
 }> = React.memo(
   function InnerTableFormCTA({
     setClickAction,
+    tableID,
   }: {
     setClickAction: React.Dispatch<React.SetStateAction<number>>;
+    tableID: string;
   }) {
     const { tableUpdateDispatch } = useContext(
       tableUpdateContext
@@ -408,7 +449,7 @@ export const TableFormCTAArea: React.FC<{
         <div className="w-max flex mx-auto h-max gap-8">
           <button
             className="capitalize h-[35px] w-max px-4  flex items-center justify-center gap-2 rounded-lg ring-1 ring-outline1 mx-auto my-4"
-            onClick={() => tableUpdateDispatch(__addColumn())}
+            onClick={() => tableUpdateDispatch(__addColumn(tableID))}
           >
             Add Column
             <span className="inline-flex w-4 h-4 items-center justify-center">
@@ -417,7 +458,6 @@ export const TableFormCTAArea: React.FC<{
               </svg>
             </span>
           </button>
-
         </div>
       </>
     );
@@ -468,7 +508,11 @@ export const FormColumnSelectList: React.FC<{
                 removeCompositionParent(columnID as unknown as NodeCompositeID)
               );
             tableUpdateDispatch(
-              __setIndex(columnID, e as unknown as GlobalColumnIndexType)
+              __setIndex(
+                columnID,
+                e as unknown as GlobalColumnIndexType,
+                tableID
+              )
             );
             break;
           case "type":
@@ -589,7 +633,8 @@ export const FormCompositeSelectList: React.FC<{
   useEffect(() => {
     const prevItems =
       getNodePropsFromIDS(
-        tableUpdateState[tableID].columns[columnID].compositeOn as unknown as []
+        tableUpdateState[tableID]?.columns[columnID]
+          .compositeOn as unknown as []
       ) || [];
     const resItems = prevItems.map(
       (el) => selectColumnIDFromName(tableUpdateState, el, tableID) || ""
@@ -653,7 +698,7 @@ export const FormCompositeSelectList: React.FC<{
                 removePlaceholder={handleRemovePlaceholder()}
                 itemList={
                   getNodePropsFromIDS(
-                    tableUpdateState[tableID].columns[columnID]
+                    tableUpdateState[tableID]?.columns[columnID]
                       .compositeOn as unknown as []
                   ) || ["NONE"]
                 }

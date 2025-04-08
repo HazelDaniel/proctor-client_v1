@@ -261,7 +261,6 @@ export const tableCreationFormReducer: (
             }) as string[];
 
           tableKeys = tableKeys.length ? tableKeys : ["NONE"];
-          console.log("composite on ", tableKeys);
 
           const newColumn = {
             ...newState.columns[columnID],

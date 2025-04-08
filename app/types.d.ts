@@ -83,6 +83,8 @@ export interface TableFormUpdatePayloadType {
 export type TableCRUDColumnType = Partial<
   Omit<TableFormUpdatePayloadType, "compositeOn"> & {
     compositeOn: ("NONE" | string)[] | null;
+    isSurrogate: boolean;
+    surrogationTimestamp?: string;
   }
 >;
 
@@ -113,6 +115,7 @@ export interface StatefulNodeType extends Node {
       unique: boolean;
       default: string;
       compositeOn: string[] | null;
+      id: NodeCompositeID;
     };
     [prop: string]: any;
   };
@@ -120,8 +123,8 @@ export interface StatefulNodeType extends Node {
 }
 
 export interface StatefulGroupNodeType {
-  [prop: string]: Omit<StatefulNodeType, "id"> & {
-    nodes: { [prop: string]: Omit<StatefulNodeType, "id"> };
+  [prop: string]: StatefulNodeType & {
+    nodes: { [prop: string]: StatefulNodeType };
   };
 }
 
@@ -136,14 +139,14 @@ export type TableCreationFormStateType = Partial<TableCRUDTableType> & {
   columns: Record<string, TableCRUDColumnType>;
 };
 
-export type TableUpdateFormStateType = Record<
-  string,
-  Partial<TableCRUDTableType> & {
-    errorState: boolean;
-    errorMessage?: string | null;
-    typeMappings: Record<string, string[]>;
-    columns: Record<string, TableCRUDColumnType | undefined>;
-  }
->;
+export type TableUpdateFormStateType =Record<
+    string,
+    Partial<TableCRUDTableType> & {
+      errorState: boolean;
+      errorMessage?: string | null;
+      typeMappings: Record<string, string[]>;
+      columns: Record<string, TableCRUDColumnType | undefined>;
+    }
+  >;
 
 export interface TableCRUDFormStateType extends TableCreationFormStateType {} // & TableUpdateFormStateType

@@ -42,6 +42,8 @@ export const tableToNodesSlice = createSlice({
         position: { x: 0, y: 0 },
         className: "table-node-group",
         nodes: {},
+        id: tableID,
+        type: "group"
       };
 
       const colToNodeTypeMap: Record<
@@ -55,7 +57,7 @@ export const tableToNodesSlice = createSlice({
         NONE: "ordinary",
       };
 
-      const resNodes: { [prop: string]: Omit<StatefulNodeType, "id"> } =
+      const resNodes: { [prop: NodeCompositeID]: StatefulNodeType } =
         Object.entries(columns).reduce((acc, curr) => {
           const [key, value] = curr;
           let {
@@ -66,6 +68,8 @@ export const tableToNodesSlice = createSlice({
             nullable,
             type: colType,
             unique,
+            isSurrogate,
+            surrogationTimestamp
           } = value;
           if (!compositeOn) compositeOn = [];
           if (!index) index = "NONE";
@@ -95,18 +99,23 @@ export const tableToNodesSlice = createSlice({
                 unique,
                 type: colType as GlobalColumnTypeType,
                 name: !isComposite ? name : computedComposite.join(", "),
+                id: key as NodeCompositeID,
               },
               label: !isComposite ? name : computedComposite.join(", "),
               type: colToNodeTypeMap[index] as "primary",
+              isSurrogate,
+              surrogationTimestamp
             },
+            id: key,
             position: { x: 0, y: 0 },
-          } satisfies Omit<StatefulNodeType, "id">;
+          } satisfies StatefulNodeType;
           return acc;
-        }, {} as { [prop: string]: Omit<StatefulNodeType, "id"> });
+        }, {} as { [prop: string]: StatefulNodeType });
 
       state.groupNodes[tableID] = {
         ...state.groupNodes[tableID],
         nodes: resNodes,
+        id: tableID,
       };
     },
     download: (
@@ -140,7 +149,7 @@ export const tableToNodesSlice = createSlice({
         errorState: false,
         errorMessage: null,
         typeMappings: mappings,
-        columns: (Object.entries(groupNode.nodes).reduce((acc, curr) => {
+        columns: Object.entries(groupNode.nodes).reduce((acc, curr) => {
           const [columnID, node] = curr;
           acc[columnID] = {
             type: node.data.column?.type,
@@ -151,12 +160,13 @@ export const tableToNodesSlice = createSlice({
             compositeOn: node.data.column?.compositeOn,
             oldName: node.data.column?.name,
             name: node.data.label,
+            isSurrogate: node.data.isSurrogate,
+            surrogationTimestamp: node.data.surrogationTimestamp
           } as TableCRUDFormStateType["columns"][string];
 
           return acc as TableCRUDTableType["columns"];
-        }, {} as TableCRUDTableType["columns"]) as unknown as TableCRUDFormStateType["columns"]),
+        }, {} as TableCRUDTableType["columns"]) as unknown as TableCRUDFormStateType["columns"],
       };
-      // console.log("result table form is ", resTableFormState);
 
       state.savedTable = resTableFormState;
     },

@@ -199,6 +199,10 @@ script {
   .table-node-child {
     @apply relative;
   }
+  .table-node-child.surrogate {
+    @apply bg-accent/50;
+    color: white;
+  }
 
   .table-form-wrapper {
     max-height: 20rem !important;

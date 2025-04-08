@@ -54,11 +54,14 @@ import {
   addNodeGroup,
   setActiveNode,
   setNodePosition,
+  updateNodeGroup,
 } from "~/reducers/nodes.reducer";
 import {
   activeNodeSelector,
   childNodePositionSelector,
   edgesSelector,
+  graphSelector,
+  groupNodeSelector,
   nodeChildrenLengthSelector,
   nodesSelector,
   savedTableSelector,
@@ -69,6 +72,7 @@ import {
 import {
   NodeCompositeID,
   StatefulNodeType,
+  TableCRUDFormStateType,
   statefulNodeColorType,
 } from "~/types";
 import { isEqual } from "~/utils/comparison";
@@ -83,7 +87,23 @@ import { BidirectionalEdge } from "./bidirectional-edge";
 import { TableCreationForm } from "./table-creation-form";
 import { parseNodeID } from "~/utils/node.utils";
 import { TableUpdateForm } from "./table-update-form";
-import { download } from "~/reducers/table-to-node.reducer";
+import {
+  download,
+  setCurrentGroupID,
+  upload,
+} from "~/reducers/table-to-node.reducer";
+import {
+  __passComposites,
+  tableUpdateFormReducer,
+} from "~/reducers/table-update-form.reducer";
+import {
+  tableUpdateContext,
+  TableUpdateContextValueType,
+  TableUpdateProvider,
+} from "~/contexts/table-update-form.context";
+import { __addNodeTable } from "~/reducers/utils/shared-functions";
+import { addConnection, hasOutboundEdges } from "~/reducers/graph.reducer";
+import { addCompositions } from "~/reducers/composition.reducer";
 
 export const ChatBubble: React.FC<{ pos: XYPosition }> = ({ pos }) => {
   return (
@@ -263,6 +283,10 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
     isEqual
   );
 
+  // const uniqueID = useMemo(() => {
+  //     return data.isSurrogate ? `table-node-${id}_${data.surrogationTimestamp}` : `table-node-${id}`;
+  // }, [id, data])
+
   const nodeColorSelection: statefulNodeColorType = useMemo(
     () =>
       ({
@@ -283,8 +307,8 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
         nodeColorSelection[
           data.type as unknown as keyof typeof nodeColorSelection
         ]
-      } shadow-inner`}
-      key={`table-node-${id}`}
+      } shadow-inner` + `${data.isSurrogate ? " surrogate opacity-55" : ""}`}
+      key={id}
       style={
         {
           "--node-width-here": "20rem",
@@ -296,7 +320,7 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
         className="w-full text-center h-full flex items-center justify-center text-canvas relative truncate"
         style={{
           color:
-            data.type === "primary" ? "rgb(var(--canvas-color))" : "#3c3c3c",
+            data.type === "primary" || data.isSurrogate ? "rgb(var(--canvas-color))" : "#3c3c3c",
         }}
       >
         {`${data.column?.name || ""}`}
@@ -358,11 +382,16 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
   const childrenCount = useSelector(nodeChildrenLengthSelector(id));
   const dispatch = useDispatch();
   const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
-  const savedTable = useSelector(savedTableSelector);
+  const {
+    tableUpdateDispatch: updateFormDispatch,
+    tableUpdateState: updateFormState,
+  } = useContext(tableUpdateContext) as TableUpdateContextValueType;
+  const groupNode = useSelector(groupNodeSelector(id));
 
   useEffect(() => {
+    updateFormDispatch(__addNodeTable(id, groupNode, globalTypeMappings));
     dispatch(download({ groupID: id, mappings: globalTypeMappings }));
-  }, [id]);
+  }, [id, groupNode]);
 
   return (
     <div
@@ -384,7 +413,13 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
           <span className="w-1 h-1 rounded-full bg-outline1d ml-[-5px]"></span>
         </div>
         <Dialog>
-          <DialogTrigger asChild className="">
+          <DialogTrigger
+            asChild
+            className=""
+            // disabled={!!!savedTable}
+            // onClick={() => {
+            // }}
+          >
             <button
               className="w-[10px] h-[10px]"
               onClick={() => {
@@ -396,18 +431,16 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
               </svg>
             </button>
           </DialogTrigger>
-          {savedTable ? (
-            <DialogContent
-              className="w-[80vw] min-w-[95vw] h-[clamp(60rem, 95vh, 60rem)] md:h-[clamp(40rem, 95vh, 99vh)] rounded-lg flex flex-col items-center p-8 form-creation-dialog-content"
-              aria-describedby=""
-            >
-              <DialogHeader className="h-max mr-auto">
-                <DialogTitle>Edit Table</DialogTitle>
-              </DialogHeader>
+          <DialogContent
+            className="w-[80vw] min-w-[95vw] h-[clamp(60rem, 95vh, 60rem)] md:h-[clamp(40rem, 95vh, 99vh)] rounded-lg flex flex-col items-center p-8 form-creation-dialog-content"
+            aria-describedby=""
+          >
+            <DialogHeader className="h-max mr-auto">
+              <DialogTitle>Edit Table</DialogTitle>
+            </DialogHeader>
 
-              <TableUpdateForm id={id} />
-            </DialogContent>
-          ) : null}
+            <TableUpdateForm id={id} />
+          </DialogContent>
         </Dialog>
       </div>
 
@@ -447,6 +480,29 @@ export const DesignCanvas: React.FC<{
     const dispatch = useDispatch();
     const nodes = useSelector(nodesSelector, isEqual);
     const edges = useSelector(edgesSelector, isEqual);
+    const graph = useSelector(graphSelector, isEqual);
+
+    const savedTable = useSelector(savedTableSelector);
+
+    const [updateFormState, updateFormDispatch] = useReducer(
+      tableUpdateFormReducer,
+      {
+        [savedTable?.tableID as string]: {
+          ...(savedTable as TableCRUDFormStateType),
+          errorState: false,
+          errorMessage: null,
+        },
+      }
+    );
+
+    const updateFormValue: TableUpdateContextValueType = useMemo(
+      () => ({
+        tableUpdateState: updateFormState,
+        tableUpdateDispatch: updateFormDispatch,
+        state: updateFormState,
+      }),
+      [updateFormState, updateFormDispatch]
+    );
 
     // CONTEXT STATE
     const { chatBubbleDispatch } = useContext(
@@ -462,6 +518,9 @@ export const DesignCanvas: React.FC<{
       () => ({ designPaneState, designPaneDispatch }),
       [designPaneState, designPaneDispatch]
     );
+
+    const [tableSyncCount, setTableSyncCount] = useState<number>(0);
+    const [syncTableID, setsyncTableID] = useState<string | null>(null);
 
     const [panPosFrame, setPanPosFrame] = useState<[{ x: number; y: number }]>([
       { x: 0, y: 0 },
@@ -597,26 +656,86 @@ export const DesignCanvas: React.FC<{
             equivSourceNode.data.type === "secondary" ||
             equivSourceNode.data.type === "composite"
           ) {
-            // TODO: (check) the secondary column doesn't already have an outbound edge
+            if (
+              !(
+                equivSourceNode.data?.column?.id ||
+                equivTargetNode.data?.column?.id
+              )
+            ) {
+              console.error(
+                `one of source: ${equivSourceNode.data?.column?.id} and target: ${equivTargetNode.data.column?.id} ID doesn't exist`
+              );
+              return eds;
+            }
+
+            if (
+              hasOutboundEdges(graph, equivSourceNode.data.column!.id, "node")
+            ) {
+              return eds;
+            }
+
             if (
               equivTargetNode.data.type === "primary" &&
               equivSourceNode.data.type === "secondary"
             ) {
+              dispatch(
+                addConnection({
+                  source: equivSourceNode.data.column!.id,
+                  dest: equivTargetNode.data.column!.id,
+                  entryType: "both",
+                })
+              );
               return addEdge(params, eds);
             }
             if (
               equivTargetNode.data.type === "composite-primary" &&
-              equivSourceNode.data.type === "composite"
+              equivSourceNode.data.type === "secondary"
             ) {
-              // TODO: (check) before adding edge, make sure that the cardinality of the composite column matches the referenced composite primary column
+              addConnection({
+                source: equivSourceNode.data.column!.id,
+                dest: equivTargetNode.data.column!.id,
+                entryType: "both",
+              });
+              updateFormDispatch(
+                __passComposites(
+                  equivTargetNode.data.column!.id,
+                  equivSourceNode.data.column!.id
+                )
+              );
+              // TODO: we still need to add compositions after passing composites
+
+              const [sourceParentID] = parseNodeID(
+                equivSourceNode.data.column!.id
+              );
+
+              const [targetParentID] = parseNodeID(
+                equivTargetNode.data.column!.id
+              );
+
+              dispatch(
+                addCompositions([
+                  equivSourceNode.data.column!.id,
+                  (
+                    updateFormState[targetParentID].columns[
+                      equivTargetNode.data.column!.id
+                    ].compositeOn || []
+                  ).map((el) => {
+                    const [parent, entry] = parseNodeID(el as NodeCompositeID);
+                    return `${parent}:${entry}`;
+                  }),
+                ])
+              );
+
+              setsyncTableID(sourceParentID);
+              setTableSyncCount((prev) => prev + 1);
+
               return addEdge(params, eds);
             }
           }
-          console.log(store.getState().nodes.groupNodes);
 
           return eds;
         }),
-      []
+      [graph, updateFormState]
     );
 
     // EFFECTS
@@ -630,42 +749,62 @@ export const DesignCanvas: React.FC<{
       }
     }, [designPaneState.activeTab, instance]);
 
+    useEffect(() => {
+      if (!syncTableID) return;
+
+      const sourceTable = updateFormState[syncTableID];
+
+      if (!sourceTable) {
+        console.error("could not upload table to nodes, table doesn't exist");
+      }
+
+      dispatch(upload(sourceTable));
+      dispatch(updateNodeGroup({ group: sourceTable }));
+    }, [tableSyncCount]);
+
+    console.log("update table state is ", updateFormState);
+    console.log("nodes are", nodes);
+
     return (
       <>
-        <ReactFlow
-          nodes={nodes}
-          nodeTypes={
-            tableNodeTypes as unknown as { [prop: string]: React.FC<NodeProps> }
-          }
-          onConnect={onConnect}
-          edgeTypes={tableEdgeTypes}
-          onNodesChange={onNodesChange}
-          edges={edges_}
-          onPaneClick={onPaneClick}
-          defaultViewport={{ zoom: 1, x: 0, y: 0 }}
-          maxZoom={!!designPaneState.activeTab ? 1 : 4}
-          minZoom={!!designPaneState.activeTab ? 1 : 0.25}
-          connectionMode={ConnectionMode.Loose}
-          onMoveEnd={(_, vp) => {
-            setPanPosFrame((prev) => {
-              const [end] = prev;
-              if (end.x === vp.x && end.y === vp.y) return prev;
-              return [{ x: vp.x, y: vp.y ? -vp.y : vp.y }];
-            });
-          }}
-          onInit={(instance) => {
-            setInstance(instance);
-          }}
-        >
-          <Background />
+        <TableUpdateProvider value={updateFormValue}>
+          <ReactFlow
+            nodes={nodes}
+            nodeTypes={
+              tableNodeTypes as unknown as {
+                [prop: string]: React.FC<NodeProps>;
+              }
+            }
+            onConnect={onConnect}
+            edgeTypes={tableEdgeTypes}
+            onNodesChange={onNodesChange}
+            edges={edges_}
+            onPaneClick={onPaneClick}
+            defaultViewport={{ zoom: 1, x: 0, y: 0 }}
+            maxZoom={!!designPaneState.activeTab ? 1 : 4}
+            minZoom={!!designPaneState.activeTab ? 1 : 0.25}
+            connectionMode={ConnectionMode.Loose}
+            onMoveEnd={(_, vp) => {
+              setPanPosFrame((prev) => {
+                const [end] = prev;
+                if (end.x === vp.x && end.y === vp.y) return prev;
+                return [{ x: vp.x, y: vp.y ? -vp.y : vp.y }];
+              });
+            }}
+            onInit={(instance) => {
+              setInstance(instance);
+            }}
+          >
+            <Background />
 
-          <DesignPaneProvider value={designPaneValue}>
-            <ChatBubbleView />
-            <CanvasPanel />
-          </DesignPaneProvider>
+            <DesignPaneProvider value={designPaneValue}>
+              <ChatBubbleView />
+              <CanvasPanel />
+            </DesignPaneProvider>
 
-          <Controls />
-        </ReactFlow>
+            <Controls />
+          </ReactFlow>
+        </TableUpdateProvider>
       </>
     );
   },
