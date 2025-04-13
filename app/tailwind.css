@@ -149,6 +149,25 @@ script {
   .floating-portal-item {
     transform: translateX(var(--pos-x)) translateY(var(--pos-y));
   }
+  .edge-foreign-object {
+    background: transparent;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .edge-button {
+    width: 20px;
+    height: 20px;
+    @apply bg-destructive text-canvas;
+    border: 1px solid #fff;
+    border-radius: 50%;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
   .table-node-group.selectable.draggable {
     border: none;
     background-color: none !important;

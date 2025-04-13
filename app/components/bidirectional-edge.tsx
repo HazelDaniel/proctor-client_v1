@@ -56,7 +56,6 @@ export function BidirectionalEdge({
   };
 
   let path = "";
-  console.log("path is ", path);
 
   if (isBiDirectionEdge) {
     path = getSpecialPath(edgePathParams, sourceX < targetX ? 25 : -25);

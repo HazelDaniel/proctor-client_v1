@@ -13,6 +13,7 @@ import {
   NodeProps,
   NodeToolbar,
   OnConnect,
+  OnEdgesChange,
   Panel,
   Position,
   ReactFlow,
@@ -104,6 +105,7 @@ import {
 import { __addNodeTable } from "~/reducers/utils/shared-functions";
 import { addConnection, hasOutboundEdges } from "~/reducers/graph.reducer";
 import { addCompositions } from "~/reducers/composition.reducer";
+import { ButtonEdge } from "./button-edge";
 
 export const ChatBubble: React.FC<{ pos: XYPosition }> = ({ pos }) => {
   return (
@@ -303,11 +305,13 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
 
   return (
     <div
-      className={`table-node-child all-[inherit] h-[--global-node-height] min-h-[--global-node-height] rounded-md z-9 w-[--node-width-here] bg-${
-        nodeColorSelection[
-          data.type as unknown as keyof typeof nodeColorSelection
-        ]
-      } shadow-inner` + `${data.isSurrogate ? " surrogate opacity-55" : ""}`}
+      className={
+        `table-node-child all-[inherit] h-[--global-node-height] min-h-[--global-node-height] rounded-md z-9 w-[--node-width-here] bg-${
+          nodeColorSelection[
+            data.type as unknown as keyof typeof nodeColorSelection
+          ]
+        } shadow-inner` + `${data.isSurrogate ? " surrogate opacity-55" : ""}`
+      }
       key={id}
       style={
         {
@@ -320,7 +324,9 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
         className="w-full text-center h-full flex items-center justify-center text-canvas relative truncate"
         style={{
           color:
-            data.type === "primary" || data.isSurrogate ? "rgb(var(--canvas-color))" : "#3c3c3c",
+            data.type === "primary" || data.isSurrogate
+              ? "rgb(var(--canvas-color))"
+              : "#3c3c3c",
         }}
       >
         {`${data.column?.name || ""}`}
@@ -463,6 +469,7 @@ const tableNodeTypes = {
 
 const tableEdgeTypes = {
   bidirectional: BidirectionalEdge,
+  button: ButtonEdge,
 };
 
 export const DesignCanvas: React.FC<{
@@ -621,8 +628,23 @@ export const DesignCanvas: React.FC<{
 
     const onNodesChange = (changes: any) => {
       changes.forEach(({ type, id, position }: any) => {
-        if (type === "position" && position) {
-          dispatch(setNodePosition({ id: id, position: position }));
+        if (type === "position") {
+          if (
+            !(
+              position &&
+              typeof position.x === "number" &&
+              typeof position.y === "number" &&
+              !isNaN(position.x) &&
+              !isNaN(position.y)
+            )
+          ) {
+            console.warn("Invalid position in onNodesChange:", {
+              id,
+              position,
+            });
+            return;
+          }
+          dispatch(setNodePosition({ id, position }));
         }
       });
     };
@@ -685,7 +707,7 @@ export const DesignCanvas: React.FC<{
                   entryType: "both",
                 })
               );
-              return addEdge(params, eds);
+              return addEdge({ ...params, type: "button" }, eds);
             }
             if (
               equivTargetNode.data.type === "composite-primary" &&
@@ -729,13 +751,28 @@ export const DesignCanvas: React.FC<{
               setsyncTableID(sourceParentID);
               setTableSyncCount((prev) => prev + 1);
 
-              return addEdge(params, eds);
+              return addEdge({ ...params, type: "button" }, eds);
             }
           }
 
           return eds;
         }),
       [graph, updateFormState]
+    );
+
+    const onLinksChange: OnEdgesChange = useCallback(
+      (changes) => {
+        changes.forEach((change) => {
+          if (change.type === "remove") {
+            const edge = edges_.find((e) => e.id === change.id);
+            if (!edge) return;
+            console.log(
+              `removing the link between source <${edge.source}> and dest <${edge.target}>`
+            );
+          }
+        });
+      },
+      [edges_]
     );
 
     // EFFECTS
@@ -778,6 +815,7 @@ export const DesignCanvas: React.FC<{
             onConnect={onConnect}
             edgeTypes={tableEdgeTypes}
             onNodesChange={onNodesChange}
+            onEdgesChange={onLinksChange}
             edges={edges_}
             onPaneClick={onPaneClick}
             defaultViewport={{ zoom: 1, x: 0, y: 0 }}

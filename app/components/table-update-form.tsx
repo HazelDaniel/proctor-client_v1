@@ -94,6 +94,7 @@ import {
   removeComposition,
   removeCompositionParent,
 } from "~/reducers/composition.reducer";
+import { setActiveNode } from "~/reducers/nodes.reducer";
 
 export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
   function InnerTableUpdateForm({ id }: { id: string }) {
@@ -150,7 +151,6 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
       }
     }, [tableActionButtonClicks, id]);
 
-    console.log("columns are ", columns);
 
     return (
       <>
@@ -352,6 +352,8 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
               onClick={() => {
                 if (!formCloseButtonRef.current) return;
                 formCloseButtonRef.current.click();
+
+                dispatch(setActiveNode({ activeNodeID: null }));
               }}
             >
               Cancel
@@ -364,6 +366,8 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
                 if (formCloseButtonRef.current) {
                   updateFormDispatch(__validate());
                   setTableActionButtonClicks((prev) => prev + 1);
+
+                  dispatch(setActiveNode({ activeNodeID: null }));
                 }
               }}
             >
@@ -371,7 +375,9 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
             </button>
 
             <DialogClose asChild className="w-[8rem] h-[3.2rem] hidden">
-              <button ref={formCloseButtonRef}></button>
+              <button ref={formCloseButtonRef} onClick={() => {
+                  dispatch(setActiveNode({ activeNodeID: null }));
+              }}></button>
             </DialogClose>
           </div>
         </DialogFooter>
