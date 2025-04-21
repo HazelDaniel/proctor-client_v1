@@ -108,6 +108,7 @@ export interface StatefulNodeType extends Node {
       | "ordinary"
       | "composite-primary";
     column?: {
+      oldName?: string;
       name: string;
       type: GlobalColumnTypeType;
       index: GlobalColumnIndexType;
@@ -139,14 +140,14 @@ export type TableCreationFormStateType = Partial<TableCRUDTableType> & {
   columns: Record<string, TableCRUDColumnType>;
 };
 
-export type TableUpdateFormStateType =Record<
-    string,
-    Partial<TableCRUDTableType> & {
-      errorState: boolean;
-      errorMessage?: string | null;
-      typeMappings: Record<string, string[]>;
-      columns: Record<string, TableCRUDColumnType | undefined>;
-    }
-  >;
+export type TableUpdateFormStateType = Record<
+  string,
+  Partial<TableCRUDTableType> & {
+    errorState: boolean;
+    errorMessage?: string | null;
+    typeMappings: Record<string, string[]>;
+    columns: Record<string, TableCRUDColumnType | undefined>;
+  }
+>;
 
 export interface TableCRUDFormStateType extends TableCreationFormStateType {} // & TableUpdateFormStateType

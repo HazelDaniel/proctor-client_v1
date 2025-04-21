@@ -147,6 +147,7 @@ const nodesSlice = createSlice({
             unique,
             isSurrogate,
             surrogationTimestamp,
+            oldName
           } = value;
           if (!compositeOn) compositeOn = [];
           if (!index) index = "NONE";
@@ -177,6 +178,7 @@ const nodesSlice = createSlice({
                 type: colType as GlobalColumnTypeType,
                 name: !isComposite ? name : computedComposite.join(", "),
                 id: key as NodeCompositeID,
+                oldName,
               },
               label: !isComposite ? name : computedComposite.join(", "),
               type: colToNodeTypeMap[index] as "primary",

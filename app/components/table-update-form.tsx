@@ -11,7 +11,10 @@ import React, {
   useState,
 } from "react";
 import {
+  compositionSelector,
+  graphSelector,
   savedTableSelector,
+  tableUpdateModalSelector,
   typeDefaultSelector,
   typeMappingSelector,
 } from "~/store";
@@ -91,16 +94,22 @@ import { getNodePropsFromIDS } from "~/utils/node.utils";
 import {
   addComposition,
   addCompositions,
+  getCompositeRep,
   removeComposition,
   removeCompositionParent,
 } from "~/reducers/composition.reducer";
 import { setActiveNode } from "~/reducers/nodes.reducer";
+import { closeUpdateFormModal } from "~/reducers/update-form-modal.reducer";
+import { hasInboundEdges, hasOutboundEdges } from "~/reducers/graph.reducer";
 
 export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
   function InnerTableUpdateForm({ id }: { id: string }) {
     const globalDefaultsList = useSelector(typeDefaultSelector, isEqual);
     const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
     const dispatch = useDispatch();
+
+    const tableUpdateModal = useSelector(tableUpdateModalSelector);
+
     const {
       tableUpdateState: updateFormState,
       tableUpdateDispatch: updateFormDispatch,
@@ -112,14 +121,14 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
     const formCloseButtonRef = useRef<HTMLButtonElement>(null);
 
     const columns: (TableCRUDColumnType & { id: string })[] = useMemo(() => {
-      if (!updateFormState[id]) {
+      if (!updateFormState[id] || !tableUpdateModal.open) {
         return [];
       }
       return Object.entries(updateFormState[id]?.columns)?.map(([k, v]) => {
         const key: NodeCompositeID = k as NodeCompositeID;
         return { id: key, ...v };
       });
-    }, [id, updateFormState]);
+    }, [id, updateFormState, tableUpdateModal]);
 
     const appendedTypes = useMemo(() => {
       return Object.keys(globalTypeMappings);
@@ -150,7 +159,6 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
         formCloseButtonRef.current.click();
       }
     }, [tableActionButtonClicks, id]);
-
 
     return (
       <>
@@ -195,61 +203,65 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
                     // <TableRow>
                     // </TableRow>
                     <>
-                    <TableRow key={column.id} className="h-8 bg-secondary/80 opacity-55">
-                      <TableCell className=" form-table-cell">
-                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 my-auto rounded-sm">
-                          <p className="text-red w-full flex items-center justify-center">{column.name || ""}</p>
-                        </div>
-                      </TableCell>
+                      <TableRow
+                        key={column.id}
+                        className="h-8 bg-secondary/80 opacity-55"
+                      >
+                        <TableCell className=" form-table-cell">
+                          <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 my-auto rounded-sm">
+                            <p className="text-red w-full flex items-center justify-center">
+                              {column.name || ""}
+                            </p>
+                          </div>
+                        </TableCell>
 
-                      <TableCell className=" form-table-cell">
-                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
-                          <p className="text-red w-full flex items-center justify-center">
-                            {column.type || ""}
-                          </p>
-                        </div>
-                      </TableCell>
+                        <TableCell className=" form-table-cell">
+                          <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                            <p className="text-red w-full flex items-center justify-center">
+                              {column.type || ""}
+                            </p>
+                          </div>
+                        </TableCell>
 
-                      <TableCell className="max-h-[5rem] form-table-cell">
-                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
-                          <p className="text-red w-full flex items-center justify-center">
-                            {column.index || ""}
-                          </p>
-                        </div>
-                      </TableCell>
+                        <TableCell className="max-h-[5rem] form-table-cell">
+                          <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                            <p className="text-red w-full flex items-center justify-center">
+                              {column.index || ""}
+                            </p>
+                          </div>
+                        </TableCell>
 
-                      <TableCell className="text-right h-max form-table-cell">
-                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
-                          {column.nullable ? <Check/> : <X/>}
-                        </div>
-                      </TableCell>
+                        <TableCell className="text-right h-max form-table-cell">
+                          <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                            {column.nullable ? <Check /> : <X />}
+                          </div>
+                        </TableCell>
 
-                      <TableCell className="text-right h-max form-table-cell">
-                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
-                          {column.unique ? <Check/> : <X/>}
-                        </div>
-                      </TableCell>
+                        <TableCell className="text-right h-max form-table-cell">
+                          <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                            {column.unique ? <Check /> : <X />}
+                          </div>
+                        </TableCell>
 
-                      <TableCell className="w-[8rem] h-max form-table-cell">
-                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
-                          <p className="text-red w-full flex items-center justify-center">
-                            {column.default || ""}
-                          </p>
-                        </div>
-                      </TableCell>
+                        <TableCell className="w-[8rem] h-max form-table-cell">
+                          <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                            <p className="text-red w-full flex items-center justify-center">
+                              {column.default || ""}
+                            </p>
+                          </div>
+                        </TableCell>
 
-                      <TableCell className="w-[8rem] h-max form-table-cell">
-                        <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
-                          <p className="text-red w-full flex items-center justify-center">
-                            {"NONE"}
-                          </p>
-                        </div>
-                      </TableCell>
+                        <TableCell className="w-[8rem] h-max form-table-cell">
+                          <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 rounded-sm">
+                            <p className="text-red w-full flex items-center justify-center">
+                              {"NONE"}
+                            </p>
+                          </div>
+                        </TableCell>
 
-                      <TableCell className="w-[8rem] h-[8rem] form-table-cell"></TableCell>
-                    </TableRow>
+                        <TableCell className="w-[8rem] h-[8rem] form-table-cell"></TableCell>
+                      </TableRow>
                     </>
-
                   ) : (
                     <TableRow key={column.id}>
                       <TableColumnNameForm
@@ -375,9 +387,12 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
             </button>
 
             <DialogClose asChild className="w-[8rem] h-[3.2rem] hidden">
-              <button ref={formCloseButtonRef} onClick={() => {
+              <button
+                ref={formCloseButtonRef}
+                onClick={() => {
                   dispatch(setActiveNode({ activeNodeID: null }));
-              }}></button>
+                }}
+              ></button>
             </DialogClose>
           </div>
         </DialogFooter>
@@ -482,6 +497,9 @@ export const FormColumnSelectList: React.FC<{
   ) as TableUpdateContextValueType;
   const dispatch = useDispatch();
 
+  const graph = useSelector(graphSelector, isEqual);
+  const composition = useSelector(compositionSelector, isEqual);
+
   const columnIndex = useContextSelector<
     TableUpdateContextValueType,
     GlobalColumnIndexType
@@ -522,7 +540,25 @@ export const FormColumnSelectList: React.FC<{
             );
             break;
           case "type":
-            tableUpdateDispatch(__setType(columnID, e));
+            {
+              const repNode = getCompositeRep(composition, columnID);
+              let isCompositeRepReferenced: boolean = false;
+              if (repNode) {
+                isCompositeRepReferenced = hasInboundEdges(
+                  graph,
+                  repNode,
+                  "node"
+                );
+              }
+
+              tableUpdateDispatch(
+                __setType(columnID, e, tableID, {
+                  isReferenced: hasInboundEdges(graph, columnID, "node"),
+                  isReferencing: hasOutboundEdges(graph, columnID, "node"),
+                  isCompositeRepReferenced,
+                })
+              );
+            }
             break;
           default:
             throw new Error("selection intent not implemented yet");

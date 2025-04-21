@@ -21,6 +21,7 @@ import tableToNodesReducer from "./reducers/table-to-node.reducer";
 import { compositionReducer } from "./reducers/composition.reducer";
 import { parseNodeID } from "./utils/node.utils";
 import { graphReducer } from "./reducers/graph.reducer";
+import { updateFormModalReducer } from "./reducers/update-form-modal.reducer";
 
 const rootReducer = combineReducers({
   workspace: workspaceReducer,
@@ -29,6 +30,7 @@ const rootReducer = combineReducers({
   contextNodes: tableToNodesReducer,
   composition: compositionReducer,
   graphs: graphReducer,
+  tableUpdateModal: updateFormModalReducer,
 });
 
 const persistConfig: PersistConfig<{
@@ -38,6 +40,7 @@ const persistConfig: PersistConfig<{
   contextNodes: ReturnType<typeof tableToNodesReducer>;
   composition: ReturnType<typeof compositionReducer>;
   graphs: ReturnType<typeof graphReducer>;
+  tableUpdateModal: ReturnType<typeof updateFormModalReducer>;
 }> = {
   key: "root",
   // whitelist: ["workspace", "types"],
@@ -113,6 +116,13 @@ export const graphSelector = (state: {
   graphs: ReturnType<typeof graphReducer>;
 }) => {
   return state.graphs;
+};
+
+// TABLE UPDATE MODAL SELECTORS
+export const tableUpdateModalSelector = (state: {
+  tableUpdateModal: ReturnType<typeof updateFormModalReducer>;
+}) => {
+  return state.tableUpdateModal;
 };
 
 // NODES SELECTORS

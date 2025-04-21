@@ -37,6 +37,7 @@ script {
     --bg-color: 248 248 248;
     --canvas-color: 254 253 253;
     --accent-color: 217 70 239;
+    --accent-color-light: 192 152 198;
     --icon-tab-bg: 248 248 248;
     --secondary-text-color: 68 68 68;
     --active-tab-color: 232 232 232;
@@ -157,7 +158,7 @@ script {
     justify-content: center;
     align-items: center;
   }
-  
+
   .edge-button {
     width: 20px;
     height: 20px;
@@ -218,8 +219,25 @@ script {
   .table-node-child {
     @apply relative;
   }
+  .table-node-child.composite-primary {
+    @apply bg-accentLight;
+  }
+  .table-node-child.composite-primary p {
+    @apply border-dashed border-2;
+    color: rgb(var(--canvas-color)) !important;
+  }
+  .table-node-child.primary {
+    @apply bg-accentLight;
+  }
+  .table-node-child.primary p {
+    /* @apply border-dashed border-2; */
+    color: rgb(var(--canvas-color)) !important;
+  }
+  .table-node-child.composite-foreign p {
+    @apply border-dashed border-2 border-accent rounded-sm;
+  }
   .table-node-child.surrogate {
-    @apply bg-accent/50;
+    @apply bg-accent/60;
     color: white;
   }
 

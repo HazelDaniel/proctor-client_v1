@@ -10,6 +10,7 @@ import {
 import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
 import { internalIndexMarkers, reservedSQLKeywords } from "~/data/table-form";
 import { getNodePropFromID } from "~/utils/node.utils";
+import type { ValidatorConfigType as UpdateValidatorConfigType } from "../table-update-form.reducer";
 
 // EXPLICIT STATE VALIDATORS
 export function validateColumnType(state: TableCreationFormStateType) {
@@ -139,22 +140,24 @@ export const __dropColumn = <S, T>(columnID: string, tableID?: string) => {
 export const __addToComposite = <S, T>(
   columnID: string,
   compositeOn: string,
-  tableID?: string
+  tableID?: string,
+  config?: UpdateValidatorConfigType
 ) => {
   return {
     type: "addToComposite" as S,
-    payload: { columnID, compositeOn, tableID } as T,
+    payload: { columnID, compositeOn, tableID, config } as T,
   };
 };
 
 export const __removeFromComposite = <S, T>(
   columnID: string,
   compositeOn: string,
-  tableID?: string
+  tableID?: string,
+  config?: UpdateValidatorConfigType
 ) => {
   return {
     type: "removeFromComposite" as S,
-    payload: { columnID, compositeOn, tableID } as T,
+    payload: { columnID, compositeOn, tableID, config } as T,
   };
 };
 
@@ -172,11 +175,12 @@ export const __setDefault = <S, T>(
 export const __setIndex = <S, T>(
   columnID: string,
   index: GlobalColumnIndexType,
-  tableID?: string
+  tableID?: string,
+  config?: UpdateValidatorConfigType
 ) => {
   return {
     type: "setIndex" as S,
-    payload: { columnID, index, tableID } as T,
+    payload: { columnID, index, tableID, config } as T,
   };
 };
 
@@ -201,11 +205,12 @@ export const __setTableName = <S, T>(name: string, tableID?: string) => {
 export const __setType = <S, T>(
   columnID: string,
   type: GlobalColumnTypeType,
-  tableID?: string
+  tableID?: string,
+  config?: UpdateValidatorConfigType
 ) => {
   return {
     type: "setType" as S,
-    payload: { columnID, type, tableID } as T,
+    payload: { columnID, type, tableID, config } as T,
   };
 };
 
@@ -399,7 +404,7 @@ export const selectDefault: (
       id
     ];
     if (!resColumn) {
-      return ""
+      return "";
     }
     return resColumn.default as string;
   } else {

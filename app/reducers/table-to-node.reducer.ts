@@ -69,7 +69,8 @@ export const tableToNodesSlice = createSlice({
             type: colType,
             unique,
             isSurrogate,
-            surrogationTimestamp
+            surrogationTimestamp,
+            oldName
           } = value;
           if (!compositeOn) compositeOn = [];
           if (!index) index = "NONE";
@@ -100,6 +101,7 @@ export const tableToNodesSlice = createSlice({
                 type: colType as GlobalColumnTypeType,
                 name: !isComposite ? name : computedComposite.join(", "),
                 id: key as NodeCompositeID,
+                oldName: name,
               },
               label: !isComposite ? name : computedComposite.join(", "),
               type: colToNodeTypeMap[index] as "primary",
@@ -118,58 +120,58 @@ export const tableToNodesSlice = createSlice({
         id: tableID,
       };
     },
-    download: (
-      state,
-      action: PayloadAction<{
-        groupID: string;
-        mappings: Record<string, string[]>;
-      }>
-    ) => {
-      // we are going to set the savedTable property of the state to a newly constructed TableCRUDFormStateType derived from the groupNode with the current groupID
-      const { groupID, mappings } = action.payload;
-      const groupNode = state.groupNodes[groupID];
+    // download: (
+    //   state,
+    //   action: PayloadAction<{
+    //     groupID: string;
+    //     mappings: Record<string, string[]>;
+    //   }>
+    // ) => {
+    //   // we are going to set the savedTable property of the state to a newly constructed TableCRUDFormStateType derived from the groupNode with the current groupID
+    //   const { groupID, mappings } = action.payload;
+    //   const groupNode = state.groupNodes[groupID];
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const colToNodeTypeMap: Record<
-        Exclude<StatefulNodeType["type"], undefined>,
-        GlobalColumnIndexType
-      > = {
-        "composite-foreign": "COMPOSITE_FOREIGN",
-        "composite-primary": "COMPOSITE_PRIMARY",
-        secondary: "FOREIGN",
-        primary: "PRIMARY",
-        ordinary: "NONE",
-      };
+    //   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    //   const colToNodeTypeMap: Record<
+    //     Exclude<StatefulNodeType["type"], undefined>,
+    //     GlobalColumnIndexType
+    //   > = {
+    //     "composite-foreign": "COMPOSITE_FOREIGN",
+    //     "composite-primary": "COMPOSITE_PRIMARY",
+    //     secondary: "FOREIGN",
+    //     primary: "PRIMARY",
+    //     ordinary: "NONE",
+    //   };
 
-      if (!groupNode) return;
-      // console.log("got here");
-      const resTableFormState: TableCRUDFormStateType = {
-        tableID: groupID,
-        tableName: groupNode.data.label,
-        errorState: false,
-        errorMessage: null,
-        typeMappings: mappings,
-        columns: Object.entries(groupNode.nodes).reduce((acc, curr) => {
-          const [columnID, node] = curr;
-          acc[columnID] = {
-            type: node.data.column?.type,
-            nullable: node.data.column?.nullable,
-            unique: node.data.column?.unique,
-            default: node.data.column?.default,
-            index: colToNodeTypeMap[node.data.type],
-            compositeOn: node.data.column?.compositeOn,
-            oldName: node.data.column?.name,
-            name: node.data.label,
-            isSurrogate: node.data.isSurrogate,
-            surrogationTimestamp: node.data.surrogationTimestamp
-          } as TableCRUDFormStateType["columns"][string];
+    //   if (!groupNode) return;
+    //   // console.log("got here");
+    //   const resTableFormState: TableCRUDFormStateType = {
+    //     tableID: groupID,
+    //     tableName: groupNode.data.label,
+    //     errorState: false,
+    //     errorMessage: null,
+    //     typeMappings: mappings,
+    //     columns: Object.entries(groupNode.nodes).reduce((acc, curr) => {
+    //       const [columnID, node] = curr;
+    //       acc[columnID] = {
+    //         type: node.data.column?.type,
+    //         nullable: node.data.column?.nullable,
+    //         unique: node.data.column?.unique,
+    //         default: node.data.column?.default,
+    //         index: colToNodeTypeMap[node.data.type],
+    //         compositeOn: node.data.column?.compositeOn,
+    //         oldName: node.data.column?.name,
+    //         name: node.data.label,
+    //         isSurrogate: node.data.isSurrogate,
+    //         surrogationTimestamp: node.data.surrogationTimestamp,
+    //       } as TableCRUDFormStateType["columns"][string];
 
-          return acc as TableCRUDTableType["columns"];
-        }, {} as TableCRUDTableType["columns"]) as unknown as TableCRUDFormStateType["columns"],
-      };
+    //       return acc as TableCRUDTableType["columns"];
+    //     }, {} as TableCRUDTableType["columns"]) as unknown as TableCRUDFormStateType["columns"],
+    //   };
 
-      state.savedTable = resTableFormState;
-    },
+    //   state.savedTable = resTableFormState;
+    // },
     updatePosition: (
       state,
       action: PayloadAction<{ groupID: string; position: XYPosition }>
@@ -224,7 +226,7 @@ export const tableToNodesSlice = createSlice({
   },
 });
 
-export const { upload, download, updatePosition, setCurrentGroupID } =
+export const { upload, updatePosition, setCurrentGroupID } =
   tableToNodesSlice.actions;
 const tableToNodesReducer = tableToNodesSlice.reducer;
 

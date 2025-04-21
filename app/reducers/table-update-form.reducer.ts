@@ -38,7 +38,7 @@ export const tableFormActionTypes = {
   retractComposites: "RETRACT_COMPOSITES",
 };
 
-export interface ValidatorConfig {
+export interface ValidatorConfigType {
   isReferenced?: boolean; // Is this column referenced by other tables?
   isPrimaryKeyReferenced?: boolean; // Is table's primary key referenced?
 
@@ -53,10 +53,14 @@ export interface ValidatorConfig {
   // hasCircularReference?: boolean; // Would this create circular reference?
 
   // Type Validations
-  isTypeCompatible?: boolean; // Is new type compatible with references?
+  isTypeCompatible?: boolean; // Is new type compatible with references?, applies only to foreign keys . composite foreign keys will be auto-filled with types and data of surrogates
 
   // Column State
   isLastColumn?: boolean; // Is this the last column in table?
+
+  isCompositeRepReferenced?: boolean; // Is the composition representative referenced (assuming that this one is a 'compositeOn' entry)
+
+  //MISC
 }
 
 export interface TableFormActionType<T> {
@@ -71,7 +75,10 @@ export interface TableFormToggleActionType
   extends TableFormActionType<{ columnID: string }> {}
 
 export interface TableFormDeletionActionType
-  extends TableFormActionType<{ columnID: string }> {}
+  extends TableFormActionType<{
+    columnID: string;
+    config?: ValidatorConfigType;
+  }> {}
 
 export type TableFormUpdateActionType = TableFormActionType<
   Partial<
@@ -87,6 +94,7 @@ export type TableFormUpdateActionType = TableFormActionType<
     mappings?: Record<string, string[]>;
     sourceCompositeID?: NodeCompositeID;
     targetSecondaryID?: string;
+    config?: ValidatorConfigType;
   }
 >;
 
@@ -95,6 +103,7 @@ export type TableFormBatchUpdateActionType = TableFormActionType<
     columnID?: string;
     errorMessage?: string;
     compositeOn: string[];
+    config?: ValidatorConfigType;
   })[]
 >;
 
@@ -156,7 +165,7 @@ export const tableUpdateFormReducer: (
               name: "",
               unique: true,
               compositeOn: null,
-              isSurrogate: false
+              isSurrogate: false,
             },
           },
           tableName,
@@ -210,10 +219,8 @@ export const tableUpdateFormReducer: (
           surrogationTimestamp: new Date().toISOString(),
         };
 
-
         return acc;
       }, {} as Record<string, TableCRUDColumnType>);
-
 
       return {
         ...state,
@@ -226,6 +233,7 @@ export const tableUpdateFormReducer: (
               ...state[targetTableID].columns[targetSecondaryID],
               index: "COMPOSITE_FOREIGN",
               compositeOn: compositeEntries,
+              oldName: state[targetTableID].columns[targetSecondaryID]?.name,
             },
           },
         },
@@ -263,6 +271,7 @@ export const tableUpdateFormReducer: (
       newColumns[columnID] = {
         ...newColumns[columnID],
         index: "FOREIGN",
+        name: newColumns[columnID].oldName,
         compositeOn: [],
       };
 
@@ -568,7 +577,7 @@ export const tableUpdateFormReducer: (
       return newState;
     }
     case "setType": {
-      const { columnID, type: colType } = payload;
+      const { columnID, type: colType, tableID, config } = payload;
       if (!columnID) return state;
 
       newState = structuredClone(state);
@@ -582,6 +591,40 @@ export const tableUpdateFormReducer: (
         resColumn.index === "COMPOSITE_PRIMARY"
       )
         return state; // you can't override the types of composite keys
+
+      if (resColumn.index === "PRIMARY" && config?.isReferenced) {
+        return {
+          ...state,
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage:
+              "primary index is currently referenced, remove references and try again",
+          },
+        };
+      } else if (resColumn.index === "FOREIGN" && config?.isReferencing) {
+        return {
+          ...state,
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage:
+              "foreign index is currently referencing other tables, remove references and try again",
+          },
+        };
+      } else if (
+        resColumn.index === "NONE" &&
+        config?.isCompositeRepReferenced
+      ) {
+        return {
+          ...state,
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage: "this column is a composite entry of a primary key that's being referenced.",
+          },
+        };
+      }
 
       let supportedDefaultSet: string[];
       if (typeDefaultMappings[colType])
@@ -651,7 +694,11 @@ export const tableUpdateFormReducer: (
           const {
             data: { column, isSurrogate, surrogationTimestamp },
           } = v;
-          acc[k as NodeCompositeID] = { ...column, isSurrogate, surrogationTimestamp } as TableCRUDColumnType;
+          acc[k as NodeCompositeID] = {
+            ...column,
+            isSurrogate,
+            surrogationTimestamp,
+          } as TableCRUDColumnType;
           return acc;
         }, {} as Record<NodeCompositeID, TableCRUDColumnType>),
         errorState: false,
