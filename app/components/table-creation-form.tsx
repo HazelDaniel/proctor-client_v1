@@ -78,6 +78,7 @@ import {
 import { useContextSelector } from "~/hooks/usecontextselector";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  compositionSelector,
   typeDefaultSelector,
   typeErrorStateSelector,
   typeMappingSelector,
@@ -90,6 +91,7 @@ import { getNodePropsFromIDS } from "~/utils/node.utils";
 import {
   addComposition,
   addCompositions,
+  getCompositeRep,
   removeComposition,
   removeCompositionParent,
 } from "~/reducers/composition.reducer";
@@ -602,6 +604,8 @@ export const TableCreationForm: React.FC = React.memo(
     const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
     const dispatch = useDispatch();
 
+    const composition = useSelector(compositionSelector, isEqual);
+
     const [creationFormState, creationFormDispatch] = useReducer(
       tableCreationFormReducer,
       initialTableCreationFormState,
@@ -767,12 +771,24 @@ export const TableCreationForm: React.FC = React.memo(
                         <div
                           className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto"
                           onClick={() => {
-                            creationFormDispatch(__dropColumn(column.id));
-                            dispatch(
-                              removeCompositionParent(
-                                column.id as unknown as NodeCompositeID
-                              )
+                            const compositeRep = getCompositeRep(
+                              composition,
+                              creationFormState.tableID as string,
+                              column.id
                             );
+                            creationFormDispatch(
+                              __dropColumn(column.id, creationFormState.tableID, {
+                                isCompositeMember: !!compositeRep,
+                              })
+                            );
+
+                            if (!compositeRep) {
+                              dispatch(
+                                removeCompositionParent(
+                                  column.id as unknown as NodeCompositeID
+                                )
+                              );
+                            }
                           }}
                         >
                           <svg className="w-full h-full">

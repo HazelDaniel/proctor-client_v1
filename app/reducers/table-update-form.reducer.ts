@@ -1,10 +1,7 @@
 import { internalIndexMarkers, typeDefaultMappings } from "~/data/table-form";
 import { v7 as UUIDv7 } from "uuid";
-// import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
 import {
   TableFormUpdatePayloadType,
-  // GlobalColumnIndexType,
-  // GlobalColumnTypeType,
   NodeCompositeID,
   TableUpdateFormStateType,
   TableCRUDColumnType,
@@ -15,6 +12,7 @@ import {
   validateColumnName,
   validateColumnType,
   validatePrimaryKeyExists,
+  ValidatorConfigType,
 } from "./utils/shared-functions";
 
 export const tableFormActionTypes = {
@@ -37,31 +35,6 @@ export const tableFormActionTypes = {
   passComposites: "PASS_COMPOSITES",
   retractComposites: "RETRACT_COMPOSITES",
 };
-
-export interface ValidatorConfigType {
-  isReferenced?: boolean; // Is this column referenced by other tables?
-  isPrimaryKeyReferenced?: boolean; // Is table's primary key referenced?
-
-  // Composite Key Validations
-  isCompositePrimaryMember?: boolean; // Is part of composite primary key?
-  isCompositeForeignMember?: boolean; // Is part of composite foreign key?
-
-  hasCompositeMembers?: boolean; // Does this composite have members?
-
-  // Foreign Key Validations
-  isReferencing?: boolean; // Does this column reference other tables?
-  // hasCircularReference?: boolean; // Would this create circular reference?
-
-  // Type Validations
-  isTypeCompatible?: boolean; // Is new type compatible with references?, applies only to foreign keys . composite foreign keys will be auto-filled with types and data of surrogates
-
-  // Column State
-  isLastColumn?: boolean; // Is this the last column in table?
-
-  isCompositeRepReferenced?: boolean; // Is the composition representative referenced (assuming that this one is a 'compositeOn' entry)
-
-  //MISC
-}
 
 export interface TableFormActionType<T> {
   type: keyof typeof tableFormActionTypes;
@@ -176,7 +149,7 @@ export const tableUpdateFormReducer: (
       return newState;
     }
     case "dropColumn": {
-      const { columnID } = payload;
+      const { columnID, config } = payload;
       if (!columnID) return state;
 
       if (
@@ -184,6 +157,59 @@ export const tableUpdateFormReducer: (
         state[tableID].columns[columnID].readonly
       )
         return state;
+
+      let errorState = config?.isReferencing;
+      if (errorState) {
+        const errorMessage =
+          "you cannot delete a column that is referencing other tables. remove references first";
+        return {
+          ...state,
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage,
+          },
+        };
+      }
+
+      errorState = config?.isCompositeMember;
+      if (errorState) {
+        const errorMessage =
+          "you cannot delete a column that is part of a composite, update the composition first.";
+
+        return {
+          ...state,
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage,
+          },
+        };
+      }
+
+      errorState = config?.isReferenced;
+      if (errorState) {
+        const errorMessage =
+          "you cannot delete a column that is referenced by other tables. remove references first";
+        return {
+          ...state,
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage,
+          },
+        };
+      }
+
+      const resColumn = state[tableID].columns[columnID];
+      if (resColumn.index === "COMPOSITE_FOREIGN") {
+        for (const entry of resColumn.compositeOn || []) {
+          // const [parentID, nodeID, nodeName] =
+          //   entry as `${string}:${NodeCompositeID}`;
+          console.warn("TODO: remove entry: ", entry);
+        }
+      }
+
       newState = structuredClone(state);
       delete newState[tableID]?.columns[columnID];
 
@@ -284,15 +310,35 @@ export const tableUpdateFormReducer: (
       };
     }
     case "addToComposite": {
-      const { columnID, compositeOn } = payload;
+      const { columnID, compositeOn, config } = payload;
       if (!columnID) return state;
       const index = state[tableID].columns[columnID]?.index;
-      const errorState = !(
+      let errorState = !(
         index === "COMPOSITE_PRIMARY" || index === "COMPOSITE_FOREIGN"
       );
       if (errorState) {
         const errorMessage =
           "you cannot set composite columns for a non composite key!";
+        return {
+          ...state,
+          [tableID]: { ...state[tableID], errorState, errorMessage },
+        };
+      }
+
+      errorState = index === "COMPOSITE_FOREIGN";
+      if (errorState) {
+        const errorMessage =
+          "you cannot manually update the composite entries of a composite foreign key";
+        return {
+          ...state,
+          [tableID]: { ...state[tableID], errorState, errorMessage },
+        };
+      }
+
+      errorState = config?.isReferenced || false;
+      if (errorState) {
+        const errorMessage =
+          "you cannot update the composite entries of a referenced composite primary key";
         return {
           ...state,
           [tableID]: { ...state[tableID], errorState, errorMessage },
@@ -396,12 +442,35 @@ export const tableUpdateFormReducer: (
       return newState;
     }
     case "setIndex": {
-      const { columnID, index } = payload;
+      const { columnID, index, config } = payload;
       newState = structuredClone(state);
       if (!columnID) return state;
       const resColumn = newState[tableID].columns[columnID];
-      if (resColumn.readonly) return state;
+      // if (resColumn.readonly) return state;
       if (resColumn.index === index) return state;
+
+      let errorState = true;
+      if (errorState) {
+        const errorMessage =
+          "index is not updatable, delete column and add again if you have to";
+        return {
+          ...state,
+          [tableID]: { ...state[tableID], errorState, errorMessage },
+        };
+      }
+
+      return state;
+
+      errorState = config?.isCompositeMember || false;
+      if (errorState) {
+        const errorMessage =
+          "you can't update the index of a composite key member. remove composition and retry";
+        return {
+          ...state,
+          [tableID]: { ...state[tableID], errorState, errorMessage },
+        };
+      }
+
       switch (index) {
         case "COMPOSITE_PRIMARY": {
           const errorState = Object.values(state[tableID].columns).some(
@@ -590,7 +659,14 @@ export const tableUpdateFormReducer: (
         resColumn.index === "COMPOSITE_FOREIGN" ||
         resColumn.index === "COMPOSITE_PRIMARY"
       )
-        return state; // you can't override the types of composite keys
+        return {
+          ...state,
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage: "you can't override the types of composite keys",
+          },
+        };
 
       if (resColumn.index === "PRIMARY" && config?.isReferenced) {
         return {
@@ -599,29 +675,36 @@ export const tableUpdateFormReducer: (
             ...state[tableID],
             errorState: true,
             errorMessage:
-              "primary index is currently referenced, remove references and try again",
+              "primary index is referenced, remove references and try again",
           },
         };
       } else if (resColumn.index === "FOREIGN" && config?.isReferencing) {
+        console.warn(
+          "foreign index references other tables, remove references and try again"
+        );
         return {
           ...state,
           [tableID]: {
             ...state[tableID],
             errorState: true,
             errorMessage:
-              "foreign index is currently referencing other tables, remove references and try again",
+              "foreign index references other tables, remove references and try again",
           },
         };
       } else if (
         resColumn.index === "NONE" &&
         config?.isCompositeRepReferenced
       ) {
+        console.warn(
+          "this column is a composite entry of a primary key that's being referenced."
+        );
         return {
           ...state,
           [tableID]: {
             ...state[tableID],
             errorState: true,
-            errorMessage: "this column is a composite entry of a primary key that's being referenced.",
+            errorMessage:
+              "this column is a composite entry of a primary key that's being referenced.",
           },
         };
       }

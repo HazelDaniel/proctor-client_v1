@@ -28,6 +28,7 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useReducer,
   useState,
@@ -315,7 +316,8 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
           nodeColorSelection[
             data.type as unknown as keyof typeof nodeColorSelection
           ] || "accentLight"
-        } shadow-inner` + `${data.isSurrogate ? " surrogate opacity-55" : ""} ${data.type}`
+        } shadow-inner` +
+        `${data.isSurrogate ? " surrogate opacity-55" : ""} ${data.type}`
       }
       key={id}
       style={
@@ -399,7 +401,9 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
   } = useContext(tableUpdateContext) as TableUpdateContextValueType;
   const groupNode = useSelector(groupNodeSelector(id));
 
-  useEffect(() => {
+  const savedTable = useSelector(savedTableSelector);
+
+  useLayoutEffect(() => {
     updateFormDispatch(__addNodeTable(id, groupNode, globalTypeMappings));
   }, [id, groupNode]);
 
@@ -438,6 +442,9 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
                 className="w-[10px] h-[10px]"
                 onClick={() => {
                   dispatch(setActiveNode({ activeNodeID: id }));
+                  dispatch(
+                    download({ groupID: id, mappings: globalTypeMappings })
+                  );
                   dispatch(openUpdateFormModal());
                 }}
               >
@@ -446,7 +453,7 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
                 </svg>
               </button>
             </DialogTrigger>
-            {tableUpdateModal.open ? (
+            {tableUpdateModal.open && id === savedTable?.tableID ? (
               <DialogContent
                 className="w-[80vw] min-w-[95vw] h-[clamp(60rem, 95vh, 60rem)] md:h-[clamp(40rem, 95vh, 99vh)] rounded-lg flex flex-col items-center p-8 form-creation-dialog-content"
                 aria-describedby=""
@@ -547,7 +554,8 @@ export const DesignCanvas: React.FC<{
     const [edges_, setEdges, onEdgesChange] = useEdgesState(edges);
 
     const edgeContextValue = useMemo(
-      () => ( {edges: edges_, setEdges}), [edges_, setEdges]
+      () => ({ edges: edges_, setEdges }),
+      [edges_, setEdges]
     );
 
     // COMPONENT EVENT HANDLERS

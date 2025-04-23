@@ -134,21 +134,24 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
       return Object.keys(globalTypeMappings);
     }, [globalTypeMappings]);
 
+    const composition = useSelector(compositionSelector, isEqual);
+    const graph = useSelector(graphSelector, isEqual);
+
     // 'FLASHING' THE ERROR STATE
     useEffect(() => {
-      if (!updateFormState.errorState) return;
+      if (!updateFormState[id]?.errorState) return;
       const timeoutFn = setTimeout(
-        () => updateFormDispatch(__clearError()),
+        () => updateFormDispatch(__clearError(id)),
         5000
       );
       return () => {
         clearTimeout(timeoutFn);
       };
-    }, [updateFormState.errorState]);
+    }, [updateFormState[id].errorState, updateFormState, id]);
 
     // AFTER FORM HAS BEEN SUCCESSFULLY VALIDATED FOR SUBMISSION
     useEffect(() => {
-      if (updateFormState.errorState || !updateFormState.tableID) return;
+      if (updateFormState[id]?.errorState || !updateFormState.tableID) return;
       if (
         formCloseButtonRef.current &&
         tableActionButtonClicks &&
@@ -159,6 +162,8 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
         formCloseButtonRef.current.click();
       }
     }, [tableActionButtonClicks, id]);
+
+    console.log("current table state is ", updateFormState[id]);
 
     return (
       <>
@@ -171,7 +176,7 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
             <div
               className={
                 "md:w-[60%] w-full flex items-center justify-end h-[40%] md:h-full bg-[#ff1d1d23] px-4 order-0 md:order-1" +
-                `${!updateFormState.errorState ? " invisible" : ""}`
+                `${!updateFormState[id]?.errorState ? " invisible" : ""}`
               }
             >
               <span className="w-8 h-8">
@@ -332,12 +337,49 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
                         <div
                           className="w-6 h-6 flex items-center justify-end cursor-pointer ml-auto"
                           onClick={() => {
-                            updateFormDispatch(__dropColumn(column.id, id));
-                            dispatch(
-                              removeCompositionParent(
-                                column.id as unknown as NodeCompositeID
-                              )
+                            let compositeRep: string | null = null;
+                            const isReferencing = hasOutboundEdges(
+                              graph,
+                              column.id,
+                              "node"
                             );
+
+                            const isReferenced = hasInboundEdges(
+                              graph,
+                              column.id,
+                              "node"
+                            );
+
+                            if (
+                              column.index !== "COMPOSITE_FOREIGN" &&
+                              column.index !== "COMPOSITE_PRIMARY"
+                            ) {
+                              compositeRep = getCompositeRep(
+                                composition,
+                                id,
+                                column.id
+                              );
+                            }
+
+                            updateFormDispatch(
+                              __dropColumn(column.id, id, {
+                                isCompositeMember: !!compositeRep,
+                                isReferencing,
+                                isReferenced,
+                              })
+                            );
+
+                            if (
+                              !compositeRep &&
+                              !isReferencing &&
+                              !isReferenced
+                            ) {
+                              dispatch(
+                                removeCompositionParent(
+                                  column.id as unknown as NodeCompositeID
+                                )
+                              );
+                            }
                           }}
                         >
                           <svg className="w-full h-full">
@@ -353,7 +395,7 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
 
             <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
 
-            <TableFormCTAArea setClickAction={() => {}} tableID={id} />
+            <TableFormCTAArea setClickAction={() => void 0} tableID={id} />
           </div>
         </div>
 
@@ -523,25 +565,32 @@ export const FormColumnSelectList: React.FC<{
           case "default":
             tableUpdateDispatch(__setDefault(columnID, e));
             break;
-          case "index":
-            if (
-              (e as unknown as GlobalColumnIndexType) !== "COMPOSITE_FOREIGN" &&
-              (e as unknown as GlobalColumnIndexType) !== "COMPOSITE_PRIMARY"
-            )
-              dispatch(
-                removeCompositionParent(columnID as unknown as NodeCompositeID)
-              );
+          case "index": {
+            const compositeRep = getCompositeRep(
+              composition,
+              tableID,
+              columnID
+            );
+
             tableUpdateDispatch(
               __setIndex(
                 columnID,
                 e as unknown as GlobalColumnIndexType,
-                tableID
+                tableID,
+                { isCompositeMember: !!compositeRep }
               )
             );
+
+            if (!compositeRep) {
+              dispatch(
+                removeCompositionParent(columnID as unknown as NodeCompositeID)
+              );
+            }
             break;
+          }
           case "type":
             {
-              const repNode = getCompositeRep(composition, columnID);
+              const repNode = getCompositeRep(composition, tableID, columnID);
               let isCompositeRepReferenced: boolean = false;
               if (repNode) {
                 isCompositeRepReferenced = hasInboundEdges(
@@ -550,13 +599,14 @@ export const FormColumnSelectList: React.FC<{
                   "node"
                 );
               }
+              const invariantConfig = {
+                isReferenced: hasInboundEdges(graph, columnID, "node"),
+                isReferencing: hasOutboundEdges(graph, columnID, "node"),
+                isCompositeRepReferenced,
+              };
 
               tableUpdateDispatch(
-                __setType(columnID, e, tableID, {
-                  isReferenced: hasInboundEdges(graph, columnID, "node"),
-                  isReferencing: hasOutboundEdges(graph, columnID, "node"),
-                  isCompositeRepReferenced,
-                })
+                __setType(columnID, e, tableID, invariantConfig)
               );
             }
             break;
@@ -672,6 +722,10 @@ export const FormCompositeSelectList: React.FC<{
     [columnID, tableID]
   );
 
+  const composition = useSelector(compositionSelector, isEqual);
+
+  const graph = useSelector(graphSelector, isEqual);
+
   useEffect(() => {
     const prevItems =
       getNodePropsFromIDS(
@@ -690,14 +744,20 @@ export const FormCompositeSelectList: React.FC<{
   const itemListSelection = useMemo(() => itemList, [tableID]);
 
   const handleAddPlaceholder = useCallback(
+
     () => (item: string) => {
-      tableUpdateDispatch(__addToComposite(columnID, item, tableID));
+
+    const invariantConfig = {
+      isReferenced: hasInboundEdges(graph, columnID, "node"),
+    };
+
+      tableUpdateDispatch(__addToComposite(columnID, item, tableID, invariantConfig));
       const resItemID = selectColumnIDFromName(tableUpdateState, item);
       dispatch(
         addComposition([columnID as NodeCompositeID, resItemID as string])
       );
     },
-    [itemList, tableID]
+    [itemList, tableID, columnID, composition, graph]
   );
 
   const handleRemovePlaceholder = useCallback(

@@ -17,6 +17,7 @@ import {
   validateColumnName,
   validateColumnType,
   validatePrimaryKeyExists,
+  ValidatorConfigType,
 } from "./utils/shared-functions";
 
 export const tableFormActionTypes = {
@@ -48,11 +49,18 @@ export interface TableFormToggleActionType
   extends TableFormActionType<{ columnID: string }> {}
 
 export interface TableFormDeletionActionType
-  extends TableFormActionType<{ columnID: string }> {}
+  extends TableFormActionType<{
+    columnID: string;
+    config?: ValidatorConfigType;
+  }> {}
 
 export type TableFormUpdateActionType = TableFormActionType<
   Partial<
-    TableFormUpdatePayloadType & { columnID?: string; errorMessage?: string }
+    TableFormUpdatePayloadType & {
+      columnID?: string;
+      errorMessage?: string;
+      config?: ValidatorConfigType;
+    }
   >
 >;
 
@@ -112,10 +120,24 @@ export const tableCreationFormReducer: (
       return newState;
     }
     case "dropColumn": {
-      const { columnID } = payload;
+      const { columnID, config } = payload;
       if (!columnID) return state;
-
       if (!state.columns[columnID]) return state;
+
+      let errorState = config?.isReferenced;
+      if (errorState) {
+        const errorMessage =
+          "you cannot delete a column that's referenced by other tables. drop references first";
+        return { ...state, errorState, errorMessage };
+      }
+
+      errorState = config?.isCompositeMember;
+      if (errorState) {
+        const errorMessage =
+          "you cannot delete a column that is part of a composite, update the composition first.";
+        return { ...state, errorState, errorMessage };
+      }
+
       newState = structuredClone(state);
       delete newState.columns[columnID];
 
@@ -186,11 +208,7 @@ export const tableCreationFormReducer: (
       if (!resComposite) return state;
 
       if (!oldCompositeOn.includes(`${resComposite}`)) {
-        console.error(
-          "doesn't have composite ",
-          oldCompositeOn,
-          resComposite
-        );
+        console.error("doesn't have composite ", oldCompositeOn, resComposite);
         return state;
       }
 

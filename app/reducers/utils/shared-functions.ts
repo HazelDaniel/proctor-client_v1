@@ -10,7 +10,33 @@ import {
 import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
 import { internalIndexMarkers, reservedSQLKeywords } from "~/data/table-form";
 import { getNodePropFromID } from "~/utils/node.utils";
-import type { ValidatorConfigType as UpdateValidatorConfigType } from "../table-update-form.reducer";
+
+export interface ValidatorConfigType {
+  isReferenced?: boolean; // Is this column referenced by other tables?
+  isPrimaryKeyReferenced?: boolean; // Is table's primary key referenced?
+
+  // Composite Key Validations
+  isCompositePrimaryMember?: boolean; // Is part of composite primary key?
+  isCompositeForeignMember?: boolean; // Is part of composite foreign key?
+  isCompositeMember?: boolean;
+
+  hasCompositeMembers?: boolean; // Does this composite have members?
+
+  // Foreign Key Validations
+  isReferencing?: boolean; // Does this column reference other tables?
+  // hasCircularReference?: boolean; // Would this create circular reference?
+
+  // Type Validations
+  isTypeCompatible?: boolean; // Is new type compatible with references?, applies only to foreign keys . composite foreign keys will be auto-filled with types and data of surrogates
+
+  // Column State
+  isLastColumn?: boolean; // Is this the last column in table?
+
+  isCompositeRepReferenced?: boolean; // Is the composition representative referenced (assuming that this one is a 'compositeOn' entry)
+
+  //MISC
+}
+
 
 // EXPLICIT STATE VALIDATORS
 export function validateColumnType(state: TableCreationFormStateType) {
@@ -107,18 +133,19 @@ export const __validate = <S, T>() => {
   };
 };
 
-export const __clearError = <S, T>() => {
+export const __clearError = <S, T>(tableID?: string) => {
   return {
     type: "clearError" as S,
-    payload: {} as T,
+    payload: { tableID } as T,
   };
 };
 
-export const __setError = <S, T>(errorMessage: string) => {
+export const __setError = <S, T>(errorMessage: string, tableID?: string) => {
   return {
     type: "setError" as S,
     payload: {
       errorMessage,
+      tableID,
     } as T,
   };
 };
@@ -130,10 +157,10 @@ export const __addColumn = <S, T>(tableID?: string) => {
   };
 };
 
-export const __dropColumn = <S, T>(columnID: string, tableID?: string) => {
+export const __dropColumn = <S, T>(columnID: string, tableID?: string, config?: ValidatorConfigType) => {
   return {
     type: "dropColumn" as S,
-    payload: { columnID, tableID } as T,
+    payload: { columnID, tableID, config } as T,
   };
 };
 
@@ -141,7 +168,7 @@ export const __addToComposite = <S, T>(
   columnID: string,
   compositeOn: string,
   tableID?: string,
-  config?: UpdateValidatorConfigType
+  config?: ValidatorConfigType
 ) => {
   return {
     type: "addToComposite" as S,
@@ -153,7 +180,7 @@ export const __removeFromComposite = <S, T>(
   columnID: string,
   compositeOn: string,
   tableID?: string,
-  config?: UpdateValidatorConfigType
+  config?: ValidatorConfigType
 ) => {
   return {
     type: "removeFromComposite" as S,
@@ -176,7 +203,7 @@ export const __setIndex = <S, T>(
   columnID: string,
   index: GlobalColumnIndexType,
   tableID?: string,
-  config?: UpdateValidatorConfigType
+  config?: ValidatorConfigType
 ) => {
   return {
     type: "setIndex" as S,
@@ -206,7 +233,7 @@ export const __setType = <S, T>(
   columnID: string,
   type: GlobalColumnTypeType,
   tableID?: string,
-  config?: UpdateValidatorConfigType
+  config?: ValidatorConfigType
 ) => {
   return {
     type: "setType" as S,
