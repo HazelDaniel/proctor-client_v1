@@ -68,6 +68,7 @@ import {
   __setDefault,
   __setIndex,
   __setName,
+  __setTableName,
   __setType,
   __toggleNullibility,
   __toggleUniqueness,
@@ -115,6 +116,9 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
       tableUpdateDispatch: updateFormDispatch,
     } = useContext(tableUpdateContext) as TableUpdateContextValueType;
 
+    const [tableName, setTableName] = useState<string>(updateFormState[id]?.tableName || "");
+    const debouncedName = useDebounce(tableName, 1000);
+
     const [tableActionButtonClicks, setTableActionButtonClicks] =
       useState<number>(0);
 
@@ -136,6 +140,10 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
 
     const composition = useSelector(compositionSelector, isEqual);
     const graph = useSelector(graphSelector, isEqual);
+
+    useEffect(() => {
+      updateFormDispatch(__setTableName(debouncedName, id));
+    }, [debouncedName]);
 
     // 'FLASHING' THE ERROR STATE
     useEffect(() => {
@@ -170,9 +178,19 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
       <>
         <div className="w-full h-full overflow-hidden">
           <Form className="w-full h-[6rem] bg-slate-900/5 flex flex-col md:flex-row items-center justify-between md:pl-[4rem] rounded-md">
-            <p className="w-[20rem] p-2 shadow-none rounded-md h-8 caret-outline1d bg-canvas order-1 md:order-0">
-              {"Table: " + updateFormState[id]?.tableName || ""}
-            </p>
+            {/* <p className="w-[20rem] p-2 shadow-none rounded-md h-8 caret-outline1d bg-canvas order-1 md:order-0"> */}
+            <input
+              type="text"
+              name=""
+              value={tableName}
+              id=""
+              placeholder="input table name"
+              className="w-[20rem] p-2 shadow-input shadow-none rounded-md h-8 caret-outline1d placeholder:text-outline1 placeholder:italic bg-canvas order-1 md:order-0"
+              onChange={(e) => {
+                setTableName(e.target.value);
+              }}
+            />
+            {/* </p> */}
 
             <div
               className={
@@ -274,6 +292,7 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
                         name={column.name || ""}
                         columnID={column.id || ""}
                         tableID={id}
+                        columnIndex={column.index || "NONE" as GlobalColumnIndexType}
                       />
 
                       <TableCell className=" form-table-cell">
@@ -449,9 +468,11 @@ export const TableColumnNameForm: React.FC<{
   name: string;
   columnID: string;
   tableID: string;
-}> = ({ name, columnID, tableID }) => {
+  columnIndex: GlobalColumnIndexType
+}> = ({ name, columnID, tableID, columnIndex }) => {
   const [colunmName, setColumnName] = useState(name);
   const debouncedName = useDebounce(colunmName, 1500);
+  const composition = useSelector(compositionSelector, isEqual);
 
   const columnNameInputRef = useRef<HTMLInputElement>(null);
   const [focused, setFocused] = useState<boolean>(false);
@@ -462,7 +483,20 @@ export const TableColumnNameForm: React.FC<{
 
   useEffect(() => {
     // TODO: run the reducer dispatcher here
-    tableUpdateDispatch(__setName(columnID, debouncedName, tableID));
+
+    let compositeRep: string | null = null;
+    if (
+      columnIndex !== "COMPOSITE_FOREIGN" &&
+      columnIndex !== "COMPOSITE_PRIMARY"
+    ) {
+      compositeRep = getCompositeRep(
+        composition,
+        tableID,
+        columnID
+      );
+    }
+
+    tableUpdateDispatch(__setName(columnID, debouncedName, tableID, {isCompositeMember: !!compositeRep}));
   }, [debouncedName, tableID]);
 
   useEffect(() => {

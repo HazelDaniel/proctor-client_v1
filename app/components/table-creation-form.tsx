@@ -287,6 +287,7 @@ export const FormColumnSelectList: React.FC<{
     tableCreationContext
   ) as TableCreationContextValueType;
   const dispatch = useDispatch();
+  const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
 
   const columnIndex = useContextSelector<
     TableCreationContextValueType,
@@ -323,7 +324,7 @@ export const FormColumnSelectList: React.FC<{
             );
             break;
           case "type":
-            tableCreationDispatch(__setType(columnID, e));
+            tableCreationDispatch(__setType(columnID, e, "", {}, globalTypeMappings));
             break;
           default:
             throw new Error("selection intent not implemented yet");

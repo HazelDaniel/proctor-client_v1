@@ -214,11 +214,12 @@ export const __setIndex = <S, T>(
 export const __setName = <S, T>(
   columnID: string,
   name: string,
-  tableID?: string
+  tableID?: string,
+  config?: ValidatorConfigType
 ) => {
   return {
     type: "setName" as S,
-    payload: { columnID, name, tableID } as T,
+    payload: { columnID, name, tableID, config } as T,
   };
 };
 
@@ -233,11 +234,12 @@ export const __setType = <S, T>(
   columnID: string,
   type: GlobalColumnTypeType,
   tableID?: string,
-  config?: ValidatorConfigType
+  config?: ValidatorConfigType,
+  mappings?: Record<string, string[]>
 ) => {
   return {
     type: "setType" as S,
-    payload: { columnID, type, tableID, config } as T,
+    payload: { columnID, type, tableID, config, mappings } as T,
   };
 };
 

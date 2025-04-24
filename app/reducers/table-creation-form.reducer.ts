@@ -414,7 +414,7 @@ export const tableCreationFormReducer: (
       return newState;
     }
     case "setType": {
-      const { columnID, type: colType } = payload;
+      const { columnID, type: colType, mappings } = payload;
       if (!columnID) return state;
 
       const newState = { ...state };
@@ -432,7 +432,7 @@ export const tableCreationFormReducer: (
       if (typeDefaultMappings[colType])
         supportedDefaultSet = Array.from(typeDefaultMappings[colType]);
       else {
-        supportedDefaultSet = state.typeMappings[colType];
+        supportedDefaultSet = mappings[colType];
       }
       if (!supportedDefaultSet) return state; // workaround: the typeMappings is only updated from a parent state so, there's a possibility that it won't exist just yet
       const [preferedDefault] = supportedDefaultSet;

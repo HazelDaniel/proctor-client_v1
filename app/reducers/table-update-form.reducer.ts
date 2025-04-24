@@ -449,9 +449,7 @@ export const tableUpdateFormReducer: (
       // if (resColumn.readonly) return state;
       if (resColumn.index === index) return state;
 
-      if (
-        resColumn.index === "COMPOSITE_FOREIGN"
-      )
+      if (resColumn.index === "COMPOSITE_FOREIGN")
         return {
           ...state,
           [tableID]: {
@@ -461,7 +459,11 @@ export const tableUpdateFormReducer: (
           },
         };
 
-      if ((resColumn.index === "PRIMARY" || resColumn.index === "COMPOSITE_PRIMARY") && config?.isReferenced) {
+      if (
+        (resColumn.index === "PRIMARY" ||
+          resColumn.index === "COMPOSITE_PRIMARY") &&
+        config?.isReferenced
+      ) {
         return {
           ...state,
           [tableID]: {
@@ -616,7 +618,7 @@ export const tableUpdateFormReducer: (
       return newState;
     }
     case "setName": {
-      const { columnID, name } = payload;
+      const { columnID, name, config } = payload;
       if (!columnID) {
         return state;
       }
@@ -628,10 +630,20 @@ export const tableUpdateFormReducer: (
         resColumn.index === "COMPOSITE_FOREIGN" ||
         resColumn.index === "COMPOSITE_PRIMARY"
       )
-        return state; // you can't directly edit the name of a composite key
+        return state;
       if (resColumn.name === name) return state;
 
-      const errorState = (name?.split(" ").length || 0) > 1;
+      let errorState = config?.isCompositeMember || false;
+      if (errorState) {
+        const errorMessage =
+          "you cannot update the name of a column in a composition. remove from composition first. ";
+        return {
+          ...state,
+          [tableID]: { ...state[tableID], errorState, errorMessage },
+        };
+      }
+
+      errorState = (name?.split(" ").length || 0) > 1;
 
       if (errorState) {
         const errorMessage = "column names are not allowed to have spaces!";

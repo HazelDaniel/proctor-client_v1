@@ -198,7 +198,7 @@ script {
   .table-node-group {
     @apply h-max relative flex flex-col p-0 bg-[unset];
     height: calc(
-      (var(--global-node-height) * var(--node-children-here)) + 20px
+      (var(--global-node-height) * var(--node-children-here)) + calc(20px * (var(--node-children-here) / 6 + 1))
     );
     width: calc(var(--node-width-here) + 8px);
     margin-left: -3px;
