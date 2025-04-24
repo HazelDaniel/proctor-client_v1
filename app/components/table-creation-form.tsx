@@ -212,7 +212,7 @@ export const FormCompositeSelectList: React.FC<{
     );
   }, [tableCreationState, columnID]);
 
-  const itemListSelection = useMemo(() => itemList, []);
+  const itemListSelection = useMemo(() => itemList, [itemList]);
 
   const handleAddPlaceholder = useCallback(
     () => (item: string) => {
@@ -777,9 +777,13 @@ export const TableCreationForm: React.FC = React.memo(
                               column.id
                             );
                             creationFormDispatch(
-                              __dropColumn(column.id, creationFormState.tableID, {
-                                isCompositeMember: !!compositeRep,
-                              })
+                              __dropColumn(
+                                column.id,
+                                creationFormState.tableID,
+                                {
+                                  isCompositeMember: !!compositeRep,
+                                }
+                              )
                             );
 
                             if (!compositeRep) {

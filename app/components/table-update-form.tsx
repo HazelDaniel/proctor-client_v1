@@ -756,7 +756,7 @@ export const FormCompositeSelectList: React.FC<{
     );
   }, [tableUpdateState, columnID, tableID]);
 
-  const itemListSelection = useMemo(() => itemList, [tableID]);
+  const itemListSelection = useMemo(() => itemList, [itemList]);
 
   const handleAddPlaceholder = useCallback(
     () => (item: string) => {
