@@ -98,7 +98,7 @@ import {
   removeComposition,
   removeCompositionParent,
 } from "~/reducers/composition.reducer";
-import { setActiveNode } from "~/reducers/nodes.reducer";
+import { setActiveNode, updateNodeGroup } from "~/reducers/nodes.reducer";
 import { closeUpdateFormModal } from "~/reducers/update-form-modal.reducer";
 import { hasInboundEdges, hasOutboundEdges } from "~/reducers/graph.reducer";
 
@@ -151,14 +151,15 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
 
     // AFTER FORM HAS BEEN SUCCESSFULLY VALIDATED FOR SUBMISSION
     useEffect(() => {
-      if (updateFormState[id]?.errorState || !updateFormState.tableID) return;
+      if (updateFormState[id]?.errorState || !id) return;
       if (
         formCloseButtonRef.current &&
         tableActionButtonClicks &&
         updateFormState[id]
       ) {
-        dispatch(setCurrentGroupID(updateFormState[id].tableID as string));
+        dispatch(setCurrentGroupID(id));
         dispatch(upload(updateFormState[id]));
+        dispatch(updateNodeGroup({ group: updateFormState[id] }));
         formCloseButtonRef.current.click();
       }
     }, [tableActionButtonClicks, id]);
@@ -572,12 +573,26 @@ export const FormColumnSelectList: React.FC<{
               columnID
             );
 
+            let isCompositeRepReferenced: boolean = false;
+            if (compositeRep) {
+              isCompositeRepReferenced = hasInboundEdges(
+                graph,
+                compositeRep,
+                "node"
+              );
+            }
+            const invariantConfig = {
+              isReferenced: hasInboundEdges(graph, columnID, "node"),
+              isReferencing: hasOutboundEdges(graph, columnID, "node"),
+              isCompositeRepReferenced,
+            };
+
             tableUpdateDispatch(
               __setIndex(
                 columnID,
                 e as unknown as GlobalColumnIndexType,
                 tableID,
-                { isCompositeMember: !!compositeRep }
+                invariantConfig
               )
             );
 
@@ -744,14 +759,14 @@ export const FormCompositeSelectList: React.FC<{
   const itemListSelection = useMemo(() => itemList, [tableID]);
 
   const handleAddPlaceholder = useCallback(
-
     () => (item: string) => {
+      const invariantConfig = {
+        isReferenced: hasInboundEdges(graph, columnID, "node"),
+      };
 
-    const invariantConfig = {
-      isReferenced: hasInboundEdges(graph, columnID, "node"),
-    };
-
-      tableUpdateDispatch(__addToComposite(columnID, item, tableID, invariantConfig));
+      tableUpdateDispatch(
+        __addToComposite(columnID, item, tableID, invariantConfig)
+      );
       const resItemID = selectColumnIDFromName(tableUpdateState, item);
       dispatch(
         addComposition([columnID as NodeCompositeID, resItemID as string])

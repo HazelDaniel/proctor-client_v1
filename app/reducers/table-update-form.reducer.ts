@@ -449,25 +449,56 @@ export const tableUpdateFormReducer: (
       // if (resColumn.readonly) return state;
       if (resColumn.index === index) return state;
 
-      let errorState = true;
-      if (errorState) {
-        const errorMessage =
-          "index is not updatable, delete column and add again if you have to";
+      if (
+        resColumn.index === "COMPOSITE_FOREIGN"
+      )
         return {
           ...state,
-          [tableID]: { ...state[tableID], errorState, errorMessage },
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage: "you can't override the index of composite keys",
+          },
         };
-      }
 
-      return state;
-
-      errorState = config?.isCompositeMember || false;
-      if (errorState) {
-        const errorMessage =
-          "you can't update the index of a composite key member. remove composition and retry";
+      if ((resColumn.index === "PRIMARY" || resColumn.index === "COMPOSITE_PRIMARY") && config?.isReferenced) {
         return {
           ...state,
-          [tableID]: { ...state[tableID], errorState, errorMessage },
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage:
+              "primary/composite index is referenced, remove references and try again",
+          },
+        };
+      } else if (resColumn.index === "FOREIGN" && config?.isReferencing) {
+        console.warn(
+          "foreign index references other tables, remove references and try again"
+        );
+        return {
+          ...state,
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage:
+              "foreign index references other tables, remove references and try again",
+          },
+        };
+      } else if (
+        resColumn.index === "NONE" &&
+        config?.isCompositeRepReferenced
+      ) {
+        console.warn(
+          "this column is a composite entry of a primary key that's being referenced."
+        );
+        return {
+          ...state,
+          [tableID]: {
+            ...state[tableID],
+            errorState: true,
+            errorMessage:
+              "this column is a composite entry of a primary key that's being referenced.",
+          },
         };
       }
 
@@ -523,8 +554,8 @@ export const tableUpdateFormReducer: (
         }
         case "FOREIGN": {
           resColumn.compositeOn = ["NONE"];
-          if (resColumn.index === "COMPOSITE_FOREIGN")
-            resColumn.name = resColumn.oldName;
+          // if (resColumn.index === "COMPOSITE_FOREIGN")
+          //   resColumn.name = resColumn.oldName;
           resColumn.index = "FOREIGN";
           const { COMPOSITE_FOREIGN, COMPOSITE_PRIMARY } = internalIndexMarkers;
           resColumn.name =

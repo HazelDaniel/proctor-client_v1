@@ -8,7 +8,11 @@
 	[FIX]
 		- try to write a useEffect to update types in the form creation state
 			whenever the parent state changes
-2. composite columns picking up duplicates
+3. composite columns picking up duplicates
 	> .. when the composite columns of a composite key are selected in the creation form, it shows duplicate
 	[FIX]
 		- i suspect the error is coming from local states of the select components
+4. composite column select list not displaying columns created after the composite key
+	> ..  even if the composite was updated after the columns creation
+	[FIX]
+		- i suspect the error is coming from local states of the select components, more specifically, dependencies
