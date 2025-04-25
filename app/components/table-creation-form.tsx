@@ -39,6 +39,7 @@ import {
   GlobalColumnIndexType,
   GlobalColumnTypeType,
   NodeCompositeID,
+  OndeleteOptionType,
 } from "~/types";
 import { tableColumnFields } from "~/data/table-form";
 import { useDebounce } from "~/hooks/usedebounce";
@@ -54,6 +55,7 @@ import {
   __dropColumn,
   __removeFromComposite,
   __setDefault,
+  __setOndelete,
   __setError,
   __setIndex,
   __setName,
@@ -65,6 +67,7 @@ import {
   selectColumnIDFromName,
   selectCompositeColumns,
   selectDefault,
+  selectOndelete,
   selectIndex,
   selectNullibility,
   selectType,
@@ -281,7 +284,7 @@ export const FormCompositeSelectList: React.FC<{
 export const FormColumnSelectList: React.FC<{
   select: TableFormColumnSelectType;
   columnID: string;
-  intent: "default" | "index" | "type";
+  intent: "default" | "index" | "type" | "ondelete";
 }> = ({ select, columnID, intent }) => {
   const { tableCreationDispatch } = useContext(
     tableCreationContext
@@ -298,6 +301,11 @@ export const FormColumnSelectList: React.FC<{
     TableCreationContextValueType,
     string
   >(tableCreationContext as any, selectDefault, [columnID]);
+
+  const columnOndelete = useContextSelector<
+    TableCreationContextValueType,
+    string
+  >(tableCreationContext as any, selectOndelete, [columnID]);
 
   const columnType = useContextSelector<
     TableCreationContextValueType,
@@ -324,7 +332,14 @@ export const FormColumnSelectList: React.FC<{
             );
             break;
           case "type":
-            tableCreationDispatch(__setType(columnID, e, "", {}, globalTypeMappings));
+            tableCreationDispatch(
+              __setType(columnID, e, "", {}, globalTypeMappings)
+            );
+            break;
+          case "ondelete":
+            tableCreationDispatch(
+              __setOndelete(columnID, e as unknown as OndeleteOptionType)
+            );
             break;
           default:
             throw new Error("selection intent not implemented yet");
@@ -339,7 +354,9 @@ export const FormColumnSelectList: React.FC<{
               ? columnIndex
               : intent === "type"
               ? columnType
-              : columnDefault
+              : intent === "default"
+              ? columnDefault
+              : columnOndelete
           }
         />
       </SelectTrigger>
@@ -707,6 +724,7 @@ export const TableCreationForm: React.FC = React.memo(
                     <TableHead className="text-center">Unique?</TableHead>
                     <TableHead className="text-center">DEFAULT</TableHead>
                     <TableHead className="text-center">Composite On</TableHead>
+                    <TableHead className="text-center">On Delete</TableHead>
                     <TableHead className="text-right w-8"></TableHead>
                   </TableRow>
                 </TableHeader>
@@ -766,6 +784,14 @@ export const TableCreationForm: React.FC = React.memo(
 
                       <TableCell className="w-[8rem] h-max form-table-cell">
                         <FormCompositeSelectList columnID={column.id} />
+                      </TableCell>
+
+                      <TableCell className="max-h-[5rem] form-table-cell">
+                        <FormColumnSelectList
+                          select={tableColumnFields.ondelete}
+                          columnID={column.id}
+                          intent="ondelete"
+                        />
                       </TableCell>
 
                       <TableCell className="w-[8rem] h-[8rem] form-table-cell">

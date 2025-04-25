@@ -3,12 +3,16 @@ import {
   GlobalColumnIndexType,
   GlobalColumnTypeType,
   NodeCompositeID,
+  OndeleteOptionType,
   StatefulGroupNodeType,
   TableCreationFormStateType,
   TableUpdateFormStateType,
 } from "~/types";
 import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
-import { internalIndexMarkers, reservedSQLKeywords } from "~/data/table-form";
+import {
+  internalIndexMarkers,
+  reservedSQLKeywords,
+} from "~/data/table-form";
 import { getNodePropFromID } from "~/utils/node.utils";
 
 export interface ValidatorConfigType {
@@ -36,7 +40,6 @@ export interface ValidatorConfigType {
 
   //MISC
 }
-
 
 // EXPLICIT STATE VALIDATORS
 export function validateColumnType(state: TableCreationFormStateType) {
@@ -157,7 +160,11 @@ export const __addColumn = <S, T>(tableID?: string) => {
   };
 };
 
-export const __dropColumn = <S, T>(columnID: string, tableID?: string, config?: ValidatorConfigType) => {
+export const __dropColumn = <S, T>(
+  columnID: string,
+  tableID?: string,
+  config?: ValidatorConfigType
+) => {
   return {
     type: "dropColumn" as S,
     payload: { columnID, tableID, config } as T,
@@ -240,6 +247,18 @@ export const __setType = <S, T>(
   return {
     type: "setType" as S,
     payload: { columnID, type, tableID, config, mappings } as T,
+  };
+};
+
+export const __setOndelete = <S, T>(
+  columnID: string,
+  ondelete: OndeleteOptionType,
+  tableID?: string,
+  config?: ValidatorConfigType
+) => {
+  return {
+    type: "setOndelete" as S,
+    payload: { columnID, ondelete, tableID, config } as T,
   };
 };
 
@@ -436,6 +455,27 @@ export const selectDefault: (
       return "";
     }
     return resColumn.default as string;
+  } else {
+    throw new Error("TypeMismatch");
+  }
+};
+
+export const selectOndelete: (
+  state: TableCreationFormStateType | TableUpdateFormStateType,
+  id: string,
+  tableID?: string
+) => OndeleteOptionType = (state, id, tableID) => {
+  if ("columns" in state) {
+    const resColumn = (state as TableCreationFormStateType).columns[id];
+    return resColumn.ondelete || "NONE";
+  } else if (`${tableID}` in state) {
+    const resColumn = (state as TableUpdateFormStateType)[`${tableID}`].columns[
+      id
+    ];
+    if (!resColumn) {
+      return "NONE";
+    }
+    return resColumn.ondelete || "NONE";
   } else {
     throw new Error("TypeMismatch");
   }

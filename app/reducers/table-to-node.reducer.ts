@@ -6,6 +6,7 @@ import {
   GlobalColumnIndexType,
   GlobalColumnTypeType,
   NodeCompositeID,
+  OndeleteOptionType,
   StatefulGroupNodeType,
   StatefulNodeType,
   TableCRUDFormStateType,
@@ -70,7 +71,9 @@ export const tableToNodesSlice = createSlice({
             unique,
             isSurrogate,
             surrogationTimestamp,
-            oldName,
+            // oldName,
+            ondelete,
+            createdAt
           } = value;
           if (!compositeOn) compositeOn = [];
           if (!index) index = "NONE";
@@ -102,6 +105,8 @@ export const tableToNodesSlice = createSlice({
                 name: !isComposite ? name : computedComposite.join(", "),
                 id: key as NodeCompositeID,
                 oldName: name,
+                ondelete: ondelete as OndeleteOptionType,
+                createdAt: createdAt as number
               },
               label: !isComposite ? name : computedComposite.join(", "),
               type: colToNodeTypeMap[index] as "primary",
@@ -164,6 +169,8 @@ export const tableToNodesSlice = createSlice({
             name: node.data.label,
             isSurrogate: node.data.isSurrogate,
             surrogationTimestamp: node.data.surrogationTimestamp,
+            ondelete: node.data.column?.ondelete,
+            createdAt: node.data.column?.createdAt
           } as TableCRUDFormStateType["columns"][string];
 
           return acc as TableCRUDTableType["columns"];

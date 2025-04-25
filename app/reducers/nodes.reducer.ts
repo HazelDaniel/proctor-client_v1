@@ -5,6 +5,7 @@ import type {
   GlobalColumnIndexType,
   GlobalColumnTypeType,
   NodeCompositeID,
+  OndeleteOptionType,
   StatefulGroupNodeType,
   StatefulNodeType,
   TableUpdateFormStateType,
@@ -147,7 +148,9 @@ const nodesSlice = createSlice({
             unique,
             isSurrogate,
             surrogationTimestamp,
-            oldName
+            oldName,
+            ondelete,
+            createdAt
           } = value;
           if (!compositeOn) compositeOn = [];
           if (!index) index = "NONE";
@@ -179,6 +182,8 @@ const nodesSlice = createSlice({
                 name: !isComposite ? name : computedComposite.join(", "),
                 id: key as NodeCompositeID,
                 oldName,
+                ondelete: ondelete as OndeleteOptionType,
+                createdAt: createdAt as number
               },
               label: !isComposite ? name : computedComposite.join(", "),
               type: colToNodeTypeMap[index] as "primary",

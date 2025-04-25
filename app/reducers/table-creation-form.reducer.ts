@@ -1,5 +1,6 @@
 import {
   internalIndexMarkers,
+  ondeleteOptions,
   reservedSQLKeywords,
   typeDefaultMappings,
 } from "~/data/table-form";
@@ -11,6 +12,7 @@ import {
   GlobalColumnTypeType,
   TableCreationFormStateType,
   NodeCompositeID,
+  OndeleteOptionType,
 } from "~/types";
 import { getNodePropFromID } from "~/utils/node.utils";
 import {
@@ -35,6 +37,7 @@ export const tableFormActionTypes = {
   clearError: "CLEAR_ERROR",
   setError: "SET_ERROR",
   validate: "VALIDATE",
+  setOndelete: "SET_ONDELETE",
 };
 
 export interface TableFormActionType<T> {
@@ -60,6 +63,7 @@ export type TableFormUpdateActionType = TableFormActionType<
       columnID?: string;
       errorMessage?: string;
       config?: ValidatorConfigType;
+      mappings?: Record<string, string[]>;
     }
   >
 >;
@@ -112,6 +116,8 @@ export const tableCreationFormReducer: (
             name: "",
             unique: true,
             compositeOn: null,
+            ondelete: "NONE",
+            createdAt: new Date().getTime()
           },
         },
         tableName,
@@ -286,6 +292,7 @@ export const tableCreationFormReducer: (
             name: internalIndexMarkers.COMPOSITE_PRIMARY,
             compositeOn: tableKeys,
             oldName: resColumn.name,
+            ondelete: "NONE" as OndeleteOptionType
           };
 
           newState.columns[columnID] = newColumn;
@@ -306,6 +313,7 @@ export const tableCreationFormReducer: (
             resColumn.name === COMPOSITE_PRIMARY
               ? ""
               : resColumn.name;
+          resColumn.ondelete = "CASCADE";
           break;
         }
         case "NONE": {
@@ -317,6 +325,7 @@ export const tableCreationFormReducer: (
             resColumn.name === COMPOSITE_PRIMARY
               ? ""
               : resColumn.name;
+          resColumn.ondelete = "NONE";
           break;
         }
         case "PRIMARY": {
@@ -340,6 +349,7 @@ export const tableCreationFormReducer: (
             resColumn.name === COMPOSITE_PRIMARY
               ? ""
               : resColumn.name;
+          resColumn.ondelete = "NONE";
           break;
         }
         default: {
@@ -428,7 +438,11 @@ export const tableCreationFormReducer: (
       )
         return state; // you can't override the types of composite keys
 
-      let supportedDefaultSet: string[];
+      if (!mappings) {
+        console.warn("global mappings not provided!");
+        return state;
+      }
+      let supportedDefaultSet: string[] | undefined;
       if (typeDefaultMappings[colType])
         supportedDefaultSet = Array.from(typeDefaultMappings[colType]);
       else {
@@ -441,6 +455,25 @@ export const tableCreationFormReducer: (
 
       newState.columns[columnID].type = colType;
 
+      return newState;
+    }
+    case "setOndelete": {
+      const { ondelete, columnID } = payload;
+      if (!columnID || !ondelete) return state;
+
+      const newState = { ...state };
+      const resColumn = newState.columns[columnID];
+      if (resColumn.ondelete === ondelete) return state;
+      if (!ondeleteOptions.includes(ondelete)) return state;
+
+      if (
+        resColumn.index !== "COMPOSITE_FOREIGN" &&
+        resColumn.index !== "FOREIGN"
+      ) {
+        return state;
+      }
+
+      newState.columns[columnID].ondelete = ondelete;
       return newState;
     }
     case "ToggleUniqueness": {

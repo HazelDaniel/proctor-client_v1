@@ -1,4 +1,8 @@
-import { internalIndexMarkers, typeDefaultMappings } from "~/data/table-form";
+import {
+  internalIndexMarkers,
+  ondeleteOptions,
+  typeDefaultMappings,
+} from "~/data/table-form";
 import { v7 as UUIDv7 } from "uuid";
 import {
   TableFormUpdatePayloadType,
@@ -6,6 +10,7 @@ import {
   TableUpdateFormStateType,
   TableCRUDColumnType,
   StatefulGroupNodeType,
+  OndeleteOptionType,
 } from "~/types";
 import { getNodePropFromID, parseNodeID } from "~/utils/node.utils";
 import {
@@ -27,6 +32,7 @@ export const tableFormActionTypes = {
   toggleNullibility: "TOGGLE_NULLIBILITY",
   ToggleUniqueness: "TOGGLE_UNIQUENESS",
   setDefault: "SET_DEFAULT",
+  setOndelete: "SET_ONDELETE",
   clearError: "CLEAR_ERROR",
   setError: "SET_ERROR",
   validate: "VALIDATE",
@@ -441,6 +447,24 @@ export const tableUpdateFormReducer: (
 
       return newState;
     }
+    case "setOndelete": {
+      const { ondelete, columnID } = payload;
+      if (!columnID || !ondelete) return state;
+
+      const newState = { ...state };
+      const resColumn = newState[tableID].columns[columnID];
+      if (resColumn.ondelete === ondelete) return state;
+      if (!ondeleteOptions.includes(ondelete)) return state;
+
+      if (
+        resColumn.index !== "COMPOSITE_FOREIGN" &&
+        resColumn.index !== "FOREIGN"
+      ) {
+        return state;
+      }
+      newState[tableID].columns[columnID].ondelete = ondelete;
+      return newState;
+    }
     case "setIndex": {
       const { columnID, index, config } = payload;
       newState = structuredClone(state);
@@ -545,6 +569,7 @@ export const tableUpdateFormReducer: (
             name: internalIndexMarkers.COMPOSITE_PRIMARY,
             oldName: resColumn.name,
             compositeOn: tableKeys,
+            ondelete: "NONE" as OndeleteOptionType,
           };
 
           newState[tableID].columns[columnID] = newColumn;
@@ -565,6 +590,8 @@ export const tableUpdateFormReducer: (
             resColumn.name === COMPOSITE_PRIMARY
               ? ""
               : resColumn.name;
+
+          resColumn.ondelete = "CASCADE";
           break;
         }
         case "NONE": {
@@ -576,6 +603,7 @@ export const tableUpdateFormReducer: (
             resColumn.name === COMPOSITE_PRIMARY
               ? ""
               : resColumn.name;
+          resColumn.ondelete = "NONE";
           break;
         }
         case "PRIMARY": {
@@ -600,6 +628,7 @@ export const tableUpdateFormReducer: (
           resColumn.unique = true;
           resColumn.nullable = false;
           resColumn.index = "PRIMARY";
+          resColumn.ondelete = "NONE";
           const { COMPOSITE_FOREIGN, COMPOSITE_PRIMARY } = internalIndexMarkers;
           resColumn.name =
             resColumn.name === COMPOSITE_FOREIGN ||

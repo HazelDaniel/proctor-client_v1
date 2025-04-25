@@ -64,9 +64,16 @@ export interface TableFormFieldsType {
   index: TableFormColumnSelectType;
   nullable: boolean;
   default: TableFormColumnSelectType;
+  ondelete: TableFormColumnSelectType;
   unique: boolean;
   // "composite on"?: TableFormCompositeSelectType; // this will be passed only as prop coz its only determined at runtime
 }
+
+export type OndeleteOptionType =
+  | "SET NULL"
+  | "SET DEFAULT"
+  | "CASCADE"
+  | "NONE";
 
 export interface TableFormUpdatePayloadType {
   type: GlobalColumnTypeType;
@@ -78,6 +85,8 @@ export interface TableFormUpdatePayloadType {
   compositeOn: "NONE" | string;
   oldName?: string;
   readonly?: boolean;
+  ondelete?: OndeleteOptionType;
+  createdAt: number;
 }
 
 export type TableCRUDColumnType = Partial<
@@ -117,6 +126,8 @@ export interface StatefulNodeType extends Node {
       default: string;
       compositeOn: string[] | null;
       id: NodeCompositeID;
+      ondelete: OndeleteOptionType;
+      createdAt: number;
     };
     [prop: string]: any;
   };

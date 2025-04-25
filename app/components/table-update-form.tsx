@@ -51,6 +51,7 @@ import {
   NodeCompositeID,
   TableCRUDFormStateType,
   TableCRUDColumnType,
+  OndeleteOptionType,
 } from "~/types";
 import { tableColumnFields } from "~/data/table-form";
 import { useDebounce } from "~/hooks/usedebounce";
@@ -68,6 +69,7 @@ import {
   __setDefault,
   __setIndex,
   __setName,
+  __setOndelete,
   __setTableName,
   __setType,
   __toggleNullibility,
@@ -78,6 +80,7 @@ import {
   selectDefault,
   selectIndex,
   selectNullibility,
+  selectOndelete,
   selectType,
   selectUniqueness,
 } from "~/reducers/utils/shared-functions";
@@ -116,7 +119,9 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
       tableUpdateDispatch: updateFormDispatch,
     } = useContext(tableUpdateContext) as TableUpdateContextValueType;
 
-    const [tableName, setTableName] = useState<string>(updateFormState[id]?.tableName || "");
+    const [tableName, setTableName] = useState<string>(
+      updateFormState[id]?.tableName || ""
+    );
     const debouncedName = useDebounce(tableName, 1000);
 
     const [tableActionButtonClicks, setTableActionButtonClicks] =
@@ -218,6 +223,7 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
                   <TableHead className="text-center">Unique?</TableHead>
                   <TableHead className="text-center">DEFAULT</TableHead>
                   <TableHead className="text-center">Composite On</TableHead>
+                  <TableHead className="text-center">On Delete</TableHead>
                   <TableHead className="text-right w-8"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -292,7 +298,9 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
                         name={column.name || ""}
                         columnID={column.id || ""}
                         tableID={id}
-                        columnIndex={column.index || "NONE" as GlobalColumnIndexType}
+                        columnIndex={
+                          column.index || ("NONE" as GlobalColumnIndexType)
+                        }
                       />
 
                       <TableCell className=" form-table-cell">
@@ -349,6 +357,15 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
                       <TableCell className="w-[8rem] h-max form-table-cell">
                         <FormCompositeSelectList
                           columnID={column.id}
+                          tableID={id}
+                        />
+                      </TableCell>
+
+                      <TableCell className="max-h-[5rem] form-table-cell">
+                        <FormColumnSelectList
+                          select={tableColumnFields.ondelete}
+                          columnID={column.id}
+                          intent="ondelete"
                           tableID={id}
                         />
                       </TableCell>
@@ -468,7 +485,7 @@ export const TableColumnNameForm: React.FC<{
   name: string;
   columnID: string;
   tableID: string;
-  columnIndex: GlobalColumnIndexType
+  columnIndex: GlobalColumnIndexType;
 }> = ({ name, columnID, tableID, columnIndex }) => {
   const [colunmName, setColumnName] = useState(name);
   const debouncedName = useDebounce(colunmName, 1500);
@@ -489,14 +506,14 @@ export const TableColumnNameForm: React.FC<{
       columnIndex !== "COMPOSITE_FOREIGN" &&
       columnIndex !== "COMPOSITE_PRIMARY"
     ) {
-      compositeRep = getCompositeRep(
-        composition,
-        tableID,
-        columnID
-      );
+      compositeRep = getCompositeRep(composition, tableID, columnID);
     }
 
-    tableUpdateDispatch(__setName(columnID, debouncedName, tableID, {isCompositeMember: !!compositeRep}));
+    tableUpdateDispatch(
+      __setName(columnID, debouncedName, tableID, {
+        isCompositeMember: !!compositeRep,
+      })
+    );
   }, [debouncedName, tableID]);
 
   useEffect(() => {
@@ -566,7 +583,7 @@ export const TableFormCTAArea: React.FC<{
 export const FormColumnSelectList: React.FC<{
   select: TableFormColumnSelectType;
   columnID: string;
-  intent: "default" | "index" | "type";
+  intent: "default" | "index" | "type" | "ondelete";
   tableID: string;
 }> = ({ select, columnID, intent, tableID }) => {
   const { tableUpdateDispatch } = useContext(
@@ -587,6 +604,11 @@ export const FormColumnSelectList: React.FC<{
     selectDefault,
     [columnID, tableID]
   );
+
+  const columnOndelete = useContextSelector<
+    TableUpdateContextValueType,
+    string
+  >(tableUpdateContext as any, selectOndelete, [columnID, tableID]);
 
   const columnType = useContextSelector<
     TableUpdateContextValueType,
@@ -659,6 +681,15 @@ export const FormColumnSelectList: React.FC<{
               );
             }
             break;
+          case "ondelete":
+            tableUpdateDispatch(
+              __setOndelete(
+                columnID,
+                e as unknown as OndeleteOptionType,
+                tableID
+              )
+            );
+            break;
           default:
             throw new Error("selection intent not implemented yet");
             break;
@@ -672,7 +703,9 @@ export const FormColumnSelectList: React.FC<{
               ? columnIndex
               : intent === "type"
               ? columnType
-              : columnDefault
+              : intent === "default"
+              ? columnDefault
+              : columnOndelete
           }
         />
       </SelectTrigger>
