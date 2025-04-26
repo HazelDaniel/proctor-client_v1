@@ -36,13 +36,14 @@ export const tableToNodesSlice = createSlice({
   initialState: initialTableToNodeState,
   reducers: {
     upload: (state, action: PayloadAction<TableCRUDFormStateType>) => {
-      const { columns, tableID, tableName } = action.payload;
+      const { columns, tableID, tableName, referenceColumns } = action.payload;
       if (!(!!tableID && !!columns && !!tableName)) return;
       state.groupNodes[tableID] = {
         data: { label: tableName, type: "table", toolbarVisible: true },
         position: { x: 0, y: 0 },
         className: "table-node-group",
         nodes: {},
+        referenceNodes: referenceColumns,
         id: tableID,
         type: "group",
       };
@@ -156,6 +157,7 @@ export const tableToNodesSlice = createSlice({
         errorState: false,
         errorMessage: null,
         typeMappings: mappings,
+        referenceColumns: groupNode.referenceNodes,
         columns: Object.entries(groupNode.nodes).reduce((acc, curr) => {
           const [columnID, node] = curr;
           acc[columnID] = {

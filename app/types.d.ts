@@ -101,6 +101,7 @@ export interface TableCRUDTableType {
   tableID: string;
   tableName: string;
   columns: Record<string, TableCRUDColumnType>;
+  referenceColumns: Record<string, boolean>;
 }
 
 export interface StatefulNodeType extends Node {
@@ -137,6 +138,7 @@ export interface StatefulNodeType extends Node {
 export interface StatefulGroupNodeType {
   [prop: string]: StatefulNodeType & {
     nodes: { [prop: string]: StatefulNodeType };
+    referenceNodes: Record<string, boolean>;
   };
 }
 
@@ -144,11 +146,15 @@ export interface statefulNodeColorType {
   [prop: StatefulNodeType["data"]["type"]]: string;
 }
 
-export type TableCreationFormStateType = Partial<TableCRUDTableType> & {
+export type TableCreationFormStateType = Omit<
+  Partial<TableCRUDTableType>,
+  "referenceColumns"
+> & {
   errorState: boolean;
   errorMessage?: string | null;
   typeMappings: Record<string, string[]>;
   columns: Record<string, TableCRUDColumnType>;
+  referenceColumns: Record<string, boolean>;
 };
 
 export type TableUpdateFormStateType = Record<
@@ -158,6 +164,7 @@ export type TableUpdateFormStateType = Record<
     errorMessage?: string | null;
     typeMappings: Record<string, string[]>;
     columns: Record<string, TableCRUDColumnType | undefined>;
+    referenceColumns: Record<string, boolean>;
   }
 >;
 

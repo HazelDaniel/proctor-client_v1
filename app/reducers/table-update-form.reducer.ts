@@ -218,6 +218,7 @@ export const tableUpdateFormReducer: (
 
       newState = structuredClone(state);
       delete newState[tableID]?.columns[columnID];
+      delete newState[tableID]?.referenceColumns[columnID];
 
       return newState;
     }
@@ -243,6 +244,7 @@ export const tableUpdateFormReducer: (
 
       const newColumns = compositeEntries.reduce((acc, entry) => {
         const [parentId, colId, _3] = entry.split(":");
+        void _3;
         const sourceColumn = state[parentId].columns[`${parentId}:${colId}`];
 
         acc[`${parentId}:${colId}`] = {
@@ -573,6 +575,7 @@ export const tableUpdateFormReducer: (
           };
 
           newState[tableID].columns[columnID] = newColumn;
+          newState[tableID].referenceColumns[columnID] = true;
 
           return newState;
         }
@@ -592,6 +595,7 @@ export const tableUpdateFormReducer: (
               : resColumn.name;
 
           resColumn.ondelete = "CASCADE";
+          newState[tableID].referenceColumns[columnID] = true;
           break;
         }
         case "NONE": {
@@ -604,6 +608,7 @@ export const tableUpdateFormReducer: (
               ? ""
               : resColumn.name;
           resColumn.ondelete = "NONE";
+          delete newState[tableID].referenceColumns[columnID];
           break;
         }
         case "PRIMARY": {
@@ -635,6 +640,7 @@ export const tableUpdateFormReducer: (
             resColumn.name === COMPOSITE_PRIMARY
               ? ""
               : resColumn.name;
+          newState[tableID].referenceColumns[columnID] = true;
           break;
         }
         default: {
@@ -856,6 +862,7 @@ export const tableUpdateFormReducer: (
           } as TableCRUDColumnType;
           return acc;
         }, {} as Record<NodeCompositeID, TableCRUDColumnType>),
+        referenceColumns: nodeBody.referenceNodes,
         errorState: false,
         errorMessage: "",
         tableName: nodeBody.data.label,

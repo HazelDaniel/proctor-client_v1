@@ -170,6 +170,20 @@ export const groupNodeSelector =
     return gNode;
   };
 
+export const referenceNodesSelector = (state: {
+  nodes: ReturnType<typeof nodesReducer>;
+}) => {
+  const groupNodes = Object.values(state.nodes.groupNodes);
+
+  return groupNodes.map((el) => {
+    return {
+      id: el.id,
+      label: el.data.label,
+      referenceNodes: Object.keys(el.referenceNodes),
+    };
+  });
+};
+
 export const nodeSelector =
   (id: string) => (state: { nodes: ReturnType<typeof nodesReducer> }) => {
     const gNode = state.nodes.groupNodes[id];

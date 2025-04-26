@@ -1,15 +1,11 @@
 import {
   internalIndexMarkers,
   ondeleteOptions,
-  reservedSQLKeywords,
   typeDefaultMappings,
 } from "~/data/table-form";
 import { v7 as UUIDv7 } from "uuid";
-import { ConstraintAssertion as assertion } from "~/dao/constraint-assertion";
 import {
   TableFormUpdatePayloadType,
-  GlobalColumnIndexType,
-  GlobalColumnTypeType,
   TableCreationFormStateType,
   NodeCompositeID,
   OndeleteOptionType,
@@ -73,6 +69,7 @@ export const initialTableCreationFormState: TableCreationFormStateType = {
   errorMessage: null,
   columns: {},
   typeMappings: {},
+  referenceColumns: {},
 };
 
 export const tableCreationFormReducer: (
@@ -91,7 +88,7 @@ export const tableCreationFormReducer: (
       return { ...state, errorMessage: "", errorState: false };
     }
     case "addColumn": {
-      const { tableID, columns, tableName } = state;
+      const { tableID, columns, tableName, referenceColumns } = state;
       const errorState = !!Object.values(state.columns).find((col) => {
         col.name === "";
       });
@@ -121,6 +118,7 @@ export const tableCreationFormReducer: (
           },
         },
         tableName,
+        referenceColumns
       };
 
       return newState;
@@ -146,6 +144,7 @@ export const tableCreationFormReducer: (
 
       newState = structuredClone(state);
       delete newState.columns[columnID];
+      delete newState.referenceColumns[columnID];
 
       return newState;
     }
@@ -295,6 +294,7 @@ export const tableCreationFormReducer: (
             ondelete: "NONE" as OndeleteOptionType
           };
 
+          newState.referenceColumns = {...newState.referenceColumns, [columnID]: true};
           newState.columns[columnID] = newColumn;
 
           return newState;
@@ -314,6 +314,7 @@ export const tableCreationFormReducer: (
               ? ""
               : resColumn.name;
           resColumn.ondelete = "CASCADE";
+          newState.referenceColumns = {...newState.referenceColumns, [columnID]: true};
           break;
         }
         case "NONE": {
@@ -326,6 +327,7 @@ export const tableCreationFormReducer: (
               ? ""
               : resColumn.name;
           resColumn.ondelete = "NONE";
+          delete newState.referenceColumns[columnID];
           break;
         }
         case "PRIMARY": {
@@ -350,6 +352,7 @@ export const tableCreationFormReducer: (
               ? ""
               : resColumn.name;
           resColumn.ondelete = "NONE";
+          newState.referenceColumns = {...newState.referenceColumns, [columnID]: true};
           break;
         }
         default: {

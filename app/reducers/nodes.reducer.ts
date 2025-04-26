@@ -39,7 +39,6 @@ const nodesSlice = createSlice({
     },
     setActiveNode: (state, action) => {
       const { activeNodeID } = action.payload;
-      console.log("active node id set to ", activeNodeID);
       state.activeNode = activeNodeID;
     },
     addNodeGroup: (
@@ -100,6 +99,7 @@ const nodesSlice = createSlice({
       group = {
         ...group,
         nodes: resultNodes,
+        referenceNodes: group.referenceNodes,
         className: "table-node-group",
         style: {
           width: "max-content",
@@ -117,7 +117,7 @@ const nodesSlice = createSlice({
       }>
     ) => {
       let { group } = action.payload;
-      const { columns, tableID, tableName } = group;
+      const { columns, tableID, tableName, referenceColumns } = group;
       if (!tableID) {
         return;
       }
@@ -230,6 +230,7 @@ const nodesSlice = createSlice({
         ...resGroup,
         position: state.groupNodes[tableID].position,
         nodes: resultNodes,
+        referenceNodes: referenceColumns,
         className: "table-node-group",
         style: {
           width: "max-content",
