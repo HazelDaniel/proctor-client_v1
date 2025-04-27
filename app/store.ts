@@ -126,6 +126,11 @@ export const tableUpdateModalSelector = (state: {
 };
 
 // NODES SELECTORS
+
+export const nodesStateSelector = (state: {nodes: ReturnType<typeof nodesReducer>;}) => {
+  return state.nodes;
+}
+
 export const nodesSelector = (state: {
   nodes: ReturnType<typeof nodesReducer>;
 }) => {
@@ -179,7 +184,7 @@ export const referenceNodesSelector = (state: {
     return {
       id: el.id,
       label: el.data.label,
-      referenceNodes: Object.keys(el.referenceNodes),
+      referenceNodes: Object.keys(el.referenceNodes) as NodeCompositeID[],
     };
   });
 };

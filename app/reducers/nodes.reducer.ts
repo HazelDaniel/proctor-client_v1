@@ -150,7 +150,7 @@ const nodesSlice = createSlice({
             surrogationTimestamp,
             oldName,
             ondelete,
-            createdAt
+            createdAt,
           } = value;
           if (!compositeOn) compositeOn = [];
           if (!index) index = "NONE";
@@ -183,14 +183,14 @@ const nodesSlice = createSlice({
                 id: key as NodeCompositeID,
                 oldName,
                 ondelete: ondelete as OndeleteOptionType,
-                createdAt: createdAt as number
+                createdAt: createdAt as number,
               },
               label: !isComposite ? name : computedComposite.join(", "),
               type: colToNodeTypeMap[index] as "primary",
               isSurrogate,
               surrogationTimestamp,
             },
-            id: isSurrogate ? `${key}/${surrogationTimestamp}` : key,
+            id: key,
             position: { x: 0, y: 0 },
           } satisfies StatefulNodeType;
           return acc;
@@ -208,7 +208,7 @@ const nodesSlice = createSlice({
           } = value;
 
           return [
-            isSurrogate ? `${key}/${surrogationTimestamp}` : key,
+            key,
             {
               ...value,
               position: { x: 0, y: index * NODE_OFFSET_VALUE },
@@ -241,6 +241,7 @@ const nodesSlice = createSlice({
         data: {
           ...state.groupNodes[tableID].data,
           label: tableName,
+          createdAt: group.createdAt,
         },
       } as StatefulGroupNodeType[string];
 

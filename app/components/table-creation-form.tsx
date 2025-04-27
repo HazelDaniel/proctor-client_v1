@@ -632,6 +632,7 @@ export const TableCreationForm: React.FC = React.memo(
           ...state,
           tableID: UUIDv7(),
           typeMappings: globalTypeMappings,
+          createdAt: new Date().getTime()
         };
       }
     );

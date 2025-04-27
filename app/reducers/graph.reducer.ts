@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
-import { Graph, NodeCompositeID } from "~/types";
+import { NodeCompositeID, TableGraphStateType } from "~/types";
 import {
   createGraph,
   addEdge as addGraphEdge,
@@ -10,11 +10,6 @@ import {
 import { parseNodeID } from "~/utils/node.utils";
 
 export type GraphEntryType = "table" | "node" | "both";
-
-export interface TableGraphStateType {
-  tables: Graph;
-  nodes: Graph;
-}
 
 export const initialTableGraphState: TableGraphStateType = {
   tables: createGraph(),

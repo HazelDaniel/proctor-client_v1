@@ -135,6 +135,7 @@ export const tableUpdateFormReducer: (
           ...state[tableID],
           errorState: false,
           typeMappings: state[tableID].typeMappings,
+          createdAt: state[tableID].createdAt,
           columns: {
             ...columns,
             [newKey]: {
@@ -246,11 +247,13 @@ export const tableUpdateFormReducer: (
         const [parentId, colId, _3] = entry.split(":");
         void _3;
         const sourceColumn = state[parentId].columns[`${parentId}:${colId}`];
+        const surrogationTimestamp = new Date().toISOString();
 
-        acc[`${parentId}:${colId}`] = {
+        acc[`${parentId}:${colId}/${surrogationTimestamp}`] = {
           ...sourceColumn,
           isSurrogate: true,
-          surrogationTimestamp: new Date().toISOString(),
+          surrogationTimestamp,
+          createdAt: (sourceColumn.createdAt || 1200000) - 10
         };
 
         return acc;
@@ -868,6 +871,7 @@ export const tableUpdateFormReducer: (
         tableName: nodeBody.data.label,
         tableID: nodeBody.id,
         typeMappings: mappings!,
+        createdAt: nodeBody.data.createdAt
       };
       const newState = {
         ...state,

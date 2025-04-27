@@ -44,7 +44,7 @@ export function getOrphanedNodes(graph: Graph): string[] {
   return orphanedNodes;
 }
 
-function getSCCs(graph: Graph): string[][] {
+export function getSCCs(graph: Graph): string[][] {
   const visited: Record<string, boolean> = {};
   const stack: string[] = [];
   const sccs: string[][] = [];

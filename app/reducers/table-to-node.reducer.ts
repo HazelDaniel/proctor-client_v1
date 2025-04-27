@@ -36,10 +36,10 @@ export const tableToNodesSlice = createSlice({
   initialState: initialTableToNodeState,
   reducers: {
     upload: (state, action: PayloadAction<TableCRUDFormStateType>) => {
-      const { columns, tableID, tableName, referenceColumns } = action.payload;
+      const { columns, tableID, tableName, referenceColumns, createdAt } = action.payload;
       if (!(!!tableID && !!columns && !!tableName)) return;
       state.groupNodes[tableID] = {
-        data: { label: tableName, type: "table", toolbarVisible: true },
+        data: { label: tableName, type: "table", toolbarVisible: true, createdAt },
         position: { x: 0, y: 0 },
         className: "table-node-group",
         nodes: {},

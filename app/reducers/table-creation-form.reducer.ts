@@ -104,6 +104,7 @@ export const tableCreationFormReducer: (
         tableID,
         errorState: false,
         typeMappings: state.typeMappings,
+        createdAt: state.createdAt,
         columns: {
           ...columns,
           [newKey]: {
@@ -114,11 +115,11 @@ export const tableCreationFormReducer: (
             unique: true,
             compositeOn: null,
             ondelete: "NONE",
-            createdAt: new Date().getTime()
+            createdAt: new Date().getTime(),
           },
         },
         tableName,
-        referenceColumns
+        referenceColumns,
       };
 
       return newState;
@@ -291,10 +292,13 @@ export const tableCreationFormReducer: (
             name: internalIndexMarkers.COMPOSITE_PRIMARY,
             compositeOn: tableKeys,
             oldName: resColumn.name,
-            ondelete: "NONE" as OndeleteOptionType
+            ondelete: "NONE" as OndeleteOptionType,
           };
 
-          newState.referenceColumns = {...newState.referenceColumns, [columnID]: true};
+          newState.referenceColumns = {
+            ...newState.referenceColumns,
+            [columnID]: true,
+          };
           newState.columns[columnID] = newColumn;
 
           return newState;
@@ -314,7 +318,10 @@ export const tableCreationFormReducer: (
               ? ""
               : resColumn.name;
           resColumn.ondelete = "CASCADE";
-          newState.referenceColumns = {...newState.referenceColumns, [columnID]: true};
+          newState.referenceColumns = {
+            ...newState.referenceColumns,
+            [columnID]: true,
+          };
           break;
         }
         case "NONE": {
@@ -352,7 +359,10 @@ export const tableCreationFormReducer: (
               ? ""
               : resColumn.name;
           resColumn.ondelete = "NONE";
-          newState.referenceColumns = {...newState.referenceColumns, [columnID]: true};
+          newState.referenceColumns = {
+            ...newState.referenceColumns,
+            [columnID]: true,
+          };
           break;
         }
         default: {

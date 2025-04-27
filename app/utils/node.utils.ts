@@ -6,6 +6,14 @@ export const parseNodeID = (nodeID: NodeCompositeID) => {
   return [parentID, ID];
 };
 
+export const parseSurrogateNodeID = (
+  nodeID: `${NodeCompositeID}:${string}`
+) => {
+  const [parentID, sourceID, ID] = nodeID.split(":");
+
+  return [parentID, sourceID, ID];
+};
+
 export const getNodePropFromID = (nodeID: `${NodeCompositeID}:${string}`) => {
   const [_, _2, property] = nodeID.split(":");
 

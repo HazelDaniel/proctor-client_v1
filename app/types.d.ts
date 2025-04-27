@@ -94,6 +94,7 @@ export type TableCRUDColumnType = Partial<
     compositeOn: ("NONE" | string)[] | null;
     isSurrogate: boolean;
     surrogationTimestamp?: string;
+    outputSQL?: string;
   }
 >;
 
@@ -129,6 +130,7 @@ export interface StatefulNodeType extends Node {
       id: NodeCompositeID;
       ondelete: OndeleteOptionType;
       createdAt: number;
+      outputSQL?: string;
     };
     [prop: string]: any;
   };
@@ -155,6 +157,7 @@ export type TableCreationFormStateType = Omit<
   typeMappings: Record<string, string[]>;
   columns: Record<string, TableCRUDColumnType>;
   referenceColumns: Record<string, boolean>;
+  createdAt: number;
 };
 
 export type TableUpdateFormStateType = Record<
@@ -165,7 +168,13 @@ export type TableUpdateFormStateType = Record<
     typeMappings: Record<string, string[]>;
     columns: Record<string, TableCRUDColumnType | undefined>;
     referenceColumns: Record<string, boolean>;
+    createdAt: number;
   }
 >;
+
+export interface TableGraphStateType {
+  tables: Graph;
+  nodes: Graph;
+}
 
 export interface TableCRUDFormStateType extends TableCreationFormStateType {} // & TableUpdateFormStateType
