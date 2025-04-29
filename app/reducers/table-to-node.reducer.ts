@@ -158,6 +158,7 @@ export const tableToNodesSlice = createSlice({
         errorMessage: null,
         typeMappings: mappings,
         referenceColumns: groupNode.referenceNodes,
+        createdAt: groupNode.data.createdAt,
         columns: Object.entries(groupNode.nodes).reduce((acc, curr) => {
           const [columnID, node] = curr;
           acc[columnID] = {

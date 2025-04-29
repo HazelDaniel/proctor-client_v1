@@ -1,6 +1,5 @@
 (validations)
 
 (general)
-> put a context up the design canvas to toggle the table update modal as it flickers due to syncs between multiple local states
-> remove the composite foreign index in the table  creation form drop down
 > the original names of composite keys (primary/foreign) should be displayed in the update form
+

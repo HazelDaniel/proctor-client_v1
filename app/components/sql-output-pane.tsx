@@ -1,11 +1,12 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   graphSelector,
   nodesStateSelector,
   referenceNodesSelector,
+  typeMappingSelector,
   workspaceSelectors,
 } from "~/store";
 
@@ -38,11 +39,33 @@ export const SQLOutputPane: React.FC = () => {
   const graphs = useSelector(graphSelector, isEqual);
   const refLists = useSelector(referenceNodesSelector, isEqual);
   const nodes = useSelector(nodesStateSelector, isEqual);
+  const globalTypeMappings = useSelector(typeMappingSelector, isEqual);
 
   const generator = useMemo(
-    () => new NodeSQLGeneratorDao(nodes, graphs, refLists),
-    [nodes, graphs, refLists]
+    () => new NodeSQLGeneratorDao(nodes, graphs, refLists, globalTypeMappings),
+    [nodes, graphs, refLists, globalTypeMappings]
   );
+
+  const [chunkedOutput, setChunkedOutput] = useState<string>("");
+
+  useEffect(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const timeoutFns: any[] = [];
+
+    setChunkedOutput("");
+
+    for (const output of outputSQL) {
+      timeoutFns.push(
+        setTimeout(() => setChunkedOutput((prev) => prev + output), 20)
+      );
+    }
+
+    return () => {
+      for (const fn of timeoutFns) {
+        clearTimeout(fn);
+      }
+    };
+  }, [outputSQL]);
 
   return (
     <>
@@ -92,7 +115,7 @@ export const SQLOutputPane: React.FC = () => {
 
           <div className="flex-1 w-full relative">
             <pre className="text-accent overflow-scroll no-scrollbar h-full bg-outline1/5 p-2 ring-1 ring-outline1/20 rounded-sm  max-h-[80vh]">
-              {outputSQL}
+              {chunkedOutput}
             </pre>
           </div>
 

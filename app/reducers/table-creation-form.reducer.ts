@@ -112,7 +112,7 @@ export const tableCreationFormReducer: (
             nullable: false,
             default: "NONE",
             name: "",
-            unique: true,
+            unique: false,
             compositeOn: null,
             ondelete: "NONE",
             createdAt: new Date().getTime(),

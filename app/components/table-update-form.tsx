@@ -103,8 +103,8 @@ import {
   removeCompositionParent,
 } from "~/reducers/composition.reducer";
 import { setActiveNode, updateNodeGroup } from "~/reducers/nodes.reducer";
-import { closeUpdateFormModal } from "~/reducers/update-form-modal.reducer";
 import { hasInboundEdges, hasOutboundEdges } from "~/reducers/graph.reducer";
+import { EnumCreationForm } from "./enum-creation-form";
 
 export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
   function InnerTableUpdateForm({ id }: { id: string }) {
@@ -127,6 +127,8 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
     const [tableActionButtonClicks, setTableActionButtonClicks] =
       useState<number>(0);
 
+    const [enumLabelClicks, setEnumLabelClicks] = useState<number>(0);
+
     const formCloseButtonRef = useRef<HTMLButtonElement>(null);
 
     const columns: (TableCRUDColumnType & { id: string })[] = useMemo(() => {
@@ -143,8 +145,16 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
       return Object.keys(globalTypeMappings);
     }, [globalTypeMappings]);
 
+    const enumCreationLabelRef = useRef<HTMLInputElement>(null);
+
     const composition = useSelector(compositionSelector, isEqual);
     const graph = useSelector(graphSelector, isEqual);
+
+    useEffect(() => {
+      if (enumCreationLabelRef.current && enumLabelClicks) {
+        enumCreationLabelRef.current.focus();
+      }
+    }, [enumCreationLabelRef, enumLabelClicks]);
 
     useEffect(() => {
       updateFormDispatch(__setTableName(debouncedName, id));
@@ -240,7 +250,7 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
                         <TableCell className=" form-table-cell">
                           <div className="w-full bg-outline1 border-dashed border-primary flex items-center justify-center h-8 my-auto rounded-sm">
                             <p className="text-red w-full flex items-center justify-center">
-                              {column.name || ""}
+                              {column.index === "COMPOSITE_PRIMARY" ? column.oldName || "" : column.name || ""}
                             </p>
                           </div>
                         </TableCell>
@@ -432,7 +442,14 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
 
             <div className="w-[15rem] h-2 bg-outline1 mx-auto rounded-full"></div>
 
-            <TableFormCTAArea setClickAction={() => void 0} tableID={id} />
+            <TableFormCTAArea
+              setClickAction={setEnumLabelClicks}
+              tableID={id}
+            />
+            <EnumCreationForm
+              ref={enumCreationLabelRef}
+              props={{ formDispatch: updateFormDispatch, tableID: id }}
+            />
           </div>
         </div>
 
@@ -593,6 +610,7 @@ export const FormColumnSelectList: React.FC<{
 
   const graph = useSelector(graphSelector, isEqual);
   const composition = useSelector(compositionSelector, isEqual);
+  const mappings = useSelector(typeMappingSelector, isEqual);
 
   const columnIndex = useContextSelector<
     TableUpdateContextValueType,
@@ -620,7 +638,7 @@ export const FormColumnSelectList: React.FC<{
       onValueChange={(e: GlobalColumnTypeType) => {
         switch (intent) {
           case "default":
-            tableUpdateDispatch(__setDefault(columnID, e));
+            tableUpdateDispatch(__setDefault(columnID, e, tableID));
             break;
           case "index": {
             const compositeRep = getCompositeRep(
@@ -677,7 +695,7 @@ export const FormColumnSelectList: React.FC<{
               };
 
               tableUpdateDispatch(
-                __setType(columnID, e, tableID, invariantConfig)
+                __setType(columnID, e, tableID, invariantConfig, mappings)
               );
             }
             break;
@@ -751,7 +769,6 @@ export const TableCheckbox: React.FC<{
   const { tableUpdateDispatch } = useContext(
     tableUpdateContext
   ) as TableUpdateContextValueType;
-  const [isChecked, setChecked] = useState<boolean>(false);
 
   const columnNullibility = useContextSelector<
     TableUpdateContextValueType,
@@ -763,18 +780,21 @@ export const TableCheckbox: React.FC<{
     boolean
   >(tableUpdateContext as any, selectUniqueness, [columnID, tableID]);
 
+  const [checkCount, setCheckCount] = useState<number>(0);
+
   useEffect(() => {
+    if (checkCount === 0) return;
     if (intent === "nullibility")
       tableUpdateDispatch(__toggleNullibility(columnID, tableID));
     else tableUpdateDispatch(__toggleUniqueness(columnID, tableID));
-  }, [intent, isChecked, tableID]);
+  }, [checkCount]);
 
   return (
     <div className="flex items-center space-x-2 justify-center">
       <Checkbox
         id={id}
         onClick={() => {
-          setChecked((prev) => !prev);
+          setCheckCount((prev) => prev + 1);
         }}
         checked={
           intent === "nullibility" ? columnNullibility : columnUniqueness

@@ -143,7 +143,7 @@ export const tableUpdateFormReducer: (
               nullable: false,
               default: "NONE",
               name: "",
-              unique: true,
+              unique: false,
               compositeOn: null,
               isSurrogate: false,
             },
@@ -253,7 +253,7 @@ export const tableUpdateFormReducer: (
           ...sourceColumn,
           isSurrogate: true,
           surrogationTimestamp,
-          createdAt: (sourceColumn.createdAt || 1200000) - 10
+          createdAt: (sourceColumn.createdAt || 1200000) - 10,
         };
 
         return acc;
@@ -719,6 +719,7 @@ export const tableUpdateFormReducer: (
     }
     case "toggleNullibility": {
       const { columnID } = payload;
+      console.log("nullibility toggled");
       if (!columnID) return state;
       newState = structuredClone(state);
       newState[tableID].columns[columnID].nullable =
@@ -727,7 +728,7 @@ export const tableUpdateFormReducer: (
       return newState;
     }
     case "setType": {
-      const { columnID, type: colType, tableID, config } = payload;
+      const { columnID, type: colType, tableID, config, mappings } = payload;
       if (!columnID) return state;
 
       newState = structuredClone(state);
@@ -790,13 +791,21 @@ export const tableUpdateFormReducer: (
         };
       }
 
+      if (!mappings) {
+        console.warn("global mappings not provided!");
+        return state;
+      }
+
       let supportedDefaultSet: string[];
       if (typeDefaultMappings[colType])
         supportedDefaultSet = Array.from(typeDefaultMappings[colType]);
       else {
-        supportedDefaultSet = state[tableID].typeMappings[colType];
+        supportedDefaultSet = mappings[colType];
       }
-      if (!supportedDefaultSet) return state; // workaround: the typeMappings is only updated from a parent state so, there's a possibility that it won't exist just yet
+      if (!supportedDefaultSet) {
+        console.warn("no supported default set");
+        return state;
+      } // workaround: the typeMappings is only updated from a parent state so, there's a possibility that it won't exist just yet
       const [preferedDefault] = supportedDefaultSet;
 
       newState[tableID].columns[columnID].default = preferedDefault;
@@ -871,7 +880,7 @@ export const tableUpdateFormReducer: (
         tableName: nodeBody.data.label,
         tableID: nodeBody.id,
         typeMappings: mappings!,
-        createdAt: nodeBody.data.createdAt
+        createdAt: nodeBody.data.createdAt,
       };
       const newState = {
         ...state,

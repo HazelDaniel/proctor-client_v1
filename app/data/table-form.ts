@@ -5,139 +5,32 @@ import {
   TableFormFieldsType,
 } from "~/types";
 import TableGlobalTypes from "./table-globals";
+import { v7, v4 } from "uuid";
 
+//prettier-ignore
 const sqlReservedKeywords = [
-  "ADD",
-  "ALL",
-  "ALTER",
-  "AND",
-  "ANY",
-  "AS",
-  "ASC",
-  "BACKUP",
-  "BETWEEN",
-  "BY",
-  "CASE",
-  "CHECK",
-  "COLUMN",
-  "CONSTRAINT",
-  "CREATE",
-  "DATABASE",
-  "DEFAULT",
-  "DELETE",
-  "DESC",
-  "DISTINCT",
-  "DROP",
-  "EXEC",
-  "EXISTS",
-  "FOREIGN",
-  "FROM",
-  "FULL",
-  "GROUP",
-  "HAVING",
-  "IN",
-  "INDEX",
-  "INNER",
-  "INSERT",
-  "INTO",
-  "IS",
-  "JOIN",
-  "KEY",
-  "LEFT",
-  "LIKE",
-  "LIMIT",
-  "NOT",
-  "NULL",
-  "ON",
-  "OR",
-  "ORDER",
-  "OUTER",
-  "PRIMARY",
-  "PROCEDURE",
-  "RIGHT",
-  "ROW",
-  "SELECT",
-  "SET",
-  "TABLE",
-  "TOP",
-  "TRUNCATE",
-  "UNION",
-  "UNIQUE",
-  "UPDATE",
-  "VALUES",
-  "VIEW",
-  "WHERE",
-
+  "ADD", "ALL", "ALTER", "AND", "ANY", "AS", "ASC", "BACKUP", "BETWEEN",
+  "BY", "CASE", "CHECK", "COLUMN", "CONSTRAINT", "CREATE", "DATABASE",
+  "DEFAULT", "DELETE", "DESC", "DISTINCT", "DROP", "EXEC", "EXISTS",
+  "FOREIGN", "FROM", "FULL", "GROUP", "HAVING", "IN", "INDEX", "INNER",
+  "INSERT", "INTO", "IS", "JOIN", "KEY", "LEFT", "LIKE", "LIMIT", "NOT",
+  "NULL", "ON", "OR", "ORDER", "OUTER", "PRIMARY", "PROCEDURE", "RIGHT", "ROW",
+  "SELECT", "SET", "TABLE", "TOP", "TRUNCATE", "UNION", "UNIQUE", "UPDATE",
+  "VALUES", "VIEW", "WHERE",
   // Data Types
-  "BIGINT",
-  "BINARY",
-  "BIT",
-  "BLOB",
-  "BOOLEAN",
-  "CHAR",
-  "DATE",
-  "DECIMAL",
-  "DOUBLE",
-  "ENUM",
-  "FLOAT",
-  "INT",
-  "INTEGER",
-  "MONEY",
-  "NUMBER",
-  "NUMERIC",
-  "REAL",
-  "SERIAL",
-  "SMALLINT",
-  "TEXT",
-  "TIME",
-  "TIMESTAMP",
-  "TINYINT",
-  "VARCHAR",
-  "XML",
-  "TIMESTAMPTZ",
-  "JSONB",
-  "BYTEA",
-  "HSTORE",
-  "JSON",
-
+  "BIGINT", "BINARY", "BIT", "BLOB", "BOOLEAN", "CHAR", "DATE", "DECIMAL",
+  "DOUBLE", "ENUM", "FLOAT", "INT", "INTEGER", "MONEY", "NUMBER", "NUMERIC",
+  "REAL", "SERIAL", "SMALLINT", "TEXT", "TIME", "TIMESTAMP", "TINYINT", "VARCHAR",
+  "XML", "TIMESTAMPTZ", "JSONB", "BYTEA", "HSTORE", "JSON",
   // Control Statements
-  "BEGIN",
-  "COMMIT",
-  "END",
-  "EXECUTE",
-  "FETCH",
-  "FOR",
-  "GRANT",
-  "IF",
-  "LOOP",
-  "PRINT",
-  "ROLLBACK",
-  "SAVEPOINT",
-  "SET",
-  "TRANSACTION",
-  "TRIGGER",
-  "WHILE",
-  "WHEN",
+  "BEGIN", "COMMIT", "END", "EXECUTE", "FETCH", "FOR", "GRANT", "IF", "LOOP",
+  "PRINT", "ROLLBACK", "SAVEPOINT", "SET", "TRANSACTION", "TRIGGER",
+  "WHILE", "WHEN",
 
   // Database-Specific Keywords
-  "ANALYZE",
-  "OPTIMIZE",
-  "REPLACE",
-  "SHOW",
-  "LANGUAGE",
-  "RETURNS",
-  "IMMUTABLE",
-  "STABLE",
-  "GO",
-  "OPENQUERY",
-  "PIVOT",
-  "RAISERROR",
-  "FLASHBACK",
-  "MERGE",
-  "NOCOPY",
-  "RAW",
-  "SEQUENCE",
-  "SCHEMA",
+  "ANALYZE", "OPTIMIZE", "REPLACE", "SHOW", "LANGUAGE", "RETURNS", "IMMUTABLE",
+  "STABLE", "GO", "OPENQUERY", "PIVOT", "RAISERROR", "FLASHBACK", "MERGE", "NOCOPY",
+  "RAW", "SEQUENCE", "SCHEMA",
 ];
 
 export const reservedSQLKeywords = new Set(sqlReservedKeywords);
@@ -146,7 +39,7 @@ export const ondeleteOptions: [
   Exclude<OndeleteOptionType, "SET NULL" | "SET DEFAULT">,
   Exclude<OndeleteOptionType, "CASCADE" | "SET DEFAULT">,
   Exclude<OndeleteOptionType, "CASCADE" | "SET NULL">,
-  Exclude<OndeleteOptionType, "CASCADE" | "SET NULL" | "SET DEFAULT">,
+  Exclude<OndeleteOptionType, "CASCADE" | "SET NULL" | "SET DEFAULT">
 ] = ["CASCADE", "SET NULL", "SET DEFAULT", "NONE"];
 
 export const internalIndexMarkers: Omit<
@@ -181,6 +74,45 @@ export const typeDefaultMappings: Record<GlobalColumnTypeType, Set<string>> = {
   NUMERIC: new Set(["RANDOM_NUMERIC", "NONE"]),
   SERIAL: new Set(["NONE"]),
   UUID: new Set(["RANDOM_UUID", "NONE"]),
+};
+
+export const extractDefaultMappings = (input: string) => {
+  const mappings = typeDefaultMappings;
+  const outputEntries = Object.values(mappings).reduce((acc, curr) => {
+    for (const entry of Array.from(curr)) {
+      acc.add(entry);
+    }
+    return acc;
+  }, new Set());
+
+  if (!outputEntries.has(input)) {
+    return input;
+  }
+  if (input === "NONE") return null;
+
+  switch (input) {
+    case "CURRENT_TIMESTAMP": {
+      return `${new Date().toISOString()}`;
+    }
+    case "CURRENT_YEAR": {
+      return `${new Date().getFullYear()}`;
+    }
+    case "RANDOM_TEXT": {
+      return `${v7()}`;
+    }
+    case "RANDOM_NUMBER": {
+      return `${Math.random() * 500000}`;
+    }
+    case "RANDOM_NUMERIC": {
+      return `${Math.random() * 500000.9}`;
+    }
+    case "RANDOM_UUID": {
+      return `${v4()}`;
+    }
+    default: {
+      return null;
+    }
+  }
 };
 
 export const tableColumnFields: TableFormFieldsType = {
@@ -218,12 +150,7 @@ export const tableColumnFields: TableFormFieldsType = {
   ondelete: {
     placeholder: "NONE",
     default: "NONE",
-    entries: [
-      "SET NULL",
-      "SET DEFAULT",
-      "CASCADE",
-      "NONE",
-    ],
+    entries: ["SET NULL", "SET DEFAULT", "CASCADE", "NONE"],
   },
   nullable: false,
   unique: true,

@@ -6,6 +6,7 @@ import {
   removeEdge as removeGraphEdge,
   hasIncomingNeighbors,
   hasOutgoingNeighbors,
+  addNode,
 } from "~/utils/graph.utils";
 import { parseNodeID } from "~/utils/node.utils";
 
@@ -62,12 +63,16 @@ export const tableGraphSlice = createSlice({
         removeGraphEdge(state.nodes, source, dest);
       }
     },
+    addTableNode: (state: TableGraphStateType, action: PayloadAction<{nodeID: string}>) => {
+      const {nodeID} = action.payload;
+      addNode(state.tables, nodeID);
+    }
   },
 });
 
 export const graphReducer = tableGraphSlice.reducer;
 
-export const { addConnection, removeConnection } = tableGraphSlice.actions;
+export const { addConnection, removeConnection, addTableNode } = tableGraphSlice.actions;
 
 // UTILS
 export const hasOutboundEdges = (

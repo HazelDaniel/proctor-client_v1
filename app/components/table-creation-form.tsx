@@ -98,6 +98,8 @@ import {
   removeComposition,
   removeCompositionParent,
 } from "~/reducers/composition.reducer";
+import { addTableNode } from "~/reducers/graph.reducer";
+import { EnumCreationForm } from "./enum-creation-form";
 
 export const TableCheckbox: React.FC<{
   id: string;
@@ -108,6 +110,7 @@ export const TableCheckbox: React.FC<{
     tableCreationContext
   ) as TableCreationContextValueType;
   const [isChecked, setChecked] = useState<boolean>(false);
+  const [toggleClicks, setToggleClicks] = useState<number>(0);
 
   const columnNullibility = useContextSelector<
     TableCreationContextValueType,
@@ -120,17 +123,18 @@ export const TableCheckbox: React.FC<{
   >(tableCreationContext as any, selectUniqueness, [columnID]);
 
   useEffect(() => {
+    if (toggleClicks === 0) return;
     if (intent === "nullibility")
       tableCreationDispatch(__toggleNullibility(columnID));
     else tableCreationDispatch(__toggleUniqueness(columnID));
-  }, [intent, isChecked]);
+  }, [toggleClicks]);
 
   return (
     <div className="flex items-center space-x-2 justify-center">
       <Checkbox
         id={id}
         onClick={(_) => {
-          setChecked((prev) => !prev);
+          setToggleClicks((prev) => prev + 1);
         }}
         checked={
           intent === "nullibility" ? columnNullibility : columnUniqueness
@@ -393,112 +397,6 @@ export const FormColumnSelectList: React.FC<{
   );
 };
 
-const EnumCreationForm: React.ForwardRefExoticComponent<
-  React.RefAttributes<HTMLInputElement>
-> = React.forwardRef(function InnerCreationForm(_, ref) {
-  const [enumFormState, enumFormDispatch] = useState<{
-    typeName: string;
-    typeEntries: string;
-  }>({ typeName: "", typeEntries: "" });
-  const dispatch = useDispatch();
-  const { tableCreationDispatch } = useContext(
-    tableCreationContext
-  ) as TableCreationContextValueType;
-
-  const { errorMessage, errorState } = useSelector(
-    typeErrorStateSelector,
-    isEqual
-  );
-
-  useEffect(() => {
-    if (errorState && errorMessage)
-      tableCreationDispatch(__setError(errorMessage));
-  }, [errorMessage]);
-
-  useEffect(() => {
-    if (!errorState) return;
-    const timeoutFn = setTimeout(() => dispatch(clearError()), 100);
-    return () => {
-      clearTimeout(timeoutFn);
-    };
-  }, [errorState]);
-
-  return (
-    <Form className="overflow-hidden flex flex-col md:flex-row items-center gap-8 h-[32rem] md:h-[20rem] w-full md:justify-start">
-      <div className="w-full md:w-max h-[20rem] md:h-max flex items-center justify-start flex-col md:flex-row md:p-4 md:gap-[10%] md:mr-[20%]">
-        <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
-          <label
-            htmlFor="enum-name-column"
-            className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
-          >
-            Name
-          </label>
-          <input
-            type="text"
-            id="enum-name-column"
-            className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
-            value={enumFormState.typeName}
-            ref={ref}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              enumFormDispatch((prev) =>
-                e.target.value === prev.typeName
-                  ? prev
-                  : { ...prev, typeName: e.target.value }
-              );
-            }}
-          />
-        </div>
-
-        <div className="h-full w-full md:w-max flex md:flex-col items-center md:items-start gap-2 justify-start">
-          <label
-            htmlFor="enum-entries-column"
-            className=" mr-4 truncate text-muted-foreground max-w-[10rem]"
-          >
-            Entries (Comma, separated)
-          </label>
-          <input
-            type="text"
-            id="enum-entries-column"
-            className="h-[2.5rem] rounded-sm p-1 ring-outline1 ring-1"
-            value={enumFormState.typeEntries}
-            onChange={(e: ChangeEvent<HTMLInputElement>) => {
-              enumFormDispatch((prev) =>
-                e.target.value === prev.typeEntries
-                  ? prev
-                  : { ...prev, typeEntries: e.target.value }
-              );
-            }}
-          />
-        </div>
-
-        <div className="h-full w-max flex items-center justify-center">
-          <button
-            className="h-8 w-8 flex items-center justify-center"
-            onClick={() => {
-              enumFormDispatch({ typeEntries: "", typeName: "" });
-            }}
-          >
-            <svg className="w-full h-full">
-              <use xlinkHref="#trash"></use>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <input
-        onClick={(e) => {
-          e.preventDefault();
-          dispatch(addType(enumFormState));
-          enumFormDispatch({ typeEntries: "", typeName: "" });
-        }}
-        type="submit"
-        value="create"
-        className="capitalize w-max px-8 h-[3rem] rounded-md bg-fg/90 text-bg cursor-pointer ring-outline1 ring-offset-1 ring-1 mb-2 md:mb-0"
-      />
-    </Form>
-  );
-});
-
 export const TableColumnNameForm: React.FC<{
   name: string;
   columnID: string;
@@ -632,7 +530,7 @@ export const TableCreationForm: React.FC = React.memo(
           ...state,
           tableID: UUIDv7(),
           typeMappings: globalTypeMappings,
-          createdAt: new Date().getTime()
+          createdAt: new Date().getTime(),
         };
       }
     );
@@ -688,6 +586,7 @@ export const TableCreationForm: React.FC = React.memo(
       if (formCloseButtonRef.current && tableActionButtonClicks) {
         dispatch(setCurrentGroupID(creationFormState.tableID as string));
         dispatch(upload(creationFormState));
+        dispatch(addTableNode({ nodeID: creationFormState.tableID }));
         formCloseButtonRef.current.click();
       }
     }, [tableActionButtonClicks]);
@@ -837,7 +736,10 @@ export const TableCreationForm: React.FC = React.memo(
 
               <TableFormCTAArea setClickAction={setEnumLabelClicks} />
 
-              <EnumCreationForm ref={enumCreationLabelRef} />
+              <EnumCreationForm
+                ref={enumCreationLabelRef}
+                props={{ formDispatch: creationFormDispatch }}
+              />
             </div>
           </div>
         </TableCreationProvider>

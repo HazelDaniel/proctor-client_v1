@@ -4,6 +4,7 @@ import {  NodeCompositeID, TableGraphStateType } from "~/types";
 import { NodesStateType } from "~/reducers/nodes.reducer";
 import { getNodePropFromID, parseNodeID } from "~/utils/node.utils";
 import { getSCCs, hasOutgoingNeighbors } from "~/utils/graph.utils";
+import { extractDefaultMappings, typeDefaultMappings } from "~/data/table-form";
 
 export const UNPARSED_TOKEN_MARKER = "<UNPARSED>";
 
@@ -16,15 +17,17 @@ type ReferenceListType = {
 export class NodeSQLGeneratorDao {
   private nodes: NodesStateType;
   private tableSCCs: string[][];
+  private predefinedTypesOutput: string = "";
 
   constructor(
     nodes: NodesStateType,
     public graph: TableGraphStateType,
-    public referenceList: ReferenceListType
+    public referenceList: ReferenceListType,
+    public typeMappings: Record<string, string[]>
   ) {
     this.nodes = structuredClone(nodes); // the only foreign object mutated. so, cloned
     this.tableSCCs = getSCCs(this.graph.tables);
-    this.tableSCCs.reverse();
+    this.tableSCCs.reverse(); //NOTE: important because referencing comes before referenced in the strongly connected comp
   }
 
   run(): void {
@@ -42,6 +45,20 @@ export class NodeSQLGeneratorDao {
   }
 
   generate(): void {
+    for (const [type, entries] of Object.entries(this.typeMappings)) {
+      const entriesString = entries.reduce((acc, curr, idx) => {
+        acc += "'";
+        acc += curr;
+        if (idx !== entries.length - 1) {
+          acc += `', `;
+        } else {
+          acc += "'";
+        }
+        return acc;
+      }, "");
+      this.predefinedTypesOutput += `CREATE TYPE IF NOT EXISTS ${type} AS ENUM (${entriesString});\n`;
+    }
+
     for (const scc of this.tableSCCs) {
       scc.reverse();
 
@@ -52,7 +69,7 @@ export class NodeSQLGeneratorDao {
 
       for (let i = 0; i < groupCount; i++) {
         const resultGroup = resultGroups[i];
-        
+
         const surrogateNodeEntries = Object.entries(resultGroup.nodes).filter(
           ([k, v]) => {
             return v.data.isSurrogate;
@@ -117,7 +134,8 @@ export class NodeSQLGeneratorDao {
 
   //prettier-ignore
   get code(): string {
-    let acc = "";
+    let acc = `${this.predefinedTypesOutput}` + `${!!this.predefinedTypesOutput ? "\n" : ""}`;
+
     for (const scc of this.tableSCCs) {
       for (const tableID of scc) {
         const resGroup = this.nodes.groupNodes[tableID];
@@ -201,7 +219,7 @@ export class NodeSQLGeneratorDao {
 
     if (index !== "COMPOSITE_PRIMARY" && index !== "COMPOSITE_FOREIGN") {
       //prettier-ignore
-      resultSQL = `${INDENT}${name} ${colType}${!!unique ? " UNIQUE" : ""}${nullable ? "" : " NOT NULL"}${ !!colDefault ? " DEFAULT " + "'" + colDefault + "'::" + colType : "" }${ index === "PRIMARY" ? " PRIMARY KEY" : "" }`;
+      resultSQL = `${INDENT}${name} ${colType}${!!unique ? " UNIQUE" : ""}${nullable ? "" : " NOT NULL"}${ !!(colDefault && extractDefaultMappings(colDefault)) ? " DEFAULT " + "'" + extractDefaultMappings(colDefault) + "'::" + colType : "" }${ index === "PRIMARY" ? " PRIMARY KEY" : "" }`;
     } else if (index === "COMPOSITE_PRIMARY") {
       const resName =
         !!name && name[name.length - 1] === ","
