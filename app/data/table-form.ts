@@ -101,7 +101,7 @@ export const extractDefaultMappings = (input: string) => {
       return `${v7()}`;
     }
     case "RANDOM_NUMBER": {
-      return `${Math.random() * 500000}`;
+      return `${Math.round(Math.random() * 500000)}`;
     }
     case "RANDOM_NUMERIC": {
       return `${Math.random() * 500000.9}`;

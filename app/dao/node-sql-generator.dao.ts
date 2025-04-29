@@ -4,7 +4,7 @@ import {  NodeCompositeID, TableGraphStateType } from "~/types";
 import { NodesStateType } from "~/reducers/nodes.reducer";
 import { getNodePropFromID, parseNodeID } from "~/utils/node.utils";
 import { getSCCs, hasOutgoingNeighbors } from "~/utils/graph.utils";
-import { extractDefaultMappings, typeDefaultMappings } from "~/data/table-form";
+import { extractDefaultMappings } from "~/data/table-form";
 
 export const UNPARSED_TOKEN_MARKER = "<UNPARSED>";
 
@@ -45,6 +45,7 @@ export class NodeSQLGeneratorDao {
   }
 
   generate(): void {
+    this.predefinedTypesOutput = "";
     for (const [type, entries] of Object.entries(this.typeMappings)) {
       const entriesString = entries.reduce((acc, curr, idx) => {
         acc += "'";
