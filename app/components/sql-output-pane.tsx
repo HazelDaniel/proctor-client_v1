@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { useEffect, useMemo, useState } from "react";
+import { CSSProperties, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   graphSelector,
@@ -23,6 +23,12 @@ import { XOpenOutputPane } from "~/reducers/workspace.reducer";
 import { Copy } from "lucide-react";
 import { ResetIcon } from "@radix-ui/react-icons";
 import { NodeSQLGeneratorDao } from "~/dao/node-sql-generator.dao";
+
+import { PrismAsync as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import plsql from "react-syntax-highlighter/dist/cjs/languages/prism/plsql";
+
+// SyntaxHighlighter.registerLanguage("sql", plsql);
 
 export const SQLOutputPane: React.FC = () => {
   //prettier-ignore
@@ -56,7 +62,7 @@ export const SQLOutputPane: React.FC = () => {
 
     for (const output of outputSQL) {
       timeoutFns.push(
-        setTimeout(() => setChunkedOutput((prev) => prev + output), 20)
+        setTimeout(() => setChunkedOutput((prev) => prev + output), 10)
       );
     }
 
@@ -93,11 +99,11 @@ export const SQLOutputPane: React.FC = () => {
             <div className="flex justify-between h-max">
               <p className="h-4 w-max text-muted-foreground">Output SQL</p>
               <div className="h-full w-max flex">
-                <span className="h-[20px] w-[20px] cursor-pointer mx-2">
-                  <Copy className="stroke-muted-foreground w-full h-full" />
+                <span className="cursor-pointer mx-2 p-1 border-canvas/5 border-2 rounded-sm">
+                  <Copy className="stroke-muted-foreground h-[15px] w-[15px]" />
                 </span>
                 <span
-                  className="h-[20px] w-[20px] cursor-pointer mx-2"
+                  className="cursor-pointer mx-2 p-1 border-canvas/5 border-2 rounded-sm"
                   onClick={() => {
                     try {
                       generator.run();
@@ -107,15 +113,26 @@ export const SQLOutputPane: React.FC = () => {
                     }
                   }}
                 >
-                  <ResetIcon className="stroke-muted-foreground w-full h-full" />
+                  <ResetIcon className="stroke-muted-foreground h-[15px] w-[15px]" />
                 </span>
               </div>
             </div>
           </SheetHeader>
 
           <div className="flex-1 w-full relative">
-            <pre className="text-accent overflow-scroll no-scrollbar h-full bg-outline1/5 p-2 ring-1 ring-outline1/20 rounded-sm  max-h-[80vh]">
-              {chunkedOutput}
+            <pre className="text-output-panel text-accent overflow-scroll no-scrollbar h-full bg-outline1/5 p-2 ring-1 ring-outline1/20 rounded-sm  max-h-[80vh]">
+              <SyntaxHighlighter
+                language="sql"
+                style={oneDark}
+                customStyle={{
+                  backgroundColor: "unset",
+                  height: "100%",
+                  minHeight: "inherit",
+                  maxHeight: "80vh",
+                }}
+              >
+                {chunkedOutput}
+              </SyntaxHighlighter>
             </pre>
           </div>
 

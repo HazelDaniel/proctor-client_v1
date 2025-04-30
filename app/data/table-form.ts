@@ -1,3 +1,4 @@
+/* eslint-disable no-extra-boolean-cast */
 import {
   GlobalColumnIndexType,
   GlobalColumnTypeType,
@@ -76,6 +77,31 @@ export const typeDefaultMappings: Record<GlobalColumnTypeType, Set<string>> = {
   UUID: new Set(["RANDOM_UUID", "NONE"]),
 };
 
+function isWord(c: number): boolean {
+  return (
+    (c >= 65 && c <= 90) ||
+    (c >= 94 && c <= 122) ||
+    (c >= 48 && c <= 57) ||
+    c === 95
+  );
+}
+
+export const generateRandomText: () => string = () => {
+  let res = "";
+  let codePoint = 0;
+  for (let i = 0; i < 10; i++) {
+    codePoint = 32 + Math.round(Math.random() * (100 - 32));
+    let char = String.fromCharCode(codePoint);
+
+    while (!isWord(codePoint) || char === "^" || char === "`") {
+      codePoint = 32 + Math.round(Math.random() * (100 - 32));
+      char = String.fromCharCode(codePoint);
+    }
+    res += char;
+  }
+  return res;
+};
+
 export const extractDefaultMappings = (input: string) => {
   const mappings = typeDefaultMappings;
   const outputEntries = Object.values(mappings).reduce((acc, curr) => {
@@ -98,16 +124,17 @@ export const extractDefaultMappings = (input: string) => {
       return `${new Date().getFullYear()}`;
     }
     case "RANDOM_TEXT": {
-      return `${v7()}`;
+      return `${generateRandomText()}`;
     }
-    case "RANDOM_NUMBER": {
+    case "RANDOM_NUMBER":
+    case "RANDOM_INT": {
       return `${Math.round(Math.random() * 500000)}`;
     }
     case "RANDOM_NUMERIC": {
       return `${Math.random() * 500000.9}`;
     }
     case "RANDOM_UUID": {
-      return `${v4()}`;
+      return `gen_random_uuid()`;
     }
     default: {
       return null;

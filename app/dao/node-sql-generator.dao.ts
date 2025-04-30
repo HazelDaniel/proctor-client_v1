@@ -93,9 +93,10 @@ export class NodeSQLGeneratorDao {
           //prettier-ignore
           // non-trivial cycles
           if (scc.length > 1) {
-              this.generateGroups( k as NodeCompositeID, ["FOREIGN", "COMPOSITE_FOREIGN"].includes( v.data.column?.index || "NONE") && i < groupCount - 1, (j < surrogateNodeEntries.length -1) ? j < surrogateNodeEntries.length - 1 && !!nodeEntryLength : !!nodeEntryLength, resultGroup.id);
+              // this.generateGroups( k as NodeCompositeID, ["FOREIGN", "COMPOSITE_FOREIGN"].includes( v.data.column?.index || "NONE") && i < groupCount - 1, (j < surrogateNodeEntries.length -1) ? j < surrogateNodeEntries.length - 1 && !!nodeEntryLength : !!nodeEntryLength, resultGroup.id);
+              this.generateGroups( k as NodeCompositeID, ["FOREIGN", "COMPOSITE_FOREIGN"].includes( v.data.column?.index || "NONE"), (j < surrogateNodeEntries.length -1) ? j < surrogateNodeEntries.length - 1 && !!nodeEntryLength : !!nodeEntryLength, resultGroup.id, scc);
             } else {
-              this.generateGroups( k as NodeCompositeID, false,  (j < surrogateNodeEntries.length - 1) ? j < surrogateNodeEntries.length - 1 && !!nodeEntryLength : !!nodeEntryLength, resultGroup.id);
+              this.generateGroups( k as NodeCompositeID, false,  (j < surrogateNodeEntries.length - 1) ? j < surrogateNodeEntries.length - 1 && !!nodeEntryLength : !!nodeEntryLength, resultGroup.id, scc);
             }
         }
 
@@ -103,9 +104,10 @@ export class NodeSQLGeneratorDao {
           const [k, v] = nodeEntries[j - surrogateNodeEntries.length];
           //prettier-ignore
           if (scc.length > 1) {
-              this.generateGroups( k as NodeCompositeID, ["FOREIGN", "COMPOSITE_FOREIGN"].includes( v.data.column?.index || "NONE") && i < groupCount - 1, j < nodeEntryLength - 1, resultGroup.id);
+              // this.generateGroups( k as NodeCompositeID, ["FOREIGN", "COMPOSITE_FOREIGN"].includes( v.data.column?.index || "NONE") && i < groupCount - 1, j < nodeEntryLength - 1, resultGroup.id);
+              this.generateGroups( k as NodeCompositeID, ["FOREIGN", "COMPOSITE_FOREIGN"].includes( v.data.column?.index || "NONE"), j < nodeEntryLength - 1, resultGroup.id, scc);
             } else {
-              this.generateGroups( k as NodeCompositeID, false, j < nodeEntryLength - 1, resultGroup.id);
+              this.generateGroups( k as NodeCompositeID, false, j < nodeEntryLength - 1, resultGroup.id, scc);
             }
         }
       }
@@ -179,7 +181,8 @@ export class NodeSQLGeneratorDao {
     columnID: NodeCompositeID,
     shouldDefer: boolean,
     shouldPunctuate: boolean,
-    originalGroupID: string
+    originalGroupID: string,
+    sccGroup: string[]
   ): string {
     //TODO: we'll handle generated columns and check conditions
     let resultSQL = "";
@@ -252,7 +255,7 @@ export class NodeSQLGeneratorDao {
           this.nodes.groupNodes[referenceParentID].nodes[target].data.column
             ?.name || UNPARSED_TOKEN_MARKER
         }) ON DELETE ${ondelete}${
-          shouldDefer ? " DEFERRABLE INITIALLY DEFERRED" : ""
+          shouldDefer && sccGroup.includes(referenceParentID) ? " DEFERRABLE INITIALLY DEFERRED" : ""
         }`;
       } else {
         const targetCompositeOn =
@@ -273,7 +276,8 @@ export class NodeSQLGeneratorDao {
             : name;
 
         //prettier-ignore
-        resultSQL += `${INDENT}FOREIGN KEY (${resName}) REFERENCES ${ this.nodes.groupNodes[referenceParentID].data.label }(${refEntries || UNPARSED_TOKEN_MARKER}) ON DELETE ${ondelete}${ shouldDefer ? " DEFERRABLE INITIALLY DEFERRED" : "" }`;
+        resultSQL += `${INDENT}FOREIGN KEY (${resName}) REFERENCES ${ this.nodes.groupNodes[referenceParentID].data.label }(${refEntries || UNPARSED_TOKEN_MARKER}) ON DELETE ${ondelete}${ shouldDefer && sccGroup.includes(referenceParentID)
+          ? " DEFERRABLE INITIALLY DEFERRED" : "" }`;
       }
     }
 
