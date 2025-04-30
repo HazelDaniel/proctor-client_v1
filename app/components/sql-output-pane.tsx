@@ -62,7 +62,7 @@ export const SQLOutputPane: React.FC = () => {
 
     for (const output of outputSQL) {
       timeoutFns.push(
-        setTimeout(() => setChunkedOutput((prev) => prev + output), 10)
+        setTimeout(() => setChunkedOutput((prev) => prev + output), 5)
       );
     }
 
@@ -99,11 +99,11 @@ export const SQLOutputPane: React.FC = () => {
             <div className="flex justify-between h-max">
               <p className="h-4 w-max text-muted-foreground">Output SQL</p>
               <div className="h-full w-max flex">
-                <span className="cursor-pointer mx-2 p-1 border-canvas/5 border-2 rounded-sm">
+                <span className="cursor-pointer mx-2 p-2 border-canvas/5 border-2 rounded-sm">
                   <Copy className="stroke-muted-foreground h-[15px] w-[15px]" />
                 </span>
                 <span
-                  className="cursor-pointer mx-2 p-1 border-canvas/5 border-2 rounded-sm"
+                  className="cursor-pointer mx-2 p-2 border-canvas/5 border-2 rounded-sm"
                   onClick={() => {
                     try {
                       generator.run();

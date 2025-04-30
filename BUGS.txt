@@ -22,3 +22,8 @@
 	> ..   or when there are more composite foreign keys than one in the table
 	[FIX] (done)
 		- issue was with a constant factor that the table height depends on
+
+6. name not correctly updated for some referencing foreign key columns until their references are removed
+	> ..  
+	[FIX]
+		- 
