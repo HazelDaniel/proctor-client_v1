@@ -1,5 +1,6 @@
 import {
   internalIndexMarkers,
+  isTextWord,
   ondeleteOptions,
   typeDefaultMappings,
 } from "~/data/table-form";
@@ -685,6 +686,15 @@ export const tableUpdateFormReducer: (
 
       if (errorState) {
         const errorMessage = "column names are not allowed to have spaces!";
+        return {
+          ...state,
+          [tableID]: { ...state[tableID], errorState, errorMessage },
+        };
+      }
+
+      errorState = (!isTextWord(name || " "));
+      if (errorState) {
+        const errorMessage = "column names should be of word characters!";
         return {
           ...state,
           [tableID]: { ...state[tableID], errorState, errorMessage },

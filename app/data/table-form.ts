@@ -7,6 +7,7 @@ import {
 } from "~/types";
 import TableGlobalTypes from "./table-globals";
 import { v7, v4 } from "uuid";
+import { kStringMaxLength } from "node:buffer";
 
 //prettier-ignore
 const sqlReservedKeywords = [
@@ -86,6 +87,10 @@ function isWord(c: number): boolean {
   );
 }
 
+export function isTextWord(s: string): boolean {
+  return /^(\w)+$/g.test(s);
+}
+
 export const generateRandomText: () => string = () => {
   let res = "";
   let codePoint = 0;
@@ -118,20 +123,20 @@ export const extractDefaultMappings = (input: string) => {
 
   switch (input) {
     case "CURRENT_TIMESTAMP": {
-      return `${new Date().toISOString()}`;
+      return `'${new Date().toISOString()}'`;
     }
     case "CURRENT_YEAR": {
       return `${new Date().getFullYear()}`;
     }
     case "RANDOM_TEXT": {
-      return `${generateRandomText()}`;
+      return `'${generateRandomText()}'`;
     }
     case "RANDOM_NUMBER":
     case "RANDOM_INT": {
       return `${Math.round(Math.random() * 500000)}`;
     }
     case "RANDOM_NUMERIC": {
-      return `${Math.random() * 500000.9}`;
+      return `'${Math.random() * 500000.9}'`;
     }
     case "RANDOM_UUID": {
       return `gen_random_uuid()`;

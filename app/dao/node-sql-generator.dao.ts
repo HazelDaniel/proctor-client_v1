@@ -223,7 +223,7 @@ export class NodeSQLGeneratorDao {
 
     if (index !== "COMPOSITE_PRIMARY" && index !== "COMPOSITE_FOREIGN") {
       //prettier-ignore
-      resultSQL = `${INDENT}${name} ${colType}${!!unique ? " UNIQUE" : ""}${nullable ? "" : " NOT NULL"}${ !!(colDefault && extractDefaultMappings(colDefault)) ? " DEFAULT " + "'" + extractDefaultMappings(colDefault) + "'::" + colType : "" }${ index === "PRIMARY" ? " PRIMARY KEY" : "" }`;
+      resultSQL = `${INDENT}${name} ${colType}${!!unique ? " UNIQUE" : ""}${nullable ? "" : " NOT NULL"}${ !!(colDefault && extractDefaultMappings(colDefault)) ? " DEFAULT " + extractDefaultMappings(colDefault) + "::" + colType : "" }${ index === "PRIMARY" ? " PRIMARY KEY" : "" }`;
     } else if (index === "COMPOSITE_PRIMARY") {
       const resName =
         !!name && name[name.length - 1] === ","

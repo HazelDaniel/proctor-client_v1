@@ -1,5 +1,6 @@
 import {
   internalIndexMarkers,
+  isTextWord,
   ondeleteOptions,
   typeDefaultMappings,
 } from "~/data/table-form";
@@ -380,6 +381,7 @@ export const tableCreationFormReducer: (
         return state;
       }
 
+
       const resColumn = state.columns[columnID];
       if (!resColumn) return state;
       if (
@@ -390,6 +392,12 @@ export const tableCreationFormReducer: (
       if (resColumn.name === name) return state;
 
       let errorState = (name?.split(" ").length || 0) > 1;
+
+      errorState = (!isTextWord(name || " "));
+      if (errorState) {
+        const errorMessage = "column names should be of word characters!";
+        return { ...state, errorState, errorMessage };
+      }
 
       if (errorState) {
         const errorMessage = "column names are not allowed to have spaces!";
@@ -404,6 +412,7 @@ export const tableCreationFormReducer: (
         const errorMessage = "columns cannot have duplicate names!";
         return { ...state, errorState, errorMessage };
       }
+
       resColumn.name = name;
 
       const newState = { ...state };
