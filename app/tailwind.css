@@ -38,6 +38,7 @@ script {
     --canvas-color: 254 253 253;
     --accent-color: 217 70 239;
     --accent-color-light: 192 152 198;
+    --accent-color-bright: 190 180 190;
     --icon-tab-bg: 248 248 248;
     --secondary-text-color: 68 68 68;
     --active-tab-color: 232 232 232;
@@ -156,7 +157,26 @@ script {
   }
   .floating-portal-item {
     transform: translateX(var(--pos-x)) translateY(var(--pos-y));
+    mask: url("data:image/svg+xml,%3Csvg%20width%3D%2219%22%20height%3D%2219%22%20viewBox%3D%220%200%2019%2019%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M19%209C19%2013.9706%2014.9706%2018%2010%2018C0%2018%201.00001%2020%201.00001%209C1.00001%204.02944%205.02944%200%2010%200C14.9706%200%2019%204.02944%2019%209Z%22%20fill%3D%22%23D9D9D9%22%2F%3E%3C%2Fsvg%3E")
+      center/contain no-repeat;
+    -webkit-mask: url("data:image/svg+xml,%3Csvg%20width%3D%2219%22%20height%3D%2219%22%20viewBox%3D%220%200%2019%2019%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M19%209C19%2013.9706%2014.9706%2018%2010%2018C0%2018%201.00001%2020%201.00001%209C1.00001%204.02944%205.02944%200%2010%200C14.9706%200%2019%204.02944%2019%209Z%22%20fill%3D%22%23D9D9D9%22%2F%3E%3C%2Fsvg%3E")
+      center/contain no-repeat;
+    -webkit-mask-type: alpha;
+    mask-type: alpha;
+    backdrop-filter: blur(2px);
   }
+
+  .react-flow__viewport-portal {
+    pointer-events: auto;
+    z-index: 99;
+  }
+
+  .bubble-chat-input {
+    transform: translateX(var(--pos-x)) translateY(calc(var(--pos-y) + 40px));
+    z-index: 9 !important;
+    caret-color: rgb(var(--outline-color));
+  }
+
   .edge-foreign-object {
     background: transparent;
     width: 40px;

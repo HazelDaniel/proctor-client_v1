@@ -83,6 +83,10 @@ export default {
           DEFAULT: "rgb(var(--accent-color-light))",
           foreground: "rgb(var(--accent-foreground))",
         },
+        accentBright: {
+          DEFAULT: "rgb(var(--accent-color-bright))",
+          foreground: "rgb(var(--accent-foreground))",
+        },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",

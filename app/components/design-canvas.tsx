@@ -24,13 +24,18 @@ import {
   useEdgesState,
 } from "@xyflow/react";
 import React, {
+  ChangeEvent,
   CSSProperties,
+  FocusEventHandler,
+  FormEvent,
+  MouseEvent,
   useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
   useMemo,
   useReducer,
+  useRef,
   useState,
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -45,7 +50,13 @@ import {
 } from "~/contexts/design-pane.context";
 import { handleKeyPress } from "~/event-handlers/workspace.handlers";
 import { useEventListener } from "~/hooks/useevent";
-import { __addBubble, selectChatBubbles } from "~/reducers/chat-bubble.reducer";
+import {
+  __addBubble,
+  __removeBubble,
+  __updateBubble,
+  selectChatBubbles,
+  selectLastAddedBubble,
+} from "~/reducers/chat-bubble.reducer";
 import {
   __setActiveTab,
   designPaneReducer,
@@ -116,33 +127,118 @@ import {
   openUpdateFormModal,
 } from "~/reducers/update-form-modal.reducer";
 import { EdgeProvider } from "~/contexts/edge.context";
+import { Send } from "lucide-react";
+import { useYjsSync } from "~/hooks/use-yjs-sync";
 
-export const ChatBubble: React.FC<{ pos: XYPosition }> = ({ pos }) => {
+export const ChatBubble: React.FC<{ pos: XYPosition; id: string }> = ({
+  pos,
+  id,
+}) => {
+  const [initialChatText, setInitialChatText] = useState<string>("");
+
+  const { chatBubbleState, chatBubbleDispatch } = useContext(
+    chatBubbleContext
+  ) as ChatBubbleContextValueType;
+
+  const lastAddedBubble = useMemo(
+    () => selectLastAddedBubble(chatBubbleState),
+    [chatBubbleState]
+  );
+
+  const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const handleOnBlur: FocusEventHandler<HTMLTextAreaElement> = (e) => {
+    e.preventDefault();
+    if (!!!initialChatText.trim()) {
+      chatBubbleDispatch(__removeBubble(id));
+      return;
+    }
+    chatBubbleDispatch(__updateBubble(id, { hasComments: true }));
+  };
+
+  const handleOnChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
+    setInitialChatText(e.target.value);
+  };
+
+  useEffect(() => {
+    if (lastAddedBubble && lastAddedBubble.data.id === id) {
+      if (chatInputRef.current && !lastAddedBubble.hasComments) {
+        chatInputRef.current.focus();
+      }
+    }
+  }, [chatInputRef, lastAddedBubble, id]);
+
   return (
-    <div
-      className={`floating-portal-item w-8 h-8 bg-accent rounded-full absolute`}
-      style={{ "--pos-x": `${pos.x}px`, "--pos-y": `${pos.y}px` } as any}
-    ></div>
+    <>
+      <div
+        className={`floating-portal-item w-8 h-8 bg-accentBright absolute p-1 overflow-visible`}
+        style={
+          {
+            "--pos-x": `${pos.x}px`,
+            "--pos-y": `${pos.y}px`,
+            "--zoom-factor": `${1}px`,
+          } as CSSProperties
+        }
+      >
+        <div className="size-full scale-[0.95] bg-outline1d rounded-full origin-top-right"></div>
+      </div>
+
+      <form
+        className={`bubble-chat-input flex flex-col w-60 h-[8rem] rounded-lg bg-outline1 border-4 border-outline1 text-sm p-2 text-outline1d outline-none shadow-md ${
+          lastAddedBubble?.data.id !== id || lastAddedBubble?.hasComments
+            ? "hidden"
+            : "flex"
+        }`}
+        style={
+          {
+            "--pos-x": `${pos.x}px`,
+            "--pos-y": `${pos.y}px`,
+            "--zoom-factor": `${1}px`,
+          } as CSSProperties
+        }
+      >
+        <textarea
+          ref={chatInputRef}
+          className="outline-none rounded-sm w-full p-1 no-scrollbar shadow-sm inset-2 text-sm flex-1"
+          name="bubble_chat_init_text"
+          onChange={handleOnChange}
+          onBlur={handleOnBlur}
+        ></textarea>
+        {/* 
+        <button
+          type="submit"
+          className="z-[9] h-5 bg-outline1d w-8 self-end rounded-sm mt-2"
+          onClick={handleOnSubmitClick}
+        >
+          <Send fill="canvas" />
+        </button> */}
+      </form>
+    </>
   );
 };
 
-export const ChatBubbleView = React.memo(function ChatBubbleViewInner() {
-  const { chatBubbleState } = useContext(
-    chatBubbleContext
-  ) as ChatBubbleContextValueType;
-  const getBubbles = useCallback(
-    (state: typeof chatBubbleState) => selectChatBubbles(state),
-    []
-  );
+export const ChatBubbleView: React.FC = React.memo(
+  function ChatBubbleViewInner() {
+    const { chatBubbleState } = useContext(
+      chatBubbleContext
+    ) as ChatBubbleContextValueType;
 
-  return (
-    <ViewportPortal>
-      {getBubbles(chatBubbleState).map((bubble) => {
-        return <ChatBubble pos={bubble.position} key={bubble.id} />;
-      })}
-    </ViewportPortal>
-  );
-});
+    const getBubbles = useCallback(
+      (state: typeof chatBubbleState) => selectChatBubbles(state),
+      []
+    );
+
+    return (
+      <ViewportPortal>
+        {getBubbles(chatBubbleState).map((bubble) => {
+          return (
+            <ChatBubble pos={bubble.position} key={bubble.id} id={bubble.id} />
+          );
+        })}
+      </ViewportPortal>
+    );
+  }
+);
 
 const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
   const { designPaneDispatch, designPaneState } = useContext(
@@ -558,6 +654,9 @@ export const DesignCanvas: React.FC<{
       [edges_, setEdges]
     );
 
+    // Initialize Yjs synchronization
+    useYjsSync();
+
     // COMPONENT EVENT HANDLERS
     useEventListener(
       "keyup",
@@ -614,6 +713,9 @@ export const DesignCanvas: React.FC<{
     // FLOW EVENT HANDLERS
     const onPaneClick = useCallback(
       (event: React.MouseEvent<Element, MouseEvent>) => {
+        console.log("the pane picked up the click instead");
+
+        // console.log("event current target is ", event.target);
         event.stopPropagation();
         switch (designPaneState.activeTab) {
           case "comment": {

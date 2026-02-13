@@ -19,7 +19,8 @@ export enum CompositeNodeStringOffset {
 export interface StatefulChatBubbleType {
   position: { x: number; y: number };
   visible: boolean;
-  data: {};
+  data: Record;
+  hasComments: boolean;
 }
 
 const typeSupportHash = {

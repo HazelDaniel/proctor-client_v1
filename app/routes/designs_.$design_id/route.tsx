@@ -41,6 +41,8 @@ import {
   chatBubbleContext,
 } from "~/contexts/chat-bubble.context";
 import { selectChatBubbles } from "~/reducers/chat-bubble.reducer";
+import { CollaborationProvider } from "~/contexts/collaboration.context";
+import { useParams } from "@remix-run/react";
 
 export const meta: MetaFunction = () => {
   return [
@@ -55,7 +57,8 @@ export const meta: MetaFunction = () => {
 };
 
 export const clientLoader = async (args: ClientLoaderFunctionArgs) => {
-  return json({});
+  const { design_id } = args.params;
+  return json({ designId: design_id });
 };
 
 const CommentBoxDrawer: React.FC<{
@@ -308,6 +311,11 @@ export const DesignsPage: React.FC = React.memo(() => {
   const [_, setWindowSize] = useState<number>(window.innerWidth);
   const [instance, setInstance] =
     useState<ReactFlowInstance<StatefulNodeType & { id: string }, Edge>>();
+  const params = useParams();
+  const designId = params.design_id || 'default-design';
+  
+  // TODO: Get actual token from auth context/storage
+  const token = 'temp-token';
 
   useEventListener(
     "resize",
@@ -316,7 +324,7 @@ export const DesignsPage: React.FC = React.memo(() => {
   );
 
   return (
-    <>
+    <CollaborationProvider instanceId={designId} token={token}>
       <WorkspaceHeader />
       <section className="designs-section flex-1 w-full basis-auto h-max md:mt-20 mt-32 overflow-hidden">
         <ChatBubbleViewCtx>
@@ -332,7 +340,7 @@ export const DesignsPage: React.FC = React.memo(() => {
           <WorkspaceSidetab />
         </ChatBubbleViewCtx>
       </section>
-    </>
+    </CollaborationProvider>
   );
 });
 

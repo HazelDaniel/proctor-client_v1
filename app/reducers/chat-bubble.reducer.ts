@@ -6,6 +6,8 @@ export const chatBubbleActionTypes = {
   hideAll: "HIDE_ALL",
   showAll: "SHOW_ALL",
   add: "ADD",
+  update: "UPDATE",
+  remove: "REMOVE",
 };
 
 export interface ChatBubbleActionType<T> {
@@ -13,20 +15,27 @@ export interface ChatBubbleActionType<T> {
   payload: T;
 }
 
-export interface ChatBubbleAdditionActionType extends ChatBubbleActionType<{pos: {x: number; y: number}}> {
-}
+export interface ChatBubbleAdditionActionType
+  extends ChatBubbleActionType<{ pos: { x: number; y: number } }> {}
+
+export interface ChatBubbleRemovalActionType
+  extends ChatBubbleActionType<{ id: string }> {}
+
+export interface ChatBubbleUpdateActionType
+  extends ChatBubbleActionType<{ id: string, body: Partial<StatefulChatBubbleType> }> {}
 
 export interface ChatBubbleStateType {
   activeID: string | null;
   bubbles: { [prop: string]: StatefulChatBubbleType };
   commonState: "hidden" | "visible";
+  lastAdded: string | null;
 }
 
 export const initialChatBubbleState: ChatBubbleStateType = {
   activeID: null,
-  bubbles: {
-  },
+  bubbles: {},
   commonState: "visible",
+  lastAdded: null
 };
 
 export const chatBubbleReducer: (
@@ -66,10 +75,33 @@ export const chatBubbleReducer: (
       return newState;
     }
     case "add": {
-      newState = {...state};
-      const {payload} = (action as ChatBubbleAdditionActionType);
-      const id = `${Object.keys(newState.bubbles).length}-${new Date().getTime()}`;
-      newState.bubbles[id] = {data: {}, position: payload.pos, visible: newState.commonState === "visible"};
+      newState = { ...state };
+      const { payload } = action as ChatBubbleAdditionActionType;
+      const id = `${
+        Object.keys(newState.bubbles).length
+      }-${new Date().getTime()}`;
+      newState.bubbles[id] = {
+        data: {id},
+        position: payload.pos,
+        visible: newState.commonState === "visible",
+        hasComments: false
+      };
+      newState.lastAdded = id;
+      return newState;
+    }
+    case "update": {
+      const {payload} = action as ChatBubbleUpdateActionType;
+      const {id, body} = payload;
+
+      newState = {...state, bubbles: {...state.bubbles, [id]: {...state.bubbles[id], ...body}}};
+      return newState;
+    }
+    case "remove": {
+      const { payload } = action as ChatBubbleRemovalActionType;
+      const { id } = payload;
+      newState = { ...state };
+      delete newState.bubbles[id];
+
       return newState;
     }
     default:
@@ -83,7 +115,24 @@ export const __addBubble: (pos: XYPosition) => ChatBubbleAdditionActionType = (
 ) => {
   return {
     type: "add",
-    payload: {pos},
+    payload: { pos },
+  };
+};
+
+export const __removeBubble: (id: string) => ChatBubbleRemovalActionType = (
+  id
+) => {
+  return {
+    type: "remove",
+    payload: { id },
+  };
+};
+
+
+export const __updateBubble: (id: string, body: Partial<StatefulChatBubbleType>) => ChatBubbleUpdateActionType = (id, body) => {
+  return {
+    type: "update",
+    payload: { id, body },
   };
 };
 
@@ -123,3 +172,13 @@ export const selectChatBubbles: (
     []
   );
 };
+
+export const selectLastAddedBubble: (
+  state: ChatBubbleStateType,
+) => (StatefulChatBubbleType) | null = (state) => {
+
+  if (!state.lastAdded)
+  return null;
+
+  return state.bubbles[state.lastAdded]
+}
