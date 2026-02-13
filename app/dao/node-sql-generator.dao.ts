@@ -65,6 +65,7 @@ export class NodeSQLGeneratorDao {
 
       const resultGroups = scc
         .map((el) => this.nodes.groupNodes[el])
+        .filter((group) => !!group) // Filter out missing groups
         .sort((a, b) => (a.data.createdAt || 0) - (b.data.createdAt || 0));
       const groupCount = resultGroups.length;
 
@@ -119,9 +120,10 @@ export class NodeSQLGeneratorDao {
 
     for (const nodeID of referenceNodes) {
       const resultNode = this.nodes.groupNodes[id].nodes[nodeID];
-      if (!resultNode.data.column) {
+      if (!resultNode || !resultNode.data.column) {
         //prettier-ignore
-        throw new Error( "there are ids do not resolve to corresponding columns");
+        // throw new Error( "there are ids do not resolve to corresponding columns");
+        continue;
       }
 
       if (
@@ -142,6 +144,7 @@ export class NodeSQLGeneratorDao {
     for (const scc of this.tableSCCs) {
       for (const tableID of scc) {
         const resGroup = this.nodes.groupNodes[tableID];
+        if (!resGroup) continue;
         const {nodes, data: {label}} = resGroup;
         acc += `CREATE TABLE IF NOT EXISTS ${label} (\n`;
 
@@ -192,13 +195,21 @@ export class NodeSQLGeneratorDao {
     let likelySurrogate: boolean = false;
 
     const [colParentID] = parseNodeID(resColumnID);
-    let node = this.nodes.groupNodes[colParentID].nodes[columnID];
+    const parentGroup = this.nodes.groupNodes[colParentID];
+    if (!parentGroup) {
+      console.warn(`Parent group ${colParentID} not found for column ${columnID}`);
+      return "";
+    }
+    let node = parentGroup.nodes[columnID];
 
     if (!node) {
       resColumnID = columnID.split("/")[0] as NodeCompositeID;
-      node = structuredClone(
-        this.nodes.groupNodes[colParentID].nodes[resColumnID]
-      );
+      node = structuredClone(parentGroup.nodes[resColumnID]);
+
+      if (!node) {
+        console.warn(`Node ${columnID} (or surrogate base) not found in group ${colParentID}`);
+        return "";
+      }
 
       likelySurrogate = true;
     }
@@ -232,9 +243,7 @@ export class NodeSQLGeneratorDao {
 
       resultSQL += `${INDENT}PRIMARY KEY (${resName})`;
 
-      this.nodes.groupNodes[colParentID].nodes[
-        resColumnID
-      ].data.column!.outputSQL = resultSQL;
+      parentGroup.nodes[resColumnID].data.column!.outputSQL = resultSQL;
     }
     if (
       (index === "FOREIGN" || index == "COMPOSITE_FOREIGN") &&
@@ -248,19 +257,23 @@ export class NodeSQLGeneratorDao {
 
       if (resultSQL) resultSQL += `,\n`;
 
+      const refGroup = this.nodes.groupNodes[referenceParentID];
+      if (!refGroup) {
+        console.warn(`Reference parent group ${referenceParentID} not found`);
+        return "";
+      }
+
       if (index === "FOREIGN") {
         resultSQL += `${INDENT}FOREIGN KEY (${name}) REFERENCES ${
-          this.nodes.groupNodes[referenceParentID].data.label
+          refGroup.data.label
         }(${
-          this.nodes.groupNodes[referenceParentID].nodes[target].data.column
-            ?.name || UNPARSED_TOKEN_MARKER
+          refGroup.nodes[target as string]?.data?.column?.name || UNPARSED_TOKEN_MARKER
         }) ON DELETE ${ondelete}${
           shouldDefer && sccGroup.includes(referenceParentID) ? " DEFERRABLE INITIALLY DEFERRED" : ""
         }`;
       } else {
-        const targetCompositeOn =
-          this.nodes.groupNodes[referenceParentID].nodes[target].data.column
-            ?.compositeOn || [];
+        const targetNode = refGroup.nodes[target as string];
+        const targetCompositeOn = targetNode?.data?.column?.compositeOn || [];
         const refEntries = targetCompositeOn
           .map((el) => {
             const name = getNodePropFromID(
@@ -276,7 +289,7 @@ export class NodeSQLGeneratorDao {
             : name;
 
         //prettier-ignore
-        resultSQL += `${INDENT}FOREIGN KEY (${resName}) REFERENCES ${ this.nodes.groupNodes[referenceParentID].data.label }(${refEntries || UNPARSED_TOKEN_MARKER}) ON DELETE ${ondelete}${ shouldDefer && sccGroup.includes(referenceParentID)
+        resultSQL += `${INDENT}FOREIGN KEY (${resName}) REFERENCES ${ refGroup.data.label }(${refEntries || UNPARSED_TOKEN_MARKER}) ON DELETE ${ondelete}${ shouldDefer && sccGroup.includes(referenceParentID)
           ? " DEFERRABLE INITIALLY DEFERRED" : "" }`;
       }
     }
@@ -286,13 +299,12 @@ export class NodeSQLGeneratorDao {
 
     if (likelySurrogate) {
       node.data.column.outputSQL = resultSQL;
-      this.nodes.groupNodes[originalGroupID].nodes[
-        columnID
-      ].data.column!.outputSQL = resultSQL;
+      const origGroup = this.nodes.groupNodes[originalGroupID];
+      if (origGroup && origGroup.nodes[columnID]?.data?.column) {
+        origGroup.nodes[columnID].data.column!.outputSQL = resultSQL;
+      }
     } else {
-      this.nodes.groupNodes[colParentID].nodes[
-        resColumnID
-      ].data.column!.outputSQL = resultSQL;
+      parentGroup.nodes[resColumnID].data.column!.outputSQL = resultSQL;
     }
 
     return columnID;
