@@ -70,7 +70,7 @@ export const WorkspaceSidetab: React.FC = () => {
         `${!sidePaneOpened ? " left-[-100vw]" : ""}`
       }
     >
-      <div className="wrapper flex flex-col justify-between w-full h-full overflow-y-auto p-2 py-8">
+      <div className="wrapper flex flex-col justify-between w-full h-full overflow-y-auto p-2 py-8  ">
         <div className="flex flex-col justify-start align-center w-full h-max">
           <div className="flex flex-col w-full my-4">
             <p className="ring-1 ring-outline1 rounded-sm w-full px-4 font-medium">
@@ -163,7 +163,7 @@ export const WorkspaceSidetab: React.FC = () => {
         </div>
 
         {/* settings pane */}
-        <div className="w-[99%] h-max group/settings-pane overflow-visible flex relative mb-20">
+        <div className="w-[99%] h-max group/settings-pane overflow-visible flex relative mb-20 mt-auto">
           <div className="w-full peer/settings-bar p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly mt-4 ring-offset-2 group-has-[button:focus]/settings-pane:border-2">
             <button className="show flex items-center justify-center w-4 h-4 focus:outline-none">
               <svg className="w-full scale-75 md:scale-50">

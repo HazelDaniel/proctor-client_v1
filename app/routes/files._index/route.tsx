@@ -33,7 +33,7 @@ export const clientLoader = async (args: ClientLoaderFunctionArgs) => {
 
 export const StarredProjectsArea: React.FC = () => {
   return (
-    <aside className="flex flex-col w-full starred-projects align-center h-max min-h-[40rem]">
+    <aside className="flex flex-col w-full starred-projects align-center h-max min-h-[40rem] flex-1">
       <h2 className="w-full mb-10 capitalize text-fg">starred projects</h2>
 
       <ul className="flex flex-col items-start justify-start flex-1 w-full list-none border-l-8 border-l-accent h-max">
@@ -105,7 +105,7 @@ export const StarredProjectsArea: React.FC = () => {
         </li>
       </ul>
 
-      <h2 className="w-full my-8 mt-10 capitalize text-fg">invitations</h2>
+      <h2 className="w-full my-6 mt-10 capitalize text-fg">invitations</h2>
       <InvitationsTab />
 
       <div className="w-[95%] h-max group/settings-pane overflow-visible flex relative">
