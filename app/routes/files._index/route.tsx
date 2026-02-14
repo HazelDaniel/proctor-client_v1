@@ -18,6 +18,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import InvitationsTab from "~/components/invitations-tab";
 
 export const meta: MetaFunction = () => {
   return [
@@ -48,8 +49,8 @@ export const StarredProjectsArea: React.FC = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none">
-              <button className="flex items-center justify-center w-12 h-full">
-                <svg className="h-4 h-inherit scale-50 cursor-pointer">
+              <button className="flex items-center justify-center w-12 h-full text-mutedFG">
+                <svg className="h-2 w-4 cursor-pointer">
                   <use xlinkHref="#kebab"></use>
                 </svg>
               </button>
@@ -81,9 +82,9 @@ export const StarredProjectsArea: React.FC = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none">
-              <button className="flex items-center justify-center w-12 h-full">
-                <svg className="h-4 h-inherit scale-50 cursor-pointer">
-                  <use xlinkHref="#kebab"></use>
+              <button className="flex items-center justify-center w-12 h-full text-mutedFG">
+                <svg className="h-2 w-4 cursor-pointer">
+                  <use xlinkHref="#kebab" className=""></use>
                 </svg>
               </button>
             </DropdownMenuTrigger>
@@ -103,6 +104,9 @@ export const StarredProjectsArea: React.FC = () => {
           </DropdownMenu>
         </li>
       </ul>
+
+      <h2 className="w-full my-8 mt-10 capitalize text-fg">invitations</h2>
+      <InvitationsTab />
 
       <div className="w-[95%] h-max group/settings-pane overflow-visible flex relative">
         <div className="w-full peer/settings-bar p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly mt-4 ring-offset-2 group-has-[button:focus]/settings-pane:border-2">

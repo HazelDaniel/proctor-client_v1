@@ -207,9 +207,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
               fill="none"
               xmlns="http://www.w3.org/2000/svg"
             >
-              <circle cx="3.84649" cy="3.84649" r="3.84649" fill="#020617" />
-              <circle cx="17.2098" cy="3.84649" r="3.84649" fill="#020617" />
-              <circle cx="30.5731" cy="3.84649" r="3.84649" fill="#020617" />
+              <circle cx="3.84649" cy="3.84649" r="3.84649" fill="currentColor" />
+              <circle cx="17.2098" cy="3.84649" r="3.84649" fill="currentColor" />
+              <circle cx="30.5731" cy="3.84649" r="3.84649" fill="currentColor" />
             </svg>
           </symbol>
 

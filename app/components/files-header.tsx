@@ -35,13 +35,13 @@ export const FilesHeader: React.FC = () => {
               <DropdownMenuContent>
                 <DropdownMenuLabel>Notification</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="hover:bg-accent/90 hover:text-canvas focus:bg-accent/90 focus:text-canvas">
+                <DropdownMenuItem className="hover:bg-black/50 hover:text-white focus:bg-black/50 focus:text-white">
                   a notification on your last project
                 </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-accent/90 hover:text-canvas focus:bg-accent/90 focus:text-canvas">
+                <DropdownMenuItem className="hover:bg-black/50 hover:text-white focus:bg-black/50 focus:text-white">
                   another notification on your last project
                 </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-accent/90 hover:text-canvas focus:bg-accent/90 focus:text-canvas">
+                <DropdownMenuItem className="hover:bg-black/50 hover:text-white focus:bg-black/50 focus:text-white">
                   a third notification on your last project
                 </DropdownMenuItem>
               </DropdownMenuContent>
