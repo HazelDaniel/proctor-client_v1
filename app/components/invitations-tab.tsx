@@ -5,8 +5,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
-import { useParams, useSearchParams } from "@remix-run/react";
-import React, { useCallback, useMemo, useState } from "react";
+import { useLoaderData, useSearchParams, Await } from "@remix-run/react";
+import React, { useCallback, useMemo, Suspense } from "react";
 
 type InvitationsTabProps = {};
 
@@ -18,49 +18,6 @@ type InvitationsTabEntryProps = {
   members: number;
   ofType: "received" | "pending";
 };
-
-const dummyInvitations: InvitationsTabEntryProps[] = [
-  {
-    id: "1",
-    ownerUsername: "john_doe",
-    name: "Project Alpha",
-    time: "2 mins ago",
-    members: 4,
-    ofType: "received",
-  },
-  {
-    id: "2",
-    ownerUsername: "jane_smith",
-    name: "Team Beta",
-    time: "1 hour ago",
-    members: 8,
-    ofType: "pending",
-  },
-  {
-    id: "3",
-    ownerUsername: "michael_brown",
-    name: "Gamma Group",
-    time: "3 days ago",
-    members: 12,
-    ofType: "received",
-  },
-  {
-    id: "4",
-    ownerUsername: "sarah_connor",
-    name: "Delta Squad",
-    time: "1 week ago",
-    members: 6,
-    ofType: "pending",
-  },
-  {
-    id: "5",
-    ownerUsername: "emma_watson",
-    name: "Omega Team",
-    time: "2 weeks ago",
-    members: 10,
-    ofType: "received",
-  },
-];
 
 const InvitationsTabEntry: React.FC<{
   ownerUsername: string;
@@ -90,6 +47,20 @@ const InvitationsTabEntry: React.FC<{
   );
   const randomColor = `rgba(${rvalue}, ${gvalue}, ${bvalue}, 0.6)`;
 
+  // Simple time ago logic (server returns ISO strings)
+  const timeAgo = useMemo(() => {
+    const date = new Date(time);
+    const now = new Date();
+    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+    
+    if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+    const diffInMinutes = Math.floor(diffInSeconds / 60);
+    if (diffInMinutes < 60) return `${diffInMinutes}m ago`;
+    const diffInHours = Math.floor(diffInMinutes / 60);
+    if (diffInHours < 24) return `${diffInHours}h ago`;
+    return date.toLocaleDateString();
+  }, [time]);
+
   return (
     <div className="w-full h-max flex justify-start items-center gap-[6%] overflow-hidden relative">
       <div
@@ -106,13 +77,13 @@ const InvitationsTabEntry: React.FC<{
           <div
             className="w-full flex gap-2 justify-start"
             title={`${
-              ofType === "pending" ? "To" : "By" } ${ownerUsername}. Received ${time}. ${members} members`}
+              ofType === "pending" ? "To" : "By" } ${ownerUsername}. Received ${timeAgo}. ${members} members`}
           >
             <span className="text-mutedFG text-xs font-medium w-1/3 truncate justify-self-[start_!important]">
               {`${ofType === "pending" ? "to " : "By "}`} {ownerUsername}
             </span>
             <span className="text-mutedFG text-xs font-medium w-1/3 truncate">
-              {time} seconds ago
+              {timeAgo}
             </span>
             <span className="text-mutedFG text-xs font-medium w-1/3 truncate">
               {members} members
@@ -150,9 +121,32 @@ const InvitationsTabEntry: React.FC<{
 
 const InvitationsTab: React.FC<InvitationsTabProps> = () => {
   const [params, setParams] = useSearchParams();
+  const { receivedInvitations, pendingInvitations } = useLoaderData<any>();
 
   let current = params.get("invite") as "pending" | "received" | null;
   current = current ?? "received";
+
+  const renderContent = (data: any[], type: "received" | "pending") => {
+    if (!data || data.length === 0) {
+      return (
+        <div className="w-full py-8 text-center text-mutedFG text-sm">
+          No {type} invitations found.
+        </div>
+      );
+    }
+
+    return data.map((inv: any) => {
+      const entry: InvitationsTabEntryProps = {
+        id: type === "received" ? inv.inviteId : inv.id,
+        ownerUsername: type === "received" ? (inv.inviterEmail.split("@")[0]) : (inv.inviteeEmail.split("@")[0]),
+        name: inv.toolType || "Unknown Project",
+        time: inv.createdAt,
+        members: inv.memberCount,
+        ofType: type,
+      };
+      return <InvitationsTabEntry {...entry} key={entry.id} />;
+    });
+  };
 
   return (
     <div className="w-full h-max min-h-[20rem] p-4 py-2 rounded-md border-gray-100 border-2 flex flex-col justify-start">
@@ -179,14 +173,21 @@ const InvitationsTab: React.FC<InvitationsTabProps> = () => {
       <div className="w-full h-[1px] bg-gray-200 my-2"></div>
 
       <div className="flex-1 max-h-[20rem] overflow-y-auto flex flex-col justify-start gap-6">
-        {dummyInvitations
-          .filter((inv) => inv.ofType === current)
-          .map((inv) => (
-            <InvitationsTabEntry {...inv} key={inv.id} />
-          ))}
+        <Suspense fallback={<div className="w-full py-8 text-center text-mutedFG text-sm animate-pulse">Loading invitations...</div>}>
+          {current === "received" ? (
+            <Await resolve={receivedInvitations}>
+              {(data) => renderContent(data, "received")}
+            </Await>
+          ) : (
+            <Await resolve={pendingInvitations}>
+              {(data) => renderContent(data, "pending")}
+            </Await>
+          )}
+        </Suspense>
       </div>
     </div>
   );
 };
 
 export default InvitationsTab;
+

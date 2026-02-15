@@ -1,4 +1,4 @@
-import { ClientLoaderFunctionArgs, json, redirect } from "@remix-run/react";
+import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect } from "@remix-run/react";
 import type { MetaFunction } from "@remix-run/node";
 import { FilesHeader } from "~/components/files-header";
 import {
@@ -20,6 +20,7 @@ import {
 } from "@radix-ui/react-dropdown-menu";
 import InvitationsTab from "~/components/invitations-tab";
 import { store } from "~/store";
+import { gqlRequest } from "~/utils/api.client";
 
 export const meta: MetaFunction = () => {
   return [
@@ -28,14 +29,79 @@ export const meta: MetaFunction = () => {
   ];
 };
 
+export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+
+  if (intent === "CREATE_SCHEMA_DESIGN") {
+    try {
+      const result = await gqlRequest(`
+        mutation CreateToolInstance($toolType: String!) {
+          createToolInstance(toolType: $toolType) {
+            instance {
+              id
+            }
+          }
+        }
+      `, { toolType: "schema-design" });
+
+      const newId = result.createToolInstance.instance.id;
+      return redirect(`/files/${newId}`);
+    } catch (err) {
+      console.error("Failed to create tool instance:", err);
+      return json({ error: "Failed to create project" }, { status: 500 });
+    }
+  }
+
+  return json({ error: "Invalid intent" }, { status: 400 });
+};
+
 export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
   const state = store.getState();
   // Ensure we only redirect after we've attempted to initialize auth
   if (state.auth.isInitialized && !state.auth.isAuthenticated) {
     return redirect("/auth");
   }
-  return json({});
+
+  const receivedInvitations = gqlRequest(`
+    query MyReceivedInvitations {
+      myReceivedInvitations {
+        inviteId
+        instanceId
+        inviteeEmail
+        status
+        createdAt
+        expiresAt
+        toolType
+        inviterEmail
+        memberCount
+      }
+    }
+  `).then(res => res.myReceivedInvitations);
+
+  const pendingInvitations = gqlRequest(`
+    query MyPendingInvites {
+      myPendingInvites {
+        id
+        instanceId
+        inviteeEmail
+        status
+        createdAt
+        expiresAt
+        toolType
+        memberCount
+      }
+    }
+  `).then(res => res.myPendingInvites);
+
+
+  return defer({
+    receivedInvitations,
+    pendingInvitations,
+  });
 };
+
+
 
 export const InvitationsTabArea: React.FC = () => {
   return (
@@ -292,28 +358,40 @@ export const ProjectTabLinks: React.FC = () => {
   );
 };
 
-export const ProjectOptionsArea: React.FC = () => {
+export const DBSchemaDesignButton: React.FC = () => {
   return (
-    <ul className="project-options-area w-full min-w-[80vw] md:min-w-[70vw] xs:flex sm:grid gap-0 md:gap-4 grid-cols-2 h-max min-h-[30rem] self-start items-center">
-      <li className="group/opt-area-1 flex justify-start items-center even:justify-end h-[8rem] md:h-1/2 overflow-hidden p-4 px-8 max-w-[25rem] md:max-w-[22rem] md:mx-0 mx-auto mb-16 md:mb-0 rounded-lg ring-1 ring-outline1 bg-[#f8f8f8]/90 hover:bg-[#D70DB6] transition-all duration-200">
-        <div className="flex items-center justify-start w-full h-full">
-          <div className="h-14 w-14 min-h-14 min-w-14 bg-[#D70DB6] rounded-[50%] mr-4 group-hover/opt-area-1:bg-canvas">
-            <span className="flex items-center justify-center w-full h-full">
-              <svg className="w-1/2 stroke-canvas h-1/2 group-hover/opt-area-1:stroke-[#D70DB6]">
-                <use xlinkHref="#design"></use>
-              </svg>
-            </span>
+    <li className="group/opt-area-1 flex justify-start items-center even:justify-end h-[8rem] md:h-1/2 overflow-hidden max-w-[25rem] md:max-w-[22rem] md:mx-0 mx-auto mb-16 md:mb-0 rounded-lg ring-1 ring-outline1 bg-[#f8f8f8]/90 hover:bg-[#D70DB6] transition-all duration-200">
+      <Form method="post" className="w-full h-full">
+        <input type="hidden" name="intent" value="CREATE_SCHEMA_DESIGN" />
+        <button
+          type="submit"
+          className="flex items-center justify-start w-full h-full p-4 px-8 focus:outline-none"
+        >
+          <div className="h-14 w-14 min-h-14 min-w-14 bg-[#D70DB6] rounded-[50%] mr-4 group-hover/opt-area-1:bg-canvas flex items-center justify-center">
+            <svg className="w-1/2 stroke-canvas h-1/2 group-hover/opt-area-1:stroke-[#D70DB6]">
+              <use xlinkHref="#design"></use>
+            </svg>
           </div>
-          <div className="select-none">
+          <div className="select-none text-left">
             <h2 className="text-lg font-medium group-hover/opt-area-1:text-canvas">
               DB Schema Design
             </h2>
-            <p className="text-sm group-hover/opt-area-1:text-canvas">
+            <p className="text-sm group-hover/opt-area-1:text-canvas opacity-80">
               forward engineer a new db schema
             </p>
           </div>
-        </div>
-      </li>
+        </button>
+      </Form>
+    </li>
+  );
+};
+
+
+export const ProjectOptionsArea: React.FC = () => {
+  return (
+    <ul className="project-options-area w-full min-w-[80vw] md:min-w-[70vw] xs:flex sm:grid gap-0 md:gap-4 grid-cols-2 h-max min-h-[30rem] self-start items-center">
+
+      <DBSchemaDesignButton/>
 
       <li className="group/opt-area-2 flex justify-start items-center even:justify-end h-[8rem] md:h-1/2 overflow-hidden p-4 px-8 max-w-[25rem] md:max-w-[22rem] md:mx-0 mx-auto mb-16 md:mb-0 rounded-lg ring-1 ring-outline1 bg-[#f8f8f8]/90 hover:bg-[#0DD7B2] transition-all duration-200">
         <div className="flex items-center justify-start w-full h-full">

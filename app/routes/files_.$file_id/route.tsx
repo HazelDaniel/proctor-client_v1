@@ -80,27 +80,16 @@ export const clientLoader = async ({ params }: ClientLoaderFunctionArgs) => {
     `, { instanceId: file_id });
   } catch (err) {
     console.error("Access denied:", err);
-    return redirect("/auth");
-  }
-
-
-  // 2. Check file-level access (ownership/collaboration)
-  try {
-    await gqlRequest(`
-      query CheckAccess($instanceId: String!) {
-        toolInstance(instanceId: $instanceId) {
-          id
-          toolType
-        }
-      }
-    `, { instanceId: file_id });
-  } catch (err) {
-    console.error("Access denied:", err);
+    // If user is logged in, redirect to /files, otherwise to /auth
+    if (state.auth.isAuthenticated) {
+      return redirect("/files");
+    }
     return redirect("/auth");
   }
 
   return json({ designId: file_id });
 };
+
 
 
 const CommentBoxDrawer: React.FC<{
