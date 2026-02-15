@@ -53,8 +53,51 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
     }
   }
 
+  if (intent === "ACCEPT_INVITATION") {
+    const inviteId = formData.get("inviteId");
+    try {
+      await gqlRequest(`
+        mutation AcceptInvite($inviteId: String!) {
+          acceptToolInstanceInviteById(inviteId: $inviteId)
+        }
+      `, { inviteId });
+      return json({ success: true, message: "Invitation accepted" });
+    } catch (err: any) {
+      return json({ error: err.message || "Failed to accept invitation" }, { status: 500 });
+    }
+  }
+
+  if (intent === "DECLINE_INVITATION") {
+    const inviteId = formData.get("inviteId");
+    try {
+      await gqlRequest(`
+        mutation DeclineInvite($inviteId: String!) {
+          declineInvite(inviteId: $inviteId)
+        }
+      `, { inviteId });
+      return json({ success: true, message: "Invitation declined" });
+    } catch (err: any) {
+      return json({ error: err.message || "Failed to decline invitation" }, { status: 500 });
+    }
+  }
+
+  if (intent === "RESCIND_INVITATION") {
+    const inviteId = formData.get("inviteId");
+    try {
+      await gqlRequest(`
+        mutation RevokeInvite($inviteId: String!) {
+          revokeToolInstanceInvite(inviteId: $inviteId)
+        }
+      `, { inviteId });
+      return json({ success: true, message: "Invitation rescinded" });
+    } catch (err: any) {
+      return json({ error: err.message || "Failed to rescind invitation" }, { status: 500 });
+    }
+  }
+
   return json({ error: "Invalid intent" }, { status: 400 });
 };
+
 
 export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
   const state = store.getState();
@@ -350,7 +393,7 @@ export const ProjectTabLinks: React.FC = () => {
         <li className="w-[10rem] p-2 px-4 rounded-md bg-outline1/20 text-center hover:bg-outline1/50 transition-colors duration-500 cursor-pointer">
           <Link to={""}>shared</Link>
         </li>
-        <li className="w-[10rem] p-1 px-4 rounded-md bg-outline1/20 text-center hover:bg-outline1/50 transition-colors duration-500 cursor-pointer">
+        <li className="w-[10rem] p-2 px-4 rounded-md bg-outline1/20 text-center hover:bg-outline1/50 transition-colors duration-500 cursor-pointer">
           <Link to={""}>all files</Link>
         </li>
       </ul>

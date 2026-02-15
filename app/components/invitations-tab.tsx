@@ -1,11 +1,6 @@
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@radix-ui/react-dropdown-menu";
-import { useLoaderData, useSearchParams, Await } from "@remix-run/react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@radix-ui/react-dropdown-menu";
+import { useLoaderData, useSearchParams, Await, Form } from "@remix-run/react";
+
 import React, { useCallback, useMemo, Suspense } from "react";
 
 type InvitationsTabProps = {};
@@ -77,7 +72,7 @@ const InvitationsTabEntry: React.FC<{
           <div
             className="w-full flex gap-2 justify-start"
             title={`${
-              ofType === "pending" ? "To" : "By" } ${ownerUsername}. Received ${timeAgo}. ${members} members`}
+              ofType === "pending" ? "To" : "By" } ${ownerUsername}. ${ofType === "pending" ? "Sent" : "Received"} ${timeAgo}. ${members} members`}
           >
             <span className="text-mutedFG text-xs font-medium w-1/3 truncate justify-self-[start_!important]">
               {`${ofType === "pending" ? "to " : "By "}`} {ownerUsername}
@@ -100,19 +95,41 @@ const InvitationsTabEntry: React.FC<{
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="z-10 h-max w-max rounded-sm p-4 ring-1 ring-outline1 bg-canvas">
-            {ofType === "received" ? (
-              <>
-                <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
-                  Accept
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-              </>
-            ) : null}
-
-            <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
-              {ofType === "pending" ? "Rescind" : "Decline"}
-            </DropdownMenuItem>
+            <Form method="post">
+              <input type="hidden" name="inviteId" value={id} />
+              {ofType === "received" ? (
+                <>
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="ACCEPT_INVITATION"
+                    className="w-full text-left focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer hover:bg-muted/50 px-2 rounded-sm"
+                  >
+                    Accept
+                  </button>
+                  <DropdownMenuSeparator className="my-2 bg-outline1 h-[1px]" />
+                  <button
+                    type="submit"
+                    name="intent"
+                    value="DECLINE_INVITATION"
+                    className="w-full text-left focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer hover:bg-muted/50 px-2 rounded-sm"
+                  >
+                    Decline
+                  </button>
+                </>
+              ) : (
+                <button
+                  type="submit"
+                  name="intent"
+                  value="RESCIND_INVITATION"
+                  className="w-full text-left focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer hover:bg-muted/50 px-2 rounded-sm"
+                >
+                  Rescind
+                </button>
+              )}
+            </Form>
           </DropdownMenuContent>
+
         </DropdownMenu>
       </div>
     </div>

@@ -9,15 +9,40 @@ import { ResetIcon } from "@radix-ui/react-icons";
 import { workspaceSelectors } from "~/store";
 import { closeSidePane, openSidePane } from "~/reducers/workspace.reducer";
 import { useDispatch, useSelector } from "react-redux";
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { UnknownAction } from "@reduxjs/toolkit";
 import { SQLOutputPane } from "./sql-output-pane";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { Form, useActionData, useNavigation } from "@remix-run/react";
+import { Loader2 } from "lucide-react";
 
 export const WorkspaceHeader: React.FC = () => {
   const { sidePane: sidePaneVisible } = useSelector(workspaceSelectors);
 
   const dispatch = useDispatch<UnknownAction | any>();
   const sidePaneOpened = sidePaneVisible;
+
+  const actionData = useActionData<any>();
+  const navigation = useNavigation();
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+
+  const isSubmitting =
+    navigation.state === "submitting" &&
+    navigation.formData?.get("intent") === "INVITE_COLLABORATOR";
+
+  useEffect(() => {
+    if (actionData?.success) {
+      setIsInviteOpen(false);
+    }
+  }, [actionData]);
 
   const toggleSidePane = useCallback(() => {
     if (sidePaneOpened) {
@@ -26,8 +51,6 @@ export const WorkspaceHeader: React.FC = () => {
     }
     dispatch(openSidePane());
   }, [sidePaneOpened]);
-
-  console.log("rendering workspace header...");
 
   return (
     <header className="workspace-header flex items-center justify-start w-full h-32 md:h-20 px-4 pr-0 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-[15]">
@@ -67,7 +90,6 @@ export const WorkspaceHeader: React.FC = () => {
         />
       </div>
 
-      {/* star and other header components */}
       <div className="w-[15rem] flex justify-between items-center mx-auto md:mx-0">
         <span className="w-8 h-8 flex items-center justify-center">
           <svg
@@ -112,9 +134,67 @@ export const WorkspaceHeader: React.FC = () => {
             </svg>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-[15rem] mr-8 rounded-md p-2 bg-canvas *:outline-none *:focus:outline-none drop-shadow-md mt-4 z-[15]">
-            <DropdownMenuItem className="rounded-sm p-4 cursor-pointer">
-              invite collaborator
-            </DropdownMenuItem>
+            <Dialog open={isInviteOpen} onOpenChange={setIsInviteOpen}>
+              <DialogTrigger asChild>
+                <DropdownMenuItem
+                  className="rounded-sm p-4 cursor-pointer"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  invite collaborator
+                </DropdownMenuItem>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md bg-canvas ring-1 ring-outline1">
+                <DialogHeader>
+                  <DialogTitle>Invite Collaborator</DialogTitle>
+                  <DialogDescription>
+                    Enter the email address of the person you'd like to invite to
+                    this project.
+                  </DialogDescription>
+                </DialogHeader>
+                <Form method="post" className="flex flex-col gap-4">
+                  <input
+                    type="hidden"
+                    name="intent"
+                    value="INVITE_COLLABORATOR"
+                  />
+                  <div className="flex flex-col gap-2">
+                    <label htmlFor="email" className="text-sm font-medium">
+                      Email address
+                    </label>
+                    <input
+                      required
+                      type="email"
+                      name="email"
+                      id="email"
+                      placeholder="colleague@example.com"
+                      className="flex h-10 w-full rounded-md border border-outline1 bg-transparent px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-mutedFG focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    />
+                  </div>
+                  {actionData?.error && (
+                    <p className="text-sm font-medium text-danger">
+                      {actionData.error}
+                    </p>
+                  )}
+                  <DialogFooter className="sm:justify-end">
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-accent text-white hover:bg-accent/90 h-10 px-4 py-2"
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        "Send Invitation"
+                      )}
+                    </button>
+                  </DialogFooter>
+                </Form>
+              </DialogContent>
+            </Dialog>
+
             <DropdownMenuSeparator className="bg-outline1 w-full h-[1px]" />
             <DropdownMenuItem className="rounded-sm p-4 cursor-pointer">
               record session
@@ -128,7 +208,7 @@ export const WorkspaceHeader: React.FC = () => {
         </DropdownMenu>
       </div>
 
-      <SQLOutputPane/>
+      <SQLOutputPane />
     </header>
   );
 };

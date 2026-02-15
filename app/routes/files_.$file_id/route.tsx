@@ -1,4 +1,4 @@
-import { ClientLoaderFunctionArgs, Form, Link, json, redirect } from "@remix-run/react";
+import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, Link, json, redirect } from "@remix-run/react";
 import { useDispatch, useSelector } from "react-redux";
 import type { MetaFunction } from "@remix-run/node";
 import useEventListener from "~/hooks/useevent";
@@ -44,6 +44,7 @@ import { selectChatBubbles } from "~/reducers/chat-bubble.reducer";
 import { CollaborationProvider } from "~/contexts/collaboration.context";
 import { useParams } from "@remix-run/react";
 import { store } from "~/store";
+import { gqlRequest } from "~/utils/api.client";
 
 export const meta: MetaFunction = () => {
   return [
@@ -57,7 +58,34 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-import { gqlRequest } from "~/utils/api.client";
+export const clientAction = async ({ params, request }: ClientActionFunctionArgs) => {
+  const formData = await request.formData();
+  const intent = formData.get("intent");
+  const instanceId = params.file_id;
+
+  if (intent === "INVITE_COLLABORATOR") {
+    const email = formData.get("email") as string;
+    if (!email) return json({ error: "Email is required" }, { status: 400 });
+
+    try {
+      await gqlRequest(`
+        mutation CreateInvite($instanceId: String!, $email: String!) {
+          createToolInstanceInvite(instanceId: $instanceId, email: $email) {
+            token
+          }
+        }
+      `, { instanceId, email });
+
+      return json({ success: true, message: `Invitation sent to ${email}` });
+    } catch (err: any) {
+      console.error("Failed to create invite:", err);
+      return json({ error: err.message || "Failed to send invitation" }, { status: 500 });
+    }
+  }
+
+  return json({ error: "Invalid intent" }, { status: 400 });
+};
+
 
 export const clientLoader = async ({ params }: ClientLoaderFunctionArgs) => {
   const state = store.getState();
