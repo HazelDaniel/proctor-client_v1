@@ -31,10 +31,22 @@ export const clientLoader = async (args: ClientLoaderFunctionArgs) => {
   return json({});
 };
 
-export const StarredProjectsArea: React.FC = () => {
+export const InvitationsTabArea: React.FC = () => {
+  return (
+    <>
+      <h2 className="w-full my-6 mt-0 capitalize text-fg">invitations</h2>
+      <InvitationsTab />
+    </>
+  );
+};
+
+export const ArchivedProjectsArea: React.FC = () => {
   return (
     <aside className="flex flex-col w-full starred-projects align-center h-max min-h-[40rem] flex-1">
-      <h2 className="w-full mb-10 capitalize text-fg">starred projects</h2>
+
+      <InvitationsTabArea />
+
+      <h2 className="w-full my-6 capitalize text-fg">archived projects</h2>
 
       <ul className="flex flex-col items-start justify-start flex-1 w-full list-none border-l-8 border-l-accent h-max">
         <li className="group-file1 flex justify-start w-[95%] h-12 relative">
@@ -105,8 +117,6 @@ export const StarredProjectsArea: React.FC = () => {
         </li>
       </ul>
 
-      <h2 className="w-full my-6 mt-10 capitalize text-fg">invitations</h2>
-      <InvitationsTab />
 
       <div className="w-[95%] h-max group/settings-pane overflow-visible flex relative">
         <div className="w-full peer/settings-bar p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly mt-4 ring-offset-2 group-has-[button:focus]/settings-pane:border-2">
@@ -385,7 +395,7 @@ export const FilesPage: React.FC = () => {
           >
             <div className="flex h-full flex-col justify-start p-4 md:max-w-[30rem] sm:max-w-[100vw] min-w-[20rem] items-start">
               <FilesSearchBox />
-              <StarredProjectsArea />
+              <ArchivedProjectsArea />
             </div>
           </ResizablePanel>
           <ResizableHandle withHandle className="w-[3px]" />
