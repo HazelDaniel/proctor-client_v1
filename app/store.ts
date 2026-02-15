@@ -22,6 +22,7 @@ import { compositionReducer } from "./reducers/composition.reducer";
 import { parseNodeID } from "./utils/node.utils";
 import { graphReducer } from "./reducers/graph.reducer";
 import { updateFormModalReducer } from "./reducers/update-form-modal.reducer";
+import authReducer from "./reducers/auth.reducer";
 
 const rootReducer = combineReducers({
   workspace: workspaceReducer,
@@ -31,6 +32,7 @@ const rootReducer = combineReducers({
   composition: compositionReducer,
   graphs: graphReducer,
   tableUpdateModal: updateFormModalReducer,
+  auth: authReducer,
 });
 
 const persistConfig: PersistConfig<{
@@ -41,12 +43,14 @@ const persistConfig: PersistConfig<{
   composition: ReturnType<typeof compositionReducer>;
   graphs: ReturnType<typeof graphReducer>;
   tableUpdateModal: ReturnType<typeof updateFormModalReducer>;
+  auth: ReturnType<typeof authReducer>;
 }> = {
   key: "root",
   // whitelist: ["workspace", "types"],
-  whitelist: ["workspace"],
+  whitelist: ["workspace", "auth"],
   storage: new PersistoreStore(),
 };
+
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
 

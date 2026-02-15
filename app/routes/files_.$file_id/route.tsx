@@ -1,4 +1,4 @@
-import { ClientLoaderFunctionArgs, Form, Link, json } from "@remix-run/react";
+import { ClientLoaderFunctionArgs, Form, Link, json, redirect } from "@remix-run/react";
 import { useDispatch, useSelector } from "react-redux";
 import type { MetaFunction } from "@remix-run/node";
 import useEventListener from "~/hooks/useevent";
@@ -43,6 +43,7 @@ import {
 import { selectChatBubbles } from "~/reducers/chat-bubble.reducer";
 import { CollaborationProvider } from "~/contexts/collaboration.context";
 import { useParams } from "@remix-run/react";
+import { store } from "~/store";
 
 export const meta: MetaFunction = () => {
   return [
@@ -56,10 +57,51 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export const clientLoader = async (args: ClientLoaderFunctionArgs) => {
-  const { design_id } = args.params;
-  return json({ designId: design_id });
+import { gqlRequest } from "~/utils/api.client";
+
+export const clientLoader = async ({ params }: ClientLoaderFunctionArgs) => {
+  const state = store.getState();
+  const file_id = params.file_id;
+
+  // 1. Check basic authentication
+  if (state.auth.isInitialized && !state.auth.isAuthenticated) {
+    return redirect("/auth");
+  }
+
+  // 2. Check file-level access (ownership/collaboration)
+  try {
+    await gqlRequest(`
+      query CheckAccess($instanceId: String!) {
+        toolInstance(instanceId: $instanceId) {
+          id
+          toolType
+        }
+      }
+    `, { instanceId: file_id });
+  } catch (err) {
+    console.error("Access denied:", err);
+    return redirect("/auth");
+  }
+
+
+  // 2. Check file-level access (ownership/collaboration)
+  try {
+    await gqlRequest(`
+      query CheckAccess($instanceId: String!) {
+        toolInstance(instanceId: $instanceId) {
+          id
+          toolType
+        }
+      }
+    `, { instanceId: file_id });
+  } catch (err) {
+    console.error("Access denied:", err);
+    return redirect("/auth");
+  }
+
+  return json({ designId: file_id });
 };
+
 
 const CommentBoxDrawer: React.FC<{
   commentsOpened: boolean;

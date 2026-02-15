@@ -1,11 +1,55 @@
-import { ClientLoaderFunctionArgs, Form, Link } from "@remix-run/react";
-import { Logo } from "~/components/logo";
+import { Link, useNavigate } from "@remix-run/react";
 
-export const clientLoader = (args: ClientLoaderFunctionArgs) => {
-  return {};
-};
+import { Logo } from "~/components/logo";
+import { useState } from "react";
+import { gqlRequest } from "~/utils/api.client";
 
 export const AuthPage: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
+  const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const handleRequestLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+    try {
+      await gqlRequest(`
+        mutation RequestLogin($email: String!, $username: String) {
+          requestLogin(email: $email, username: $username)
+        }
+      `, { email, username });
+      setSent(true);
+    } catch (err: any) {
+      setError(err.message || "Failed to request login");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (sent) {
+    return (
+      <section className="flex flex-col items-center justify-center w-full h-screen bg-canvas p-8 text-center">
+        <div className="w-16 h-16 mb-8">
+          <Logo />
+        </div>
+        <h2 className="text-2xl font-semibold mb-4">Check your email</h2>
+        <p className="text-secondaryText max-w-md">
+          We've sent a magic login link to <strong>{email}</strong>. 
+          Please check your inbox (and spam folder) to continue.
+        </p>
+        <button 
+          onClick={() => setSent(false)} 
+          className="mt-8 text-accent underline"
+        >
+          Back to sign in
+        </button>
+      </section>
+    );
+  }
+
   return (
     <section className="flex flex-col items-center justify-center lg:flex-row w-[100vw] h-[68rem] min-h-[100vh] relative overflow-hidden">
       <div className="bg-auth-bg-mobile lg:bg-auth-bg-desktop absolute lg:relative w-full h-full md:h-full left-0 bg-[cover] z-2 block lg:mt-0"></div>
@@ -18,131 +62,68 @@ export const AuthPage: React.FC = () => {
         </div>
 
         <h2 className="mb-[60px] text-2xl font-semibold text-secondaryText">
-          Sign in to proctor
+          Sign in to Proctor
         </h2>
-        <Form className="flex flex-col w-[90%] md:w-[80%] h-max">
+        
+        <form onSubmit={handleRequestLogin} className="flex flex-col w-[90%] md:w-[80%] h-max">
           <input
             type="email"
-            className="h-16 md:h-[3rem] w-full rounded-full ring-1 mb-8 bg-outline1/20 focus:outline-none focus:rounded-sm px-8 placeholder:text-secondaryText/50 ring-outline1 text-secondaryText text-md"
-            placeholder="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-16 md:h-[3rem] w-full rounded-full ring-1 mb-4 bg-outline1/20 focus:outline-none focus:rounded-sm px-8 placeholder:text-secondaryText/50 ring-outline1 text-secondaryText text-md"
+            placeholder="Email address"
           />
 
-          <div className="relative h-16 md:h-[3rem] w-full">
-            <input
-              type="password"
-              className="h-16 md:h-[3rem] w-full rounded-full ring-1 mb-8 bg-outline1/20 focus:outline-none focus:rounded-sm px-8 placeholder:text-secondaryText/50 ring-outline1 text-secondaryText peer/passwordField text-md"
-              placeholder="password"
-            />
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="h-16 md:h-[3rem] w-full rounded-full ring-1 mb-8 bg-outline1/20 focus:outline-none focus:rounded-sm px-8 placeholder:text-secondaryText/50 ring-outline1 text-secondaryText text-md"
+            placeholder="Username"
+          />
 
-            <span className="y-centered-absolute right-4 w-8 h-8 flex items-center justify-center peer-focus/passwordField:opacity-0 transition-opacity duration-500">
-              <svg className="w-full h-full">
-                <use xlinkHref="#eye"></use>
-              </svg>
-            </span>
-
-            <span className="y-centered-absolute right-4 w-8 h-8 flex items-center justify-center opacity-0 peer-focus/passwordField:opacity-100 transition-opacity duration-500">
-              <svg className="w-full h-full">
-                <use xlinkHref="#eye-slashed"></use>
-              </svg>
-            </span>
-          </div>
-
-          <div className="flex items-center my-6">
-            <div className="flex-1 flex items-center">
-              <input
-                type="checkbox"
-                name=""
-                id="remember-me"
-                className="mr-4 accent-outline1d h-full"
-              />
-              <label
-                htmlFor="remember-me"
-                className="capitalize text-outline1d text-md h-full flex flex-col justify-center"
-              >
-                remember me
-              </label>
-            </div>
-            <Link className="underline" to={""}>
-              forgot password?
-            </Link>
-          </div>
+          {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
 
           <button
             type="submit"
-            className="mt-4 rounded-full h-16 md:h-[3rem] bg-fg text-canvas text-lg uppercase mb-8"
+            disabled={loading}
+            className="mt-4 rounded-full h-16 md:h-[3rem] bg-fg text-canvas text-lg uppercase mb-8 disabled:opacity-50"
           >
-            sign in
+            {loading ? "Sending link..." : "Send Magic Link"}
           </button>
 
           <div className="flex justify-center items-center mt-4">
             <span className="flex-1 h-1 bg-outline1 rounded mr-4"></span>
-            <p className="text-outline1d text-md font-medium">or login using</p>
+            <p className="text-outline1d text-md font-medium">social login (coming soon)</p>
             <span className="flex-1 h-1 bg-outline1 rounded ml-4"></span>
           </div>
 
-          <ul className="w-full h-max flex gap-4 justify-center mt-2 mb-8">
-            <li className="w-8 h-8">
-              <Link
-                to={""}
-                className="w-full h-full flex items-center justify-center"
-              >
-                <svg className="w-full h-full">
-                  <use xlinkHref="#google"></use>
-                </svg>
-              </Link>
-            </li>
-
-            <li className="w-8 h-8">
-              <Link
-                to={""}
-                className="w-full h-full flex items-center justify-center"
-              >
-                <svg className="w-full h-full">
-                  <use xlinkHref="#meta"></use>
-                </svg>
-              </Link>
-            </li>
-
-            <li className="w-8 h-8">
-              <Link
-                to={""}
-                className="w-full h-full flex items-center justify-center"
-              >
-                <svg className="w-full h-full">
-                  <use xlinkHref="#linkedin"></use>
-                </svg>
-              </Link>
-            </li>
-
-            <li className="w-8 h-8">
-              <Link
-                to={""}
-                className="w-full h-full flex items-center justify-center"
-              >
-                <svg className="w-full h-full">
-                  <use xlinkHref="#github"></use>
-                </svg>
-              </Link>
-            </li>
+          <ul className="w-full h-max flex gap-4 justify-center mt-2 mb-8 opacity-50 pointer-events-none">
+            {/* Social icons removed for brevity, keeping only visual structure */}
+            <li className="w-8 h-8 bg-outline1 rounded-full"></li>
+            <li className="w-8 h-8 bg-outline1 rounded-full"></li>
+            <li className="w-8 h-8 bg-outline1 rounded-full"></li>
           </ul>
 
           <div className="flex w-[90%] justify-between mx-auto h-max mb-16">
             <p className="text-lg text-outline1d md:text-md">
-              Don't have an account?
+              Need help?
             </p>{" "}
             <span>
               <Link
                 to={""}
                 className="underline underline-offset-4 text-lg md:text-md font-semibold text-accent"
               >
-                sign up
+                contact support
               </Link>
             </span>
           </div>
-        </Form>
+        </form>
       </div>
     </section>
   );
 };
+
 
 export default AuthPage;

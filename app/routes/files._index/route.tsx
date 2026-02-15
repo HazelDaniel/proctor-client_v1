@@ -1,4 +1,4 @@
-import { ClientLoaderFunctionArgs, json } from "@remix-run/react";
+import { ClientLoaderFunctionArgs, json, redirect } from "@remix-run/react";
 import type { MetaFunction } from "@remix-run/node";
 import { FilesHeader } from "~/components/files-header";
 import {
@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
 import InvitationsTab from "~/components/invitations-tab";
+import { store } from "~/store";
 
 export const meta: MetaFunction = () => {
   return [
@@ -27,7 +28,12 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-export const clientLoader = async (args: ClientLoaderFunctionArgs) => {
+export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
+  const state = store.getState();
+  // Ensure we only redirect after we've attempted to initialize auth
+  if (state.auth.isInitialized && !state.auth.isAuthenticated) {
+    return redirect("/auth");
+  }
   return json({});
 };
 

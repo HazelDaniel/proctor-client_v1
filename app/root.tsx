@@ -14,6 +14,10 @@ import { persistor, store } from "./store";
 import { useEffect, useState } from "react";
 import { PersistGate } from "redux-persist/lib/integration/react";
 
+import { gqlRequest } from "./utils/api.client";
+import { useDispatch, useSelector } from "react-redux";
+import { setUser, logout } from "./reducers/auth.reducer";
+
 export const links: LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
   {
@@ -747,14 +751,48 @@ export function Layout({ children }: { children: React.ReactNode }) {
   );
 }
 
+function AuthInitializer({ children }: { children: React.ReactNode }) {
+  const dispatch = useDispatch();
+
+  useEffect(() => {
+    async function initAuth() {
+      try {
+        const data = await gqlRequest(`
+          query GetCurrentUser {
+            getCurrentUser {
+              id
+              email
+              username
+              emailVerified
+            }
+          }
+        `);
+        if (data.getCurrentUser) {
+          dispatch(setUser(data.getCurrentUser));
+        } else {
+          dispatch(logout());
+        }
+      } catch (err) {
+        dispatch(logout());
+      }
+    }
+    initAuth();
+  }, [dispatch]);
+
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <>
       <Provider store={store}>
         <PersistGate persistor={persistor}>
-          <Outlet />
+          <AuthInitializer>
+            <Outlet />
+          </AuthInitializer>
         </PersistGate>
       </Provider>
     </>
   );
 }
+
