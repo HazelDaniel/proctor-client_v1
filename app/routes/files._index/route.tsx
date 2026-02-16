@@ -278,7 +278,6 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
 };
 
 
-
 export const InvitationsTabArea: React.FC = () => {
   return (
     <>

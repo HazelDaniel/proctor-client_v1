@@ -1,4 +1,5 @@
 import { UnknownAction } from "@reduxjs/toolkit";
+import { Link } from "@remix-run/react";
 import React, { useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -91,7 +92,9 @@ export const WorkspaceSidetab: React.FC = () => {
               </li>
 
               <li className="w-full flex justify-between items-center h-8 overflow-hidden capitalize my-2">
-                back to files
+                <Link to={"/files"}>
+                    back to files
+                </Link>
               </li>
 
               <li className="w-full flex justify-between items-center h-8 overflow-hidden capitalize my-2">
