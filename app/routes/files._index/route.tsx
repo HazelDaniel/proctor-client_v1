@@ -375,11 +375,13 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
               alt="the icon image representing a big uncolored innner folder"
               className="w-[60%] h-[80%] drop-shadow-lg absolute top-[0.5rem] group-hover/toolinstance-folder:top-[0rem] left-[15%] ease-out duration-200 delay-150"
             />
-            <img
-              src="/public/icons/big-colored-folder.png"
-              alt="the icon image representing a big colored folder"
-              className="w-[80%] h-[80%] aspect-square drop-shadow-lg relative"
-            />
+            <Link to={`/files/${id}`} className="w-[80%] h-[80%] aspect-square drop-shadow-lg relative">
+              <img
+                src="/public/icons/big-colored-folder.png"
+                alt="the icon image representing a big colored folder"
+                className="size-full"
+              />
+            </Link>
 
             <DropdownMenu>
               <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none absolute top-0 w-12 size-8 right-[-3rem]">
