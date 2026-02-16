@@ -150,10 +150,25 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
         name
       }
     }
-  `).then(res => res.toolInstances.map((t: any) => ({
-    ...t,
-    ownerID: t.ownerId // Map ownerId to ownerID if needed by ToolInstanceType
-  })));
+  `).then(res => {
+    console.debug("[FilesLoader] GraphQL raw response:", res);
+    if (!res?.toolInstances || !Array.isArray(res.toolInstances)) {
+      console.warn("[FilesLoader] Unexpected toolInstances format or missing data:", res);
+      return [];
+    }
+    return res.toolInstances.map((t: any) => ({
+      id: t.id || "unknown",
+      toolType: t.toolType || "unknown",
+      createdAt: t.createdAt ? new Date(isNaN(+t.createdAt) ? t.createdAt : +t.createdAt) : new Date(),
+      ownerID: t.ownerId || "unknown",
+      name: t.name || "Untitled Project",
+    }));
+  }).catch(err => {
+    console.error("[FilesLoader] gqlRequest failed for toolInstances:", err);
+    // Include specific error message if available from GraphQL
+    const message = err.message || (err.errors && err.errors[0]?.message) || "Unknown error";
+    throw new Error(message);
+  });
 
 
   return defer({
@@ -292,7 +307,7 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
             <img
               src="/public/icons/inner-file.svg"
               alt="the icon image representing a big uncolored innner folder"
-              className="w-[60%] h-[80%] drop-shadow-lg absolute top-[0.5rem] group-hover/toolinstance-folder:top-[0rem] left-[15%] ease-in-out duration-150"
+              className="w-[60%] h-[80%] drop-shadow-lg absolute top-[0.5rem] group-hover/toolinstance-folder:top-[0rem] left-[15%] ease-out duration-200 delay-150"
             />
             <img
               src="/public/icons/big-colored-folder.png"
@@ -304,7 +319,26 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
           <div className="flex-1 flex flex-col items-start justify-center">
             <h2 className="font-semibold text-lg">{name}</h2>
             <p className="font-medium text-outline1d">
-              last saved {`${new Date(+createdAt).getMinutes()}`} minutes ago
+              last saved {(() => {
+                try {
+                  if (!createdAt) return "recently";
+                  const date = new Date(isNaN(+createdAt) ? createdAt : +createdAt);
+                  if (isNaN(date.getTime())) return "recently";
+                  
+                  const now = new Date();
+                  const diffMinutes = Math.floor((now.getTime() - date.getTime()) / (1000 * 60));
+                  
+                  if (diffMinutes < 1) return "just now";
+                  if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
+                  
+                  const diffHours = Math.floor(diffMinutes / 60);
+                  if (diffHours < 24) return `${diffHours} hours ago`;
+                  
+                  return date.toLocaleDateString();
+                } catch (e) {
+                  return "recently";
+                }
+              })()}
             </p>
           </div>
         </div>
@@ -326,7 +360,10 @@ export const FileListView: React.FC = () => {
   return (
     <ul className="flex md:grid flex-col md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(25rem,1fr))] justify-start md:justify-normal items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw] mb-20">
       <Suspense fallback={<p className="text-secondaryText px-8">Loading your projects...</p>}>
-        <Await resolve={toolInstances}>
+        <Await 
+          resolve={toolInstances} 
+          errorElement={<p className="text-red-500 px-8">Error loading projects. Check console for details.</p>}
+        >
           {(resolvedTools: ToolInstanceType[]) => (
             <>
               {resolvedTools.map((tool) => (
