@@ -1,5 +1,5 @@
-import { Await, ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect, useLoaderData } from "@remix-run/react";
-import { Suspense } from "react";
+import { Await, ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect, useLoaderData, useFetcher } from "@remix-run/react";
+import { Suspense, useEffect, useMemo, useRef } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { FilesHeader } from "~/components/files-header";
 import {
@@ -94,6 +94,52 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       return json({ success: true, message: "Invitation rescinded" });
     } catch (err: any) {
       return json({ error: err.message || "Failed to rescind invitation" }, { status: 500 });
+    }
+  }
+
+  if (intent === "RENAME_TOOL_INSTANCE") {
+    const instanceId = formData.get("instanceId");
+    const name = formData.get("name");
+    try {
+      await gqlRequest(`
+        mutation RenameToolInstance($instanceId: String!, $name: String!) {
+          renameToolInstance(instanceId: $instanceId, name: $name) {
+             id
+             name
+          }
+        }
+      `, { instanceId, name });
+      return json({ success: true, message: "Renamed" });
+    } catch (err: any) {
+      return json({ error: err.message || "Failed to rename" }, { status: 500 });
+    }
+  }
+
+  if (intent === "ARCHIVE_TOOL_INSTANCE") {
+    const instanceId = formData.get("instanceId");
+    try {
+      await gqlRequest(`
+        mutation ArchiveToolInstance($instanceId: String!) {
+          archiveToolInstance(instanceId: $instanceId)
+        }
+      `, { instanceId });
+      return json({ success: true, message: "Archived" });
+    } catch (err: any) {
+      return json({ error: err.message || "Failed to archive" }, { status: 500 });
+    }
+  }
+
+  if (intent === "DELETE_TOOL_INSTANCE") {
+    const instanceId = formData.get("instanceId");
+    try {
+      await gqlRequest(`
+        mutation DeleteToolInstance($instanceId: String!) {
+          deleteToolInstance(instanceId: $instanceId)
+        }
+      `, { instanceId });
+      return json({ success: true, message: "Deleted" });
+    } catch (err: any) {
+      return json({ error: err.message || "Failed to delete" }, { status: 500 });
     }
   }
 
@@ -298,9 +344,29 @@ export const ArchivedProjectsArea: React.FC = () => {
 };
 
 export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, ownerID, toolType, name}) => {
+  const fetcher = useFetcher();
+  const [isEditing, setIsEditing] = useState(false);
+  
+  // Optimistic UI: use the submitted name if available, otherwise use props
+  const optimisticName = fetcher.formData?.has("name") && fetcher.formData.get("intent") === "RENAME_TOOL_INSTANCE"
+    ? String(fetcher.formData.get("name"))
+    : name;
+  
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (isEditing && inputRef.current) {
+      // Timeout to ensure focus is set after Radix UI restores focus
+      const timer = setTimeout(() => {
+        inputRef.current?.focus();
+        inputRef.current?.select();
+      }, 20);
+      return () => clearTimeout(timer);
+    }
+  }, [isEditing]);
 
   return <>
-      <li className="h-48 md:h-[20rem] group/list-view-item1 flex justify-start items-center w-full md:w-max relative overflow-visible">
+      <li className="h-48 md:h-[20rem] group/list-view-item1 flex justify-start items-center w-full md:w-max relative overflow-hidden">
         <span className="y-right-absolute-full w-2 group-hover/list-view-item1:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
         <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
           <div className="w-[5rem] mr-[10%] md:w-[14rem] md:h-full h-[5rem] flex md:mb-4 relative group/toolinstance-folder">
@@ -314,10 +380,84 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
               alt="the icon image representing a big colored folder"
               className="w-[80%] h-[80%] aspect-square drop-shadow-lg relative"
             />
+
+            <DropdownMenu>
+              <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none absolute top-0 w-12 size-8 right-[-3rem]">
+                <button className="flex items-center justify-center size-full text-mutedFG ">
+                  <svg className="h-2 w-4 cursor-pointer">
+                    <use xlinkHref="#kebab"></use>
+                  </svg>
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="z-10 h-max w-max rounded-sm p-4 ring-1 ring-outline1 bg-canvas">
+                <DropdownMenuItem 
+                  className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer"
+                  onSelect={() => setIsEditing(true)}
+                >
+                  rename file
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer"
+                  onSelect={() => {
+                    const formData = new FormData();
+                    formData.set("intent", "ARCHIVE_TOOL_INSTANCE");
+                    formData.set("instanceId", id);
+                    fetcher.submit(formData, { method: "post" });
+                  }}
+                >
+                  archive file
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer"
+                  onSelect={() => {
+                     // Confirm dialog could go here, but per requirements "strict" implementation first
+                     const formData = new FormData();
+                     formData.set("intent", "DELETE_TOOL_INSTANCE");
+                     formData.set("instanceId", id);
+                     fetcher.submit(formData, { method: "post" });
+                  }}
+                >
+                  delete file
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <div className="flex-1 flex flex-col items-start justify-center">
-            <h2 className="font-semibold text-lg">{name}</h2>
+            <>
+              <fetcher.Form className={`${isEditing ? "flex" : "hidden"}`} method="post" onSubmit={() => setIsEditing(false)} onBlur={(e) => {
+                 // If blur happens without submit (e.g. clicking away), we might want to submit or cancel.
+                 // Requirements say "name content is replaced with updated (optimistic)..." implies auto-submit or explicit submit.
+                 // "input field will autofocus... after form is submitted mode is set back to inert"
+                 // Let's support blur-to-submit for better UX, or just cancel on escape.
+                 // For now, explicit Enter to submit (handled by Form) is safest. 
+                 // But let's trigger submit on blur to be "seamless" if the value changed? 
+                 // Simple approach: Submit on blur.
+                 if (e.currentTarget instanceof HTMLFormElement) {
+                    fetcher.submit(e.currentTarget);
+                 }
+                 setIsEditing(false);
+              }}>
+                  <input type="hidden" name="intent" value="RENAME_TOOL_INSTANCE" />
+                  <input type="hidden" name="instanceId" value={id} />
+                  <input 
+                    type="text" 
+                    name="name" 
+                    ref={inputRef}
+                    defaultValue={name} 
+                    className={`font-semibold text-primary/80 text-lg bg-transparent border border-accents-500 focus:outline-none w-[80%] px-2`}
+                    id={`tool-instance-${id}`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') {
+                        setIsEditing(false);
+                      }
+                    }}
+                  />
+              </fetcher.Form>
+              <h2 className={`${isEditing ? "hidden" : "block font-semibold text-lg w-[10rem] truncate"}`}>{optimisticName}</h2>
+          </>
             <p className="font-medium text-outline1d">
               last saved {(() => {
                 try {
@@ -343,7 +483,7 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
           </div>
         </div>
 
-        <div className="h-full ml-auto justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
+        <div className="h-full ml-[2rem] justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
           <img
             src="/images/emoji_student_1.png"
             alt="the image representing the author of a file"

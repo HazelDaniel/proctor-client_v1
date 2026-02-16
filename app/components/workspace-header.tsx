@@ -21,11 +21,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { Form, useActionData, useNavigation } from "@remix-run/react";
+import { Form, useActionData, useNavigation, useFetcher } from "@remix-run/react";
 import { Loader2 } from "lucide-react";
 
-export const WorkspaceHeader: React.FC = () => {
+export interface WorkspaceHeaderProps {
+  initialName?: string;
+  instanceId?: string;
+}
+
+export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ initialName, instanceId }) => {
   const { sidePane: sidePaneVisible } = useSelector(workspaceSelectors);
+  const fetcher = useFetcher();
 
   const dispatch = useDispatch<UnknownAction | any>();
   const sidePaneOpened = sidePaneVisible;
@@ -33,6 +39,12 @@ export const WorkspaceHeader: React.FC = () => {
   const actionData = useActionData<any>();
   const navigation = useNavigation();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+  const [name, setName] = useState(initialName || "untitled_project");
+
+  // Sync state with props when they change (e.g. initial load)
+  useEffect(() => {
+    if (initialName) setName(initialName);
+  }, [initialName]);
 
   const isSubmitting =
     navigation.state === "submitting" &&
@@ -51,6 +63,17 @@ export const WorkspaceHeader: React.FC = () => {
     }
     dispatch(openSidePane());
   }, [sidePaneOpened]);
+
+  const handleRename = () => {
+    if (!instanceId || name === initialName) return;
+    
+    // Optimistic update handled by local state 'name', fetcher submits in background
+    const formData = new FormData();
+    formData.set("intent", "RENAME_TOOL_INSTANCE");
+    formData.set("instanceId", instanceId);
+    formData.set("name", name);
+    fetcher.submit(formData, { method: "post" });
+  };
 
   return (
     <header className="workspace-header flex items-center justify-start w-full h-32 md:h-20 px-4 pr-0 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-[15]">
@@ -81,13 +104,16 @@ export const WorkspaceHeader: React.FC = () => {
       </div>
 
       <div className="w-0 md:block mx-0 md:mx-auto">
-        <input
-          type="text"
-          name=""
-          id=""
-          className="bg-transparent outline-none fixed md:static top-32 md:top-0  x-centered-absolute text-center font-semibold focus:ring-1 focus:ring-outline1 rounded-md"
-          defaultValue={"untitled_project"}
-        />
+        <fetcher.Form method="post" onSubmit={(e) => { e.preventDefault(); handleRename(); }}>
+           <input
+            type="text"
+            name="name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onBlur={handleRename}
+            className="bg-transparent outline-none fixed md:static top-32 md:top-0  x-centered-absolute text-center font-semibold focus:ring-1 focus:ring-outline1 rounded-md"
+          />
+        </fetcher.Form>
       </div>
 
       <div className="w-[15rem] flex justify-between items-center mx-auto md:mx-0">

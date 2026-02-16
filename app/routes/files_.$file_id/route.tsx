@@ -1,4 +1,4 @@
-import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, Link, json, redirect } from "@remix-run/react";
+import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, Link, json, redirect, useLoaderData } from "@remix-run/react";
 import { useDispatch, useSelector } from "react-redux";
 import type { MetaFunction } from "@remix-run/node";
 import useEventListener from "~/hooks/useevent";
@@ -83,6 +83,25 @@ export const clientAction = async ({ params, request }: ClientActionFunctionArgs
     }
   }
 
+  if (intent === "RENAME_TOOL_INSTANCE") {
+    const name = formData.get("name") as string;
+    if (!name) return json({ error: "Name is required" }, { status: 400 });
+    
+    try {
+      await gqlRequest(`
+        mutation RenameToolInstance($instanceId: String!, $name: String!) {
+          renameToolInstance(instanceId: $instanceId, name: $name) {
+             id
+             name
+          }
+        }
+      `, { instanceId, name });
+      return json({ success: true, name });
+    } catch (err: any) {
+      return json({ error: err.message || "Failed to rename" }, { status: 500 });
+    }
+  }
+
   return json({ error: "Invalid intent" }, { status: 400 });
 };
 
@@ -97,15 +116,20 @@ export const clientLoader = async ({ params }: ClientLoaderFunctionArgs) => {
   }
 
   // 2. Check file-level access (ownership/collaboration)
+  // 2. Check file-level access (ownership/collaboration) and get details
+  let toolInstance;
   try {
-    await gqlRequest(`
+    const res = await gqlRequest(`
       query CheckAccess($instanceId: String!) {
         toolInstance(instanceId: $instanceId) {
           id
           toolType
+          name
+          ownerId
         }
       }
     `, { instanceId: file_id });
+    toolInstance = res.toolInstance;
   } catch (err) {
     console.error("Access denied:", err);
     // If user is logged in, redirect to /files, otherwise to /auth
@@ -115,7 +139,7 @@ export const clientLoader = async ({ params }: ClientLoaderFunctionArgs) => {
     return redirect("/auth");
   }
 
-  return json({ designId: file_id });
+  return json({ designId: file_id, toolInstance });
 };
 
 
@@ -384,7 +408,10 @@ export const DesignsPage: React.FC = React.memo(() => {
 
   return (
     <CollaborationProvider instanceId={designId} token={token}>
-      <WorkspaceHeader />
+      <WorkspaceHeader 
+        initialName={useLoaderData<typeof clientLoader>().toolInstance?.name || 'Untitled Project'} 
+        instanceId={useLoaderData<typeof clientLoader>().toolInstance?.id || designId}
+      />
       <section className="designs-section flex-1 w-full basis-auto h-max md:mt-20 mt-32 overflow-hidden">
         <ChatBubbleViewCtx>
           <CommentBoard instance={instance} />
