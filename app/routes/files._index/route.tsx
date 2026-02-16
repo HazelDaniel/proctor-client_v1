@@ -19,6 +19,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@radix-ui/react-dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose,
+} from "~/components/ui/dialog";
 import InvitationsTab from "~/components/invitations-tab";
 import { store } from "~/store";
 import { gqlRequest } from "~/utils/api.client";
@@ -129,6 +139,20 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
     }
   }
 
+  if (intent === "UNARCHIVE_TOOL_INSTANCE") {
+    const instanceId = formData.get("instanceId");
+    try {
+      await gqlRequest(`
+        mutation UnarchiveToolInstance($instanceId: String!) {
+          unarchiveToolInstance(instanceId: $instanceId)
+        }
+      `, { instanceId });
+      return json({ success: true, message: "Unarchived" });
+    } catch (err: any) {
+      return json({ error: err.message || "Failed to unarchive" }, { status: 500 });
+    }
+  }
+
   if (intent === "DELETE_TOOL_INSTANCE") {
     const instanceId = formData.get("instanceId");
     try {
@@ -216,11 +240,40 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
     throw new Error(message);
   });
 
+  /* Fetch archived projects */
+  const archivedProjects = gqlRequest(`
+    query ListArchivedTools {
+      myArchivedToolInstances {
+        id
+        toolType
+        createdAt
+        ownerId
+        name
+        archivedAt
+      }
+    }
+  `).then(res => {
+    if (!res?.myArchivedToolInstances || !Array.isArray(res.myArchivedToolInstances)) {
+      return [];
+    }
+    return res.myArchivedToolInstances.map((t: any) => ({
+      id: t.id,
+      toolType: t.toolType,
+      createdAt: t.createdAt ? new Date(isNaN(+t.createdAt) ? t.createdAt : +t.createdAt) : new Date(),
+      ownerID: t.ownerId,
+      name: t.name || "Untitled Project",
+      archivedAt: t.archivedAt ? new Date(isNaN(+t.archivedAt) ? t.archivedAt : +t.archivedAt) : new Date(),
+    }));
+  }).catch(err => {
+    console.error("[FilesLoader] Failed to fetch archived projects:", err);
+    return [];
+  });
 
   return defer({
     receivedInvitations,
     pendingInvitations,
     toolInstances,
+    archivedProjects,
   });
 };
 
@@ -235,6 +288,89 @@ export const InvitationsTabArea: React.FC = () => {
   );
 };
 
+const ArchivedProjectItem: React.FC<{ project: ToolInstanceType }> = ({ project }) => {
+  const fetcher = useFetcher();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  return (
+    <li className="group-file1 flex justify-start w-[95%] h-12 relative hover:bg-black/5 transition-colors rounded-sm">
+      <span className="flex items-center justify-center w-12 h-full">
+        <svg className="w-full h-full scale-75">
+          <use xlinkHref="#folder"></use>
+        </svg>
+      </span>
+      <p className="w-[15rem] md:w-[20rem] h-[2rem] text-ellipsis self-center text-sm px-4 truncate font-medium text-fg/80">
+        {project.name}
+      </p>
+
+      <div className="ml-auto mr-2 h-full flex items-center">
+        <DropdownMenu>
+          <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none opacity-50 group-hover-file1:opacity-100">
+            <button className="flex items-center justify-center w-8 h-8 text-mutedFG hover:bg-black/10 rounded-full">
+              <svg className="h-2 w-4 cursor-pointer">
+                <use xlinkHref="#kebab"></use>
+              </svg>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="z-10 h-max w-max rounded-sm p-4 ring-1 ring-outline1 bg-canvas">
+            <DropdownMenuItem 
+              className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer"
+              onSelect={() => {
+                const formData = new FormData();
+                formData.set("intent", "UNARCHIVE_TOOL_INSTANCE");
+                formData.set("instanceId", project.id);
+                fetcher.submit(formData, { method: "post" });
+              }}
+            >
+              Unarchive
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            
+            <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <DialogTrigger asChild>
+                <DropdownMenuItem 
+                  className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer text-red-500 hover:text-red-600"
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  Delete file
+                </DropdownMenuItem>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md bg-canvas ring-1 ring-outline1">
+                <DialogHeader>
+                  <DialogTitle>Delete Project</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to permanently delete <strong>{project.name}</strong>? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter className="sm:justify-end gap-2">
+                  <DialogClose asChild>
+                    <button className="px-4 py-2 rounded-md ring-1 ring-outline1 hover:bg-accent/10">
+                      Cancel
+                    </button>
+                  </DialogClose>
+                  <button
+                    className="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    onClick={() => {
+                      const formData = new FormData();
+                      formData.set("intent", "DELETE_TOOL_INSTANCE");
+                      formData.set("instanceId", project.id);
+                      fetcher.submit(formData, { method: "post" });
+                      setIsDeleteDialogOpen(false);
+                    }}
+                  >
+                    Delete
+                  </button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </li>
+  );
+};
+
 export const ArchivedProjectsArea: React.FC = () => {
   return (
     <aside className="flex flex-col w-full starred-projects align-center h-max min-h-[40rem] flex-1">
@@ -243,73 +379,20 @@ export const ArchivedProjectsArea: React.FC = () => {
 
       <h2 className="w-full my-6 capitalize text-fg">archived projects</h2>
 
-      <ul className="flex flex-col items-start justify-start flex-1 w-full list-none border-l-8 border-l-accent h-max">
-        <li className="group-file1 flex justify-start w-[95%] h-12 relative">
-          <span className="flex items-center justify-center w-12 h-full">
-            <svg className="w-full h-full scale-75">
-              <use xlinkHref="#folder"></use>
-            </svg>
-          </span>
-          <p className="w-[20rem] h-[2rem] text-ellipsis self-center text-sm px-4 truncate">
-            new_file_title_1_on_the_first_longest_line.pct
-          </p>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none">
-              <button className="flex items-center justify-center w-12 h-full text-mutedFG">
-                <svg className="h-2 w-4 cursor-pointer">
-                  <use xlinkHref="#kebab"></use>
-                </svg>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="z-10 h-max w-max rounded-sm p-4 ring-1 ring-outline1 bg-canvas">
-              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
-                rename file
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
-                add to favorites
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
-                delete file
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </li>
-        <li className="group-file1 flex justify-start w-[95%] h-12 relative">
-          <span className="flex items-center justify-center w-12 h-full">
-            <svg className="w-full h-full scale-75">
-              <use xlinkHref="#folder"></use>
-            </svg>
-          </span>
-          <p className="w-[20rem] h-[2rem] text-ellipsis inline-flex flex-col justify-center self-center text-sm px-4">
-            new_file_title_2.pct
-          </p>
-
-          <DropdownMenu>
-            <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none">
-              <button className="flex items-center justify-center w-12 h-full text-mutedFG">
-                <svg className="h-2 w-4 cursor-pointer">
-                  <use xlinkHref="#kebab" className=""></use>
-                </svg>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="z-10 h-max w-max rounded-sm p-4 ring-1 ring-outline1 bg-canvas">
-              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
-                rename file
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
-                add to favorites
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer">
-                delete file
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </li>
+      <ul className="flex flex-col items-start justify-start flex-1 w-full list-none border-l-8 border-l-accent h-max min-h-[5rem]">
+        <Suspense fallback={<p className="text-secondaryText px-4 py-2">Loading archived...</p>}>
+          <Await resolve={useLoaderData<typeof clientLoader>().archivedProjects} errorElement={<p className="text-red-500 px-4">Failed to load archived projects.</p>}>
+            {(archived: ToolInstanceType[]) => (
+              archived.length === 0 ? (
+                <p className="text-mutedFG px-4 py-2 text-sm mx-auto">No archived projects</p>
+              ) : (
+                archived.map((project) => (
+                  <ArchivedProjectItem key={project.id} project={project} />
+                ))
+              )
+            )}
+          </Await>
+        </Suspense>
       </ul>
 
 
@@ -346,6 +429,7 @@ export const ArchivedProjectsArea: React.FC = () => {
 export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, ownerID, toolType, name}) => {
   const fetcher = useFetcher();
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   
   // Optimistic UI: use the submitted name if available, otherwise use props
   const optimisticName = fetcher.formData?.has("name") && fetcher.formData.get("intent") === "RENAME_TOOL_INSTANCE"
@@ -411,18 +495,43 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
                   archive file
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer"
-                  onSelect={() => {
-                     // Confirm dialog could go here, but per requirements "strict" implementation first
-                     const formData = new FormData();
-                     formData.set("intent", "DELETE_TOOL_INSTANCE");
-                     formData.set("instanceId", id);
-                     fetcher.submit(formData, { method: "post" });
-                  }}
-                >
-                  delete file
-                </DropdownMenuItem>
+                <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                  <DialogTrigger asChild>
+                    <DropdownMenuItem 
+                      className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer text-red-500 hover:text-red-600"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      delete file
+                    </DropdownMenuItem>
+                  </DialogTrigger>
+                  <DialogContent className="z-[50] sm:max-w-md bg-canvas ring-1 ring-outline1">
+                    <DialogHeader>
+                      <DialogTitle>Delete File</DialogTitle>
+                      <DialogDescription>
+                        Are you sure you want to delete <strong>{name}</strong>? This action cannot be undone.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="sm:justify-end gap-2">
+                       <DialogClose asChild>
+                        <button className="px-4 py-2 rounded-md ring-1 ring-outline1 hover:bg-accent/10">
+                          Cancel
+                        </button>
+                      </DialogClose>
+                      <button
+                        className="px-4 py-2 rounded-md bg-red-500 text-white hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        onClick={() => {
+                           const formData = new FormData();
+                           formData.set("intent", "DELETE_TOOL_INSTANCE");
+                           formData.set("instanceId", id);
+                           fetcher.submit(formData, { method: "post" });
+                           setIsDeleteDialogOpen(false);
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

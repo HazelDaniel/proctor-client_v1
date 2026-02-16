@@ -187,4 +187,5 @@ export interface ToolInstanceType {
   createdAt: Date;
   ownerID: string;
   name: string;
+  archivedAt?: Date;
 }
