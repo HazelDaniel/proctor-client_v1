@@ -1,4 +1,5 @@
-import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect } from "@remix-run/react";
+import { Await, ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect, useLoaderData } from "@remix-run/react";
+import { Suspense } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { FilesHeader } from "~/components/files-header";
 import {
@@ -21,6 +22,7 @@ import {
 import InvitationsTab from "~/components/invitations-tab";
 import { store } from "~/store";
 import { gqlRequest } from "~/utils/api.client";
+import { ToolInstanceType } from "~/types";
 
 export const meta: MetaFunction = () => {
   return [
@@ -138,9 +140,26 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
   `).then(res => res.myPendingInvites);
 
 
+  const toolInstances = gqlRequest(`
+    query ListMyTools {
+      toolInstances {
+        id
+        toolType
+        createdAt
+        ownerId
+        name
+      }
+    }
+  `).then(res => res.toolInstances.map((t: any) => ({
+    ...t,
+    ownerID: t.ownerId // Map ownerId to ownerID if needed by ToolInstanceType
+  })));
+
+
   return defer({
     receivedInvitations,
     pendingInvitations,
+    toolInstances,
   });
 };
 
@@ -263,24 +282,29 @@ export const ArchivedProjectsArea: React.FC = () => {
   );
 };
 
-export const FileListView: React.FC = () => {
-  return (
-    <ul className="flex md:grid flex-col md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(25rem,1fr))] justify-start md:justify-normal items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw] mb-20">
+export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, ownerID, toolType, name}) => {
+
+  return <>
       <li className="h-48 md:h-[20rem] group/list-view-item1 flex justify-start items-center w-full md:w-max relative overflow-visible">
         <span className="y-right-absolute-full w-2 group-hover/list-view-item1:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
         <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
-          <div className="w-[5rem] mr-[10%] md:w-[16rem] md:h-full h-[5rem] flex md:mb-4">
+          <div className="w-[5rem] mr-[10%] md:w-[14rem] md:h-full h-[5rem] flex md:mb-4 relative group/toolinstance-folder">
+            <img
+              src="/public/icons/inner-file.svg"
+              alt="the icon image representing a big uncolored innner folder"
+              className="w-[60%] h-[80%] drop-shadow-lg absolute top-[0.5rem] group-hover/toolinstance-folder:top-[0rem] left-[15%] ease-in-out duration-150"
+            />
             <img
               src="/public/icons/big-colored-folder.png"
               alt="the icon image representing a big colored folder"
-              className="w-[80%] h-[80%] aspect-square drop-shadow-lg"
+              className="w-[80%] h-[80%] aspect-square drop-shadow-lg relative"
             />
           </div>
 
           <div className="flex-1 flex flex-col items-start justify-center">
-            <h2 className="font-semibold text-lg">Work_in_progress_1</h2>
+            <h2 className="font-semibold text-lg">{name}</h2>
             <p className="font-medium text-outline1d">
-              last saved 2 minutes ago
+              last saved {`${new Date(+createdAt).getMinutes()}`} minutes ago
             </p>
           </div>
         </div>
@@ -293,90 +317,25 @@ export const FileListView: React.FC = () => {
           />
         </div>
       </li>
+  </>
+}
 
-      <li className="h-48 md:h-[20rem] group/list-view-item2 flex justify-start items-center w-full md:w-max relative overflow-visible">
-        <span className="y-right-absolute-full w-2 group-hover/list-view-item2:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
-        <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
-          <div className="w-[5rem] mr-[10%] md:w-[16rem] md:h-full h-[5rem] flex md:mb-4">
-            <img
-              src="/public/icons/big-colored-folder.png"
-              alt="the icon image representing a big colored folder"
-              className="w-[80%] h-[80%] aspect-square drop-shadow-lg"
-            />
-          </div>
+export const FileListView: React.FC = () => {
+  const { toolInstances } = useLoaderData<typeof clientLoader>();
 
-          <div className="flex-1 flex flex-col items-start justify-center">
-            <h2 className="font-semibold text-lg">Work_in_progress_1</h2>
-            <p className="font-medium text-outline1d">
-              last saved 2 minutes ago
-            </p>
-          </div>
-        </div>
-
-        <div className="h-full ml-auto justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
-          <img
-            src="/images/emoji_student_1.png"
-            alt="the image representing the author of a file"
-            className="h-[4rem] w-[4rem] aspect-square rounded-full"
-          />
-        </div>
-      </li>
-
-      <li className="h-48 md:h-[20rem] group/list-view-item2 flex justify-start items-center w-full md:w-max relative overflow-visible">
-        <span className="y-right-absolute-full w-2 group-hover/list-view-item2:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
-        <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
-          <div className="w-[5rem] mr-[10%] md:w-[16rem] md:h-full h-[5rem] flex md:mb-4">
-            <img
-              src="/public/icons/big-colored-folder.png"
-              alt="the icon image representing a big colored folder"
-              className="w-[80%] h-[80%] aspect-square drop-shadow-lg"
-            />
-          </div>
-
-          <div className="flex-1 flex flex-col items-start justify-center">
-            <h2 className="font-semibold text-lg">Work_in_progress_1</h2>
-            <p className="font-medium text-outline1d">
-              last saved 2 minutes ago
-            </p>
-          </div>
-        </div>
-
-        <div className="h-full ml-auto justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
-          <img
-            src="/images/emoji_student_1.png"
-            alt="the image representing the author of a file"
-            className="h-[4rem] w-[4rem] aspect-square rounded-full"
-          />
-        </div>
-      </li>
-
-      <li className="h-48 md:h-[20rem] group/list-view-item2 flex justify-start items-center w-full md:w-max relative overflow-visible">
-        <span className="y-right-absolute-full w-2 group-hover/list-view-item2:bg-accent/25 md:invisible transition-colors duration-150 translate-x-4"></span>
-        <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
-          <div className="w-[5rem] mr-[10%] md:w-[16rem] md:h-full h-[5rem] flex md:mb-4">
-            <img
-              src="/public/icons/big-colored-folder.png"
-              alt="the icon image representing a big colored folder"
-              className="w-[80%] h-[80%] aspect-square drop-shadow-lg"
-            />
-          </div>
-
-          <div className="flex-1 flex flex-col items-start justify-center">
-            <h2 className="font-semibold text-lg">Work_in_progress_1</h2>
-            <p className="font-medium text-outline1d">
-              last saved 2 minutes ago
-            </p>
-          </div>
-        </div>
-
-        <div className="h-full ml-auto justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
-          <img
-            src="/images/emoji_student_1.png"
-            alt="the image representing the author of a file"
-            className="h-[4rem] w-[4rem] aspect-square rounded-full"
-          />
-        </div>
-      </li>
+  return (
+    <ul className="flex md:grid flex-col md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(25rem,1fr))] justify-start md:justify-normal items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw] mb-20">
+      <Suspense fallback={<p className="text-secondaryText px-8">Loading your projects...</p>}>
+        <Await resolve={toolInstances}>
+          {(resolvedTools: ToolInstanceType[]) => (
+            <>
+              {resolvedTools.map((tool) => (
+                <ToolInstanceFile key={tool.id} {...tool} />
+              ))}
+            </>
+          )}
+        </Await>
+      </Suspense>
     </ul>
   );
 };

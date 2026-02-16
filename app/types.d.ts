@@ -179,3 +179,12 @@ export interface TableGraphStateType {
 }
 
 export interface TableCRUDFormStateType extends TableCreationFormStateType {} // & TableUpdateFormStateType
+
+// 
+export interface ToolInstanceType {
+  id: string;
+  toolType: "schema-design" | string;
+  createdAt: Date;
+  ownerID: string;
+  name: string;
+}

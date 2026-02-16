@@ -19,11 +19,20 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
     return json({ error: "Invalid verification link. Missing token or email." });
   }
 
+  // Get rememberMe preference from localStorage (set in /auth route)
+  let rememberMe = false;
+  try {
+    const stored = localStorage.getItem("proctor_remember_me");
+    rememberMe = stored === "true";
+  } catch (e) {
+    console.warn("Failed to read rememberMe from localStorage", e);
+  }
+
   try {
     const data = await gqlRequest(
       `
-      mutation VerifyLogin($email: String!, $token: String!) {
-        verifyLogin(email: $email, token: $token) {
+      mutation VerifyLogin($email: String!, $token: String!, $rememberMe: Boolean) {
+        verifyLogin(email: $email, token: $token, rememberMe: $rememberMe) {
           user {
             id
             email
@@ -34,11 +43,14 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
         }
       }
     `,
-      { email, token }
+      { email, token, rememberMe }
     );
 
     // Update global state
     store.dispatch(setUser(data.verifyLogin.user));
+
+    // Cleanup
+    localStorage.removeItem("proctor_remember_me");
 
     // Redirect to files on success
     return redirect("/files");

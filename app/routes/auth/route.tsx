@@ -3,6 +3,7 @@ import { Link, useNavigate } from "@remix-run/react";
 import { Logo } from "~/components/logo";
 import { useState } from "react";
 import { gqlRequest } from "~/utils/api.client";
+import { Checkbox } from "~/components/ui/checkbox";
 
 export const AuthPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -10,6 +11,7 @@ export const AuthPage: React.FC = () => {
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [rememberMe, setRememberMe] = useState(true);
 
   const handleRequestLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +23,10 @@ export const AuthPage: React.FC = () => {
           requestLogin(email: $email, username: $username)
         }
       `, { email, username });
+      
+      // Persist rememberMe preference for the verification step
+      localStorage.setItem("proctor_remember_me", String(rememberMe));
+      
       setSent(true);
     } catch (err: any) {
       setError(err.message || "Failed to request login");
@@ -82,6 +88,21 @@ export const AuthPage: React.FC = () => {
             className="h-16 md:h-[3rem] w-full rounded-full ring-1 mb-8 bg-outline1/20 focus:outline-none focus:rounded-sm px-8 placeholder:text-secondaryText/50 ring-outline1 text-secondaryText text-md"
             placeholder="Username"
           />
+
+          <div className="flex items-center space-x-3 mb-6 px-4">
+            <Checkbox 
+              id="rememberMe" 
+              checked={rememberMe} 
+              onCheckedChange={(checked) => setRememberMe(!!checked)}
+              className="border-outline1"
+            />
+            <label
+              htmlFor="rememberMe"
+              className="text-md font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-secondaryText/80 cursor-pointer"
+            >
+              Remember me
+            </label>
+          </div>
 
           {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
 
