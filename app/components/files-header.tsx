@@ -49,7 +49,7 @@ export const FilesHeader: React.FC = () => {
             <DropdownMenuTrigger className="ring-none border-none outline-none focus:outline-none">
               <div className="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
                 <img
-                  src="/images/emoji_student_1.png"
+                  src={user?.avatarUrl || "/images/emoji_student_1.png"}
                   alt="the profile picture of the current user on the files page"
                   className="w-10 h-10 drop-shadow-md"
                 />

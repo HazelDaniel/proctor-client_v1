@@ -5,6 +5,7 @@ export interface User {
   email: string;
   username?: string;
   emailVerified: number;
+  avatarUrl: string;
 }
 
 interface AuthState {

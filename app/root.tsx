@@ -764,6 +764,7 @@ function AuthInitializer({ children }: { children: React.ReactNode }) {
               email
               username
               emailVerified
+              avatarUrl
             }
           }
         `);

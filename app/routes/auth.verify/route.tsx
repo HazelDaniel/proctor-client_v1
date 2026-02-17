@@ -38,6 +38,7 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
             email
             username
             emailVerified
+            avatarUrl
           }
           token
         }
