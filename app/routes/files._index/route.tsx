@@ -1,5 +1,5 @@
 import { Await, ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect, useLoaderData, useFetcher } from "@remix-run/react";
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import type { MetaFunction } from "@remix-run/node";
 import { FilesHeader } from "~/components/files-header";
 import {
@@ -429,6 +429,8 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
   const fetcher = useFetcher();
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const hasFetchedAvatar = useRef(false);
   
   // Optimistic UI: use the submitted name if available, otherwise use props
   const optimisticName = fetcher.formData?.has("name") && fetcher.formData.get("intent") === "RENAME_TOOL_INSTANCE"
@@ -447,6 +449,41 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
       return () => clearTimeout(timer);
     }
   }, [isEditing]);
+
+  // IntersectionObserver ref callback for lazy avatar fetching
+  const avatarObserverRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!node || hasFetchedAvatar.current) return;
+
+      const observer = new IntersectionObserver(
+        (entries) => {
+          const entry = entries[0];
+          if (entry.isIntersecting && !hasFetchedAvatar.current) {
+            hasFetchedAvatar.current = true;
+            observer.disconnect();
+
+            gqlRequest(`
+              query FetchUserAvatarUrl($userId: String!) {
+                fetchUserAvatarUrl(userId: $userId)
+              }
+            `, { userId: ownerID })
+              .then((data) => {
+                if (data.fetchUserAvatarUrl) {
+                  setAvatarUrl(data.fetchUserAvatarUrl);
+                }
+              })
+              .catch((err) => {
+                console.warn("[ToolInstanceFile] Failed to fetch avatar:", err);
+              });
+          }
+        },
+        { threshold: 0.5 },
+      );
+
+      observer.observe(node);
+    },
+    [ownerID],
+  );
 
   return <>
       <li className="h-48 md:h-[20rem] group/list-view-item1 flex justify-start items-center w-full md:w-max relative overflow-hidden">
@@ -538,13 +575,6 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
           <div className="flex-1 flex flex-col items-start justify-center">
             <>
               <fetcher.Form className={`${isEditing ? "flex" : "hidden"}`} method="post" onSubmit={() => setIsEditing(false)} onBlur={(e) => {
-                 // If blur happens without submit (e.g. clicking away), we might want to submit or cancel.
-                 // Requirements say "name content is replaced with updated (optimistic)..." implies auto-submit or explicit submit.
-                 // "input field will autofocus... after form is submitted mode is set back to inert"
-                 // Let's support blur-to-submit for better UX, or just cancel on escape.
-                 // For now, explicit Enter to submit (handled by Form) is safest. 
-                 // But let's trigger submit on blur to be "seamless" if the value changed? 
-                 // Simple approach: Submit on blur.
                  if (e.currentTarget instanceof HTMLFormElement) {
                     fetcher.submit(e.currentTarget);
                  }
@@ -593,9 +623,9 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
           </div>
         </div>
 
-        <div className="h-full ml-[2rem] justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
+        <div ref={avatarObserverRef} className="h-full ml-[2rem] justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
           <img
-            src="/images/emoji_student_1.png"
+            src={avatarUrl || "/images/emoji_student_1.png"}
             alt="the image representing the author of a file"
             className="h-[4rem] w-[4rem] aspect-square rounded-full"
           />
