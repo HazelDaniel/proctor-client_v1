@@ -1,3 +1,5 @@
+[todo]: use the broadcast api to make sure that only one tab per toolinstance is opened. one tool instance can't be opened in multiple tabs
+
 (validations)
 
 (general)

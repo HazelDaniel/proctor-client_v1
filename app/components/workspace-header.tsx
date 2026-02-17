@@ -10,6 +10,7 @@ import { workspaceSelectors } from "~/store";
 import { closeSidePane, openSidePane } from "~/reducers/workspace.reducer";
 import { useDispatch, useSelector } from "react-redux";
 import { useCallback, useEffect, useState } from "react";
+import { useCollaboration } from "~/contexts/collaboration.context";
 import { UnknownAction } from "@reduxjs/toolkit";
 import { SQLOutputPane } from "./sql-output-pane";
 import {
@@ -41,6 +42,10 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ initialName, i
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [name, setName] = useState(initialName || "untitled_project");
 
+  // Active viewer presence
+  const { socket } = useCollaboration();
+  const [viewers, setViewers] = useState<{ userId: string; avatarUrl: string | null }[]>([]);
+
   // Sync state with props when they change (e.g. initial load)
   useEffect(() => {
     if (initialName) setName(initialName);
@@ -55,6 +60,16 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ initialName, i
       setIsInviteOpen(false);
     }
   }, [actionData]);
+
+  // Subscribe to presence:viewers
+  useEffect(() => {
+    if (!socket) return;
+    const onViewers = (data: { viewers: { userId: string; avatarUrl: string | null }[] }) => {
+      setViewers(data.viewers);
+    };
+    socket.on('presence:viewers', onViewers);
+    return () => { socket.off('presence:viewers', onViewers); };
+  }, [socket]);
 
   const toggleSidePane = useCallback(() => {
     if (sidePaneOpened) {
@@ -74,6 +89,8 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ initialName, i
     formData.set("name", name);
     fetcher.submit(formData, { method: "post" });
   };
+
+  console.log("viewers are ", viewers);
 
   return (
     <header className="workspace-header flex items-center justify-start w-full h-32 md:h-20 px-4 pr-0 bg-gradient-to-b from-bg from-80% backdrop-blur-sm fixed z-[15]">
@@ -134,17 +151,27 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ initialName, i
         </span>
 
         <ul className="w-max flex h-8">
-          <li className="w-8 h-8 rounded-full drop-shadow-md rotate-[-3deg] mx-[-0.3rem] select-none">
-            <img src="/images/emoji_student_2.png" alt="" />
-          </li>
-          <li className="w-8 h-8 rounded-full drop-shadow-md rotate-[-3deg] mx-[-0.3rem] select-none">
-            <img src="/images/emoji_student_1.png" alt="" />
-          </li>
-          <li className="w-8 h-8 rounded-full drop-shadow-md bg-canvas mx-[-0.3rem] select-none">
-            <span className="w-full h-full flex items-center justify-center">
-              +2
-            </span>
-          </li>
+          {viewers.slice(0, 3).map((v) => (
+            <li key={v.userId} className="w-8 h-8 rounded-full drop-shadow-md rotate-[-3deg] mx-[-0.3rem] select-none overflow-hidden">
+              <img
+                src={v.avatarUrl || "/images/emoji_student_1.png"}
+                alt="active viewer"
+                className="w-full h-full object-cover"
+              />
+            </li>
+          ))}
+          {viewers.length > 3 && (
+            <li className="w-8 h-8 rounded-full drop-shadow-md bg-canvas mx-[-0.3rem] select-none">
+              <span className="w-full h-full flex items-center justify-center text-sm font-medium">
+                +{viewers.length - 3}
+              </span>
+            </li>
+          )}
+          {viewers.length === 0 && (
+            <li className="w-8 h-8 rounded-full drop-shadow-md bg-canvas mx-[-0.3rem] select-none opacity-40">
+              <span className="w-full h-full flex items-center justify-center text-xs">—</span>
+            </li>
+          )}
         </ul>
 
         <span className="w-8 h-8 flex items-center justify-center">

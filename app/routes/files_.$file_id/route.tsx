@@ -395,10 +395,10 @@ export const DesignsPage: React.FC = React.memo(() => {
   const [instance, setInstance] =
     useState<ReactFlowInstance<StatefulNodeType & { id: string }, Edge>>();
   const params = useParams();
-  const designId = params.design_id || 'default-design';
+  const fileId = params.file_id || 'default-design';
   
-  // TODO: Get actual token from auth context/storage
-  const token = 'temp-token';
+  // Use the actual userId for socket auth so the gateway can identify the user
+  const userId = store.getState().auth.user?.id || '';
 
   useEventListener(
     "resize",
@@ -407,10 +407,10 @@ export const DesignsPage: React.FC = React.memo(() => {
   );
 
   return (
-    <CollaborationProvider instanceId={designId} token={token}>
+    <CollaborationProvider instanceId={fileId} token={userId}>
       <WorkspaceHeader 
         initialName={useLoaderData<typeof clientLoader>().toolInstance?.name || 'Untitled Project'} 
-        instanceId={useLoaderData<typeof clientLoader>().toolInstance?.id || designId}
+        instanceId={useLoaderData<typeof clientLoader>().toolInstance?.id || fileId}
       />
       <section className="designs-section flex-1 w-full basis-auto h-max md:mt-20 mt-32 overflow-hidden">
         <ChatBubbleViewCtx>
