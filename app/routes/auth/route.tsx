@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "@remix-run/react";
+import { Link, useSearchParams } from "@remix-run/react";
 
 import { Logo } from "~/components/logo";
 import { useState } from "react";
@@ -6,6 +6,10 @@ import { gqlRequest } from "~/utils/api.client";
 import { Checkbox } from "~/components/ui/checkbox";
 
 export const AuthPage: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const mode = searchParams.get("mode") === "signin" ? "signin" : "signup";
+  const isSignUp = mode === "signup";
+
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [sent, setSent] = useState(false);
@@ -22,7 +26,7 @@ export const AuthPage: React.FC = () => {
         mutation RequestLogin($email: String!, $username: String) {
           requestLogin(email: $email, username: $username)
         }
-      `, { email, username });
+      `, { email, username: isSignUp ? username : undefined });
       
       // Persist rememberMe preference for the verification step
       localStorage.setItem("proctor_remember_me", String(rememberMe));
@@ -50,7 +54,7 @@ export const AuthPage: React.FC = () => {
           onClick={() => setSent(false)} 
           className="mt-8 text-accent underline"
         >
-          Back to sign in
+          Back to {isSignUp ? "sign up" : "sign in"}
         </button>
       </section>
     );
@@ -68,7 +72,7 @@ export const AuthPage: React.FC = () => {
         </div>
 
         <h2 className="mb-[60px] text-2xl font-semibold text-secondaryText">
-          Sign in to Proctor
+          {isSignUp ? "Sign up for Proctor" : "Sign in to Proctor"}
         </h2>
         
         <form onSubmit={handleRequestLogin} className="flex flex-col w-[90%] md:w-[80%] h-max">
@@ -81,15 +85,17 @@ export const AuthPage: React.FC = () => {
             placeholder="Email address"
           />
 
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            className="h-16 md:h-[3rem] w-full rounded-full ring-1 mb-8 bg-outline1/20 focus:outline-none focus:rounded-sm px-8 placeholder:text-secondaryText/50 ring-outline1 text-secondaryText text-md"
-            placeholder="Username"
-          />
+          {isSignUp && (
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="h-16 md:h-[3rem] w-full rounded-full ring-1 mb-4 bg-outline1/20 focus:outline-none focus:rounded-sm px-8 placeholder:text-secondaryText/50 ring-outline1 text-secondaryText text-md"
+              placeholder="Username"
+            />
+          )}
 
-          <div className="flex items-center space-x-3 mb-6 px-4">
+          <div className="flex items-center space-x-3 mb-6 px-4 mt-4">
             <Checkbox 
               id="rememberMe" 
               checked={rememberMe} 
@@ -111,7 +117,11 @@ export const AuthPage: React.FC = () => {
             disabled={loading}
             className="mt-4 rounded-full h-16 md:h-[3rem] bg-fg text-canvas text-lg uppercase mb-8 disabled:opacity-50"
           >
-            {loading ? "Sending link..." : "Send Magic Link"}
+            {loading
+              ? "Sending link..."
+              : isSignUp
+                ? "Create Account"
+                : "Send Magic Link"}
           </button>
 
           <div className="flex justify-center items-center mt-4">
@@ -129,16 +139,14 @@ export const AuthPage: React.FC = () => {
 
           <div className="flex w-[90%] justify-between mx-auto h-max mb-16">
             <p className="text-lg text-outline1d md:text-md">
-              Need help?
-            </p>{" "}
-            <span>
-              <Link
-                to={""}
-                className="underline underline-offset-4 text-lg md:text-md font-semibold text-accent"
-              >
-                contact support
-              </Link>
-            </span>
+              {isSignUp ? "Already have an account?" : "Don't have an account?"}
+            </p>
+            <Link
+              to={isSignUp ? "/auth?mode=signin" : "/auth?mode=signup"}
+              className="underline underline-offset-4 text-lg md:text-md font-semibold text-accent"
+            >
+              {isSignUp ? "Sign in" : "Sign up"}
+            </Link>
           </div>
         </form>
       </div>
