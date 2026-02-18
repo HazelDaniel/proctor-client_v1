@@ -25,6 +25,7 @@ export const useCollaboration = (): CollaborationContextValue => {
   if (!context) {
     // Return safe null values instead of throwing
     // This allows components to work even without the provider
+    console.error("no collaboration context set!");
     return {
       doc: null,
       socket: null,
