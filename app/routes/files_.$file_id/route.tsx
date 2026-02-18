@@ -390,7 +390,7 @@ const CommentBoard: React.FC<{
   );
 };
 
-export const DesignsPage: React.FC = React.memo(() => {
+export const DesignsPage: React.FC = React.memo(function DesignPageMemoized () {
   const [_, setWindowSize] = useState<number>(window.innerWidth);
   const [instance, setInstance] =
     useState<ReactFlowInstance<StatefulNodeType & { id: string }, Edge>>();
@@ -409,7 +409,7 @@ export const DesignsPage: React.FC = React.memo(() => {
   return (
     <CollaborationProvider instanceId={fileId} token={userId}>
       <WorkspaceHeader 
-        initialName={useLoaderData<typeof clientLoader>().toolInstance?.name || 'Untitled Project'} 
+        initialName={useLoaderData<typeof clientLoader>().toolInstance?.name || 'untitled'} 
         instanceId={useLoaderData<typeof clientLoader>().toolInstance?.id || fileId}
       />
       <section className="designs-section flex-1 w-full basis-auto h-max md:mt-20 mt-32 overflow-hidden">
