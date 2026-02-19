@@ -585,7 +585,8 @@ export const TableCreationForm: React.FC = React.memo(
       if (creationFormState.errorState || !creationFormState.tableID) return;
       if (formCloseButtonRef.current && tableActionButtonClicks) {
         dispatch(setCurrentGroupID(creationFormState.tableID as string));
-        dispatch(upload(creationFormState));
+        // yjs_sync_point:2
+        dispatch(upload(creationFormState)); // this is what converts tables to nodes on table creation
         dispatch(addTableNode({ nodeID: creationFormState.tableID }));
         formCloseButtonRef.current.click();
       }

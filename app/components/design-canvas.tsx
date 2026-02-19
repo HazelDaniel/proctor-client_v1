@@ -940,7 +940,8 @@ export const DesignCanvas: React.FC<{
         console.error("could not upload table to nodes, table doesn't exist");
       }
 
-      dispatch(upload(sourceTable));
+      // yjs_sync_point:3
+      // dispatch(upload(sourceTable));// [FEATURE_TOGGLE_TEST] honestly, i don't know if this makes a difference
       dispatch(updateNodeGroup({ group: sourceTable }));
     }, [tableSyncCount]);
 
@@ -959,9 +960,11 @@ export const DesignCanvas: React.FC<{
                   [prop: string]: React.FC<NodeProps>;
                 }
               }
+              // yjs_sync_point:5
               onConnect={onConnect}
               edgeTypes={tableEdgeTypes}
               onNodesChange={onNodesChange}
+              // yjs_sync_point:4
               onEdgesChange={onLinksChange}
               edges={edges_}
               onPaneClick={onPaneClick}
