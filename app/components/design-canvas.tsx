@@ -769,6 +769,7 @@ export const DesignCanvas: React.FC<{
             });
             return;
           }
+          // yjs_sync_point:6
           dispatch(setNodePosition({ id, position }));
         }
       });
