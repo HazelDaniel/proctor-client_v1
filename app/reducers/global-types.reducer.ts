@@ -134,10 +134,16 @@ export const typesSlice = createSlice({
       state.errorState = false;
       state.errorMessage = "";
     },
+    setTypeMappings: (
+      state,
+      action: PayloadAction<Record<string, string[]>>
+    ) => {
+      state.typeMappings = action.payload;
+    },
   },
 });
 
-export const { addType, clearError } = typesSlice.actions;
+export const { addType, clearError, setTypeMappings } = typesSlice.actions;
 const globalTypesReducer = typesSlice.reducer;
 
 export default globalTypesReducer;

@@ -504,8 +504,8 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
   }, [id, groupNode]);
 
   const tableUpdateModal = useSelector(tableUpdateModalSelector);
-  console.log("table update form is opened ? : ", tableUpdateModal.open);
-  console.log("is saved table id:  ", savedTable?.tableID, " and id is : ",  id);
+  // console.log("table update form is opened ? : ", tableUpdateModal.open);
+  // console.log("is saved table id:  ", savedTable?.tableID, " and id is : ",  id);
 
   return (
     <div

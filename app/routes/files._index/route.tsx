@@ -235,8 +235,10 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
     }));
   }).catch(err => {
     console.error("[FilesLoader] gqlRequest failed for toolInstances:", err);
-    // Include specific error message if available from GraphQL
-    const message = err.message || (err.errors && err.errors[0]?.message) || "Unknown error";
+    if (err.message === 'Unauthorized' || err.response?.status === 401) {
+      return redirect("/auth");
+    }
+    const message = err.message || (err.errors?.[0]?.message) || "Unknown error";
     throw new Error(message);
   });
 
@@ -266,6 +268,9 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
     }));
   }).catch(err => {
     console.error("[FilesLoader] Failed to fetch archived projects:", err);
+    if (err.message === 'Unauthorized' || err.response?.status === 401) {
+      return redirect("/auth");
+    }
     return [];
   });
 

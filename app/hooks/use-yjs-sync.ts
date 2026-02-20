@@ -5,6 +5,7 @@ import {
   nodesGroupSelector,
   graphSelector,
   compositionSelector,
+  typeMappingSelector,
 } from '~/store';
 import { isEqual } from '~/utils/comparison';
 import { useCollaboration } from '~/contexts/collaboration.context';
@@ -14,6 +15,7 @@ import { setNodesState } from '~/reducers/nodes.reducer';
 import { setGraphState } from '~/reducers/graph.reducer';
 import { setCompositionState } from '~/reducers/composition.reducer';
 import { syncGroupNodes } from '~/reducers/table-to-node.reducer';
+import { setTypeMappings } from '~/reducers/global-types.reducer';
 import { StatefulGroupNodeType, TableGraphStateType, CompositionStateType } from '~/types';
 
 // Origin tag for transactions initiated by the local Redux→Yjs push.
@@ -43,6 +45,7 @@ export const useYjsSync = (
   const groupNodes = useSelector(nodesGroupSelector, isEqual);
   const graph = useSelector(graphSelector, isEqual);
   const composition = useSelector(compositionSelector, isEqual);
+  const typeMappings = useSelector(typeMappingSelector, isEqual);
 
   // Debounce timer for node position sync (high-frequency during drag)
   const positionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -59,6 +62,7 @@ export const useYjsSync = (
     const yEdges = doc.getMap<any>('edges');
     const yGraphs = doc.getMap<any>('graphs');
     const yComposition = doc.getMap<any>('composition');
+    const yTypeMappings = doc.getMap<any>('typeMappings');
 
     // We listen to the doc 'update' event to detect changes from remote peers.
     // Transactions originated locally (ORIGIN_LOCAL) are skipped.
@@ -88,6 +92,9 @@ export const useYjsSync = (
 
       const remoteComposition = yComposition.toJSON() as CompositionStateType;
       dispatch(setCompositionState(remoteComposition));
+
+      const remoteTypeMappings = yTypeMappings.toJSON() as Record<string, string[]>;
+      dispatch(setTypeMappings(remoteTypeMappings));
     };
 
     doc.on('afterTransaction', handleTransaction);
@@ -215,4 +222,32 @@ export const useYjsSync = (
       }
     }, ORIGIN_LOCAL);
   }, [doc, connected, composition]);
+
+  // ──────────────────────────────────────────────────────────
+  //  Redux → Yjs: Sync typeMappings (Enums)
+  // ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!doc || !connected || !typeMappings) return;
+
+    const yTypeMappings = doc.getMap<any>('typeMappings');
+
+    doc.transact(() => {
+      const reduxKeys = new Set(Object.keys(typeMappings));
+
+      // Add/update entries
+      for (const [key, value] of Object.entries(typeMappings)) {
+        const current = yTypeMappings.get(key);
+        if (!isEqual(current, value)) {
+          yTypeMappings.set(key, value);
+        }
+      }
+
+      // Delete entries that no longer exist
+      for (const key of yTypeMappings.keys()) {
+        if (!reduxKeys.has(key)) {
+          yTypeMappings.delete(key);
+        }
+      }
+    }, ORIGIN_LOCAL);
+  }, [doc, connected, typeMappings]);
 };
