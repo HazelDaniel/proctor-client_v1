@@ -9,8 +9,11 @@ import React, {
 import * as Y from 'yjs';
 import { io, Socket } from 'socket.io-client';
 
+import type { Awareness } from 'y-protocols/awareness';
+
 export interface CollaborationContextValue {
   doc: Y.Doc | null;
+  awareness: Awareness | null;
   socket: Socket | null;
   connected: boolean;
   instanceId: string | null;
@@ -28,6 +31,7 @@ export const useCollaboration = (): CollaborationContextValue => {
     console.error("no collaboration context set!");
     return {
       doc: null,
+      awareness: null,
       socket: null,
       connected: false,
       instanceId: null,
@@ -48,10 +52,19 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
   token,
 }) => {
   const [doc] = useState(() => new Y.Doc());
+  const [awareness, setAwareness] = useState<Awareness | null>(null);
   const [connected, setConnected] = useState(false);
   const socketRef = useRef<Socket | null>(null);
 
   useEffect(() => {
+    import('y-protocols/awareness').then(({ Awareness }) => {
+      setAwareness(new Awareness(doc));
+    });
+  }, [doc]);
+
+  useEffect(() => {
+    if (!awareness) return;
+
     // Connect to the backend Yjs gateway
     const socket = io('http://localhost:3000', {
       path: '/collab',
@@ -105,9 +118,35 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     });
 
     socket.on('yjs:awareness', (data: ArrayBuffer | Uint8Array) => {
-      // Awareness updates will be handled separately if needed
-      console.log('[Collaboration] Awareness update received');
+      const u8 = data instanceof Uint8Array ? data : new Uint8Array(data);
+      import('lib0/decoding').then(({ createDecoder, readVarUint, readVarUint8Array }) => {
+        import('y-protocols/awareness').then(({ applyAwarenessUpdate }) => {
+          const decoder = createDecoder(u8);
+          const msgType = readVarUint(decoder);
+          if (msgType === 1) { // MSG_AWARENESS
+            const update = readVarUint8Array(decoder);
+            applyAwarenessUpdate(awareness, update, socket);
+          }
+        });
+      });
     });
+
+    // Broadcast local awareness updates
+    const handleAwarenessUpdate = ({ added, updated, removed }: any, origin: any) => {
+      if (origin !== socket) {
+        import('lib0/encoding').then(({ createEncoder, writeVarUint, writeVarUint8Array, toUint8Array }) => {
+          import('y-protocols/awareness').then(({ encodeAwarenessUpdate }) => {
+            const changed = added.concat(updated, removed);
+            const update = encodeAwarenessUpdate(awareness, changed);
+            const encoder = createEncoder();
+            writeVarUint(encoder, 1); // MSG_AWARENESS
+            writeVarUint8Array(encoder, update);
+            socket.emit('yjs:awareness', toUint8Array(encoder));
+          });
+        });
+      }
+    };
+    awareness.on('update', handleAwarenessUpdate);
 
     // Broadcast local Yjs updates to the server
     const handleDocUpdate = (update: Uint8Array, origin: any) => {
@@ -138,13 +177,15 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
 
     return () => {
       doc.off('update', handleDocUpdate);
+      awareness.off('update', handleAwarenessUpdate);
       socket.disconnect();
       setConnected(false);
     };
-  }, [instanceId, token, doc]);
+  }, [instanceId, token, doc, awareness]);
 
   const value: CollaborationContextValue = {
     doc,
+    awareness,
     socket: socketRef.current,
     connected,
     instanceId,

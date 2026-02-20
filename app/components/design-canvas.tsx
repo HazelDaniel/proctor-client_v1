@@ -128,7 +128,88 @@ import {
 } from "~/reducers/update-form-modal.reducer";
 import { EdgeProvider } from "~/contexts/edge.context";
 import { Send } from "lucide-react";
+import { useCollaboration } from "~/contexts/collaboration.context";
 import { useYjsSync } from "~/hooks/use-yjs-sync";
+
+export const CursorsRenderer: React.FC = React.memo(function CursorsRendererInner() {
+  const { awareness } = useCollaboration();
+  const [cursors, setCursors] = useState<{ [clientId: number]: any }>({});
+  
+  useEffect(() => {
+    if (!awareness) return;
+
+    const handleAwarenessChange = () => {
+      const states = Array.from(awareness.getStates().entries());
+      const newCursors: { [clientId: number]: any } = {};
+      
+      states.forEach(([clientId, state]) => {
+        if (clientId !== awareness.clientID && state.cursor) {
+          newCursors[clientId] = state;
+        }
+      });
+      
+      setCursors(newCursors);
+    };
+
+    awareness.on('change', handleAwarenessChange);
+    handleAwarenessChange(); // initial state
+
+    return () => {
+      awareness.off('change', handleAwarenessChange);
+    };
+  }, [awareness]);
+
+  return (
+    <ViewportPortal>
+      {Object.entries(cursors).map(([clientId, state]) => {
+        if (!state.cursor) return null;
+        return (
+          <div
+            key={clientId}
+            className="absolute pointer-events-none z-[100] flex items-start gap-1 transition-all duration-75"
+            style={{
+              left: `${state.cursor.x}px`,
+              top: `${state.cursor.y}px`,
+            }}
+          >
+            {/* The Cursor Pointer Icon */}
+            <svg
+              className="w-5 h-5 drop-shadow-md origin-top-left -translate-x-1.5 -translate-y-1.5"
+              style={{ fill: state.color || '#ff0000', stroke: '#ffffff', strokeWidth: 1.5 }}
+              viewBox="0 0 24 24"
+            >
+              <path d="M5.5 3L11 21L14.5 14.5L21 11L5.5 3Z" />
+            </svg>
+
+            {/* User Profile Image and Tag */}
+            {state.user && (
+              <div 
+                className="flex items-center gap-1.5 px-2 py-1 bg-zinc-900/90 backdrop-blur-sm rounded-full shadow-lg border border-zinc-700/50 text-xs whitespace-nowrap mt-3"
+                style={{ 
+                  boxShadow: `0 4px 12px ${state.color || '#ff0000'}30`,
+                  borderColor: `${state.color || '#ff0000'}50`
+                }}
+              >
+                {state.user.avatarUrl ? (
+                  <img
+                    src={state.user.avatarUrl}
+                    alt={state.user.name}
+                    className="w-5 h-5 rounded-full object-cover ring-1 ring-white/20"
+                  />
+                ) : (
+                  <div className="w-5 h-5 rounded-full bg-zinc-700 flex items-center justify-center text-zinc-300 font-bold ring-1 ring-white/20 text-[10px]">
+                    {state.user.name?.charAt(0)?.toUpperCase() || '?'}
+                  </div>
+                )}
+                <span className="font-semibold text-zinc-100 pr-1">{state.user.name}</span>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </ViewportPortal>
+  );
+});
 
 export const ChatBubble: React.FC<{ pos: XYPosition; id: string }> = ({
   pos,
@@ -605,6 +686,7 @@ export const DesignCanvas: React.FC<{
     const nodes = useSelector(nodesSelector, isEqual);
     const edges = useSelector(edgesSelector, isEqual);
     const graph = useSelector(graphSelector, isEqual);
+    const { user } = store.getState().auth;
 
     const savedTable = useSelector(savedTableSelector);
 
@@ -656,6 +738,8 @@ export const DesignCanvas: React.FC<{
       () => ({ edges: edges_, setEdges }),
       [edges_, setEdges]
     );
+
+    const { awareness } = useCollaboration();
 
     // Initialize Yjs synchronization
     useYjsSync(edges_, setEdges);
@@ -986,8 +1070,43 @@ export const DesignCanvas: React.FC<{
               onInit={(instance) => {
                 setInstance(instance);
               }}
+              onPointerMove={(e) => {
+                if (!instance || !awareness) return;
+                
+                const canvasParent = document.getElementById("design-canvas-wrapper");
+                if (!canvasParent) return;
+
+                const parentRect = canvasParent.getBoundingClientRect();
+                const netEventX = e.clientX - parentRect.x;
+                const netEventY = e.clientY - parentRect.y;
+
+                const position = instance.screenToFlowPosition({
+                  x: e.clientX,
+                  y: e.clientY
+                });
+
+                // Generate a random color based on clientID if not already set, or just use a default palette
+                const colors = ['#f44336', '#e91e63', '#9c27b0', '#673ab7', '#3f51b5', '#2196f3', '#03a9f4', '#00bcd4', '#009688', '#4caf50', '#8bc34a', '#cddc39', '#ffeb3b', '#ffc107', '#ff9800', '#ff5722'];
+                const color = colors[awareness.clientID % colors.length];
+
+                // Update local awareness state
+                awareness.setLocalStateField('cursor', position);
+                if (user) {
+                  awareness.setLocalStateField('user', {
+                    name: user.email.split('@')[0], 
+                    avatarUrl: user.avatarUrl,
+                  });
+                }
+                awareness.setLocalStateField('color', color);
+              }}
+              onPointerLeave={() => {
+                if (awareness) {
+                  awareness.setLocalStateField('cursor', null);
+                }
+              }}
             >
               <Background />
+              <CursorsRenderer />
 
               <DesignPaneProvider value={designPaneValue}>
                 <ChatBubbleView />

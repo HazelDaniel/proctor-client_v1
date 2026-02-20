@@ -235,10 +235,13 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
     }));
   }).catch(err => {
     console.error("[FilesLoader] gqlRequest failed for toolInstances:", err);
-    if (err.message === 'Unauthorized' || err.response?.status === 401) {
+    if (err.message === 'Unauthorized' || err.response?.status === 401 || err.message === 'Forbidden' || err.response?.status === 403) {
       return redirect("/auth");
     }
     const message = err.message || (err.errors?.[0]?.message) || "Unknown error";
+    if (message.includes('Unauthorized') || message.includes('Forbidden')) {
+      return redirect("/auth");
+    }
     throw new Error(message);
   });
 
@@ -268,7 +271,11 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
     }));
   }).catch(err => {
     console.error("[FilesLoader] Failed to fetch archived projects:", err);
-    if (err.message === 'Unauthorized' || err.response?.status === 401) {
+    if (err.message === 'Unauthorized' || err.response?.status === 401 || err.message === 'Forbidden' || err.response?.status === 403) {
+      return redirect("/auth");
+    }
+    const message = err.message || (err.errors?.[0]?.message) || "Unknown error";
+    if (message.includes('Unauthorized') || message.includes('Forbidden')) {
       return redirect("/auth");
     }
     return [];
