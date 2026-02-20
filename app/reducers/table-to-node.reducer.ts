@@ -233,10 +233,27 @@ export const tableToNodesSlice = createSlice({
         };
       });
     },
+    syncGroupNodes: (
+      state,
+      action: PayloadAction<StatefulGroupNodeType>
+    ) => {
+      // Merge remote group nodes into contextNodes.groupNodes
+      // so that `download` can find them for table editing.
+      const remoteGroupNodes = action.payload;
+      for (const [key, value] of Object.entries(remoteGroupNodes)) {
+        state.groupNodes[key] = value;
+      }
+      // Remove keys that no longer exist
+      for (const key of Object.keys(state.groupNodes)) {
+        if (!(key in remoteGroupNodes)) {
+          delete state.groupNodes[key];
+        }
+      }
+    },
   },
 });
 
-export const { upload, updatePosition, setCurrentGroupID, download } =
+export const { upload, updatePosition, setCurrentGroupID, download, syncGroupNodes } =
   tableToNodesSlice.actions;
 const tableToNodesReducer = tableToNodesSlice.reducer;
 

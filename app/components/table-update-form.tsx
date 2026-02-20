@@ -182,7 +182,7 @@ export const TableUpdateForm: React.FC<{ id: string }> = React.memo(
       ) {
         dispatch(setCurrentGroupID(id));
       // yjs_sync_point:1
-        // dispatch(upload(updateFormState[id])); // [FEATURE_TOGGLE_TEST]: also not sure if this is really needed
+        dispatch(upload(updateFormState[id])); // [FEATURE_TOGGLE_TEST]: also not sure if this is really needed
         dispatch(updateNodeGroup({ group: updateFormState[id] }));
         formCloseButtonRef.current.click();
       }

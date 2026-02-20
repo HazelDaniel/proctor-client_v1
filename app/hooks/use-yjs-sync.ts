@@ -13,6 +13,7 @@ import { Edge } from '@xyflow/react';
 import { setNodesState } from '~/reducers/nodes.reducer';
 import { setGraphState } from '~/reducers/graph.reducer';
 import { setCompositionState } from '~/reducers/composition.reducer';
+import { syncGroupNodes } from '~/reducers/table-to-node.reducer';
 import { StatefulGroupNodeType, TableGraphStateType, CompositionStateType } from '~/types';
 
 // Origin tag for transactions initiated by the local Redux→Yjs push.
@@ -74,6 +75,8 @@ export const useYjsSync = (
       //   unchanged state won't cause another write back to Yjs.
       const remoteGroupNodes = yGroupNodes.toJSON() as StatefulGroupNodeType;
       dispatch(setNodesState({ groupNodes: remoteGroupNodes }));
+      // Also sync into contextNodes so download/edit works for remote tables
+      dispatch(syncGroupNodes(remoteGroupNodes));
 
       const remoteEdges = Array.from(yEdges.values()) as Edge[];
       setEdges(remoteEdges);

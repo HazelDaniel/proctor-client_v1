@@ -504,6 +504,8 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
   }, [id, groupNode]);
 
   const tableUpdateModal = useSelector(tableUpdateModalSelector);
+  console.log("table update form is opened ? : ", tableUpdateModal.open);
+  console.log("is saved table id:  ", savedTable?.tableID, " and id is : ",  id);
 
   return (
     <div
@@ -537,6 +539,7 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
               <button
                 className="w-[10px] h-[10px]"
                 onClick={() => {
+                  console.log("active node id is ", id);
                   dispatch(setActiveNode({ activeNodeID: id }));
                   dispatch(
                     download({ groupID: id, mappings: globalTypeMappings })
@@ -942,7 +945,7 @@ export const DesignCanvas: React.FC<{
       }
 
       // yjs_sync_point:3
-      // dispatch(upload(sourceTable));// [FEATURE_TOGGLE_TEST] honestly, i don't know if this makes a difference
+      dispatch(upload(sourceTable));// [FEATURE_TOGGLE_TEST] honestly, i don't know if this makes a difference
       dispatch(updateNodeGroup({ group: sourceTable }));
     }, [tableSyncCount]);
 
