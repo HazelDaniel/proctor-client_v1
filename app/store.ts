@@ -135,6 +135,10 @@ export const nodesStateSelector = (state: {nodes: ReturnType<typeof nodesReducer
   return state.nodes;
 }
 
+export const nodesGroupSelector = (state: {nodes: ReturnType<typeof nodesReducer>;}) => {
+  return state.nodes.groupNodes;
+};
+
 export const nodesSelector = (state: {
   nodes: ReturnType<typeof nodesReducer>;
 }) => {

@@ -109,6 +109,21 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
       console.log('[Collaboration] Awareness update received');
     });
 
+    // Broadcast local Yjs updates to the server
+    const handleDocUpdate = (update: Uint8Array, origin: any) => {
+      if (origin !== socket) {
+        import('lib0/encoding').then(({ createEncoder, writeVarUint, toUint8Array }) => {
+          import('y-protocols/sync').then(({ writeUpdate }) => {
+            const encoder = createEncoder();
+            writeVarUint(encoder, 0); // MSG_SYNC
+            writeUpdate(encoder, update);
+            socket.emit('yjs:sync', toUint8Array(encoder));
+          });
+        });
+      }
+    };
+    doc.on('update', handleDocUpdate);
+
     // Send initial sync when connected
     socket.on('connect', () => {
       import('lib0/encoding').then(({ createEncoder, writeVarUint, toUint8Array }) => {
@@ -122,6 +137,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     });
 
     return () => {
+      doc.off('update', handleDocUpdate);
       socket.disconnect();
       setConnected(false);
     };

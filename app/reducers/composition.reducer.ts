@@ -1,10 +1,6 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { NodeCompositeID } from "~/types";
+import { NodeCompositeID, CompositionStateType } from "~/types";
 import { parseNodeID } from "~/utils/node.utils";
-
-interface CompositionStateType {
-  [key: string]: { [key: NodeCompositeID]: { [key: NodeCompositeID]: number } };
-}
 
 const initialCompositionState: CompositionStateType = {};
 
@@ -57,12 +53,15 @@ export const compositionSlice = createSlice({
     ) => {
       const [nodeID, compositeColumnID] = action.payload;
       const [parentID, _2] = parseNodeID(action.payload[0]);
-      if (
+        if (
         state[parentID] &&
         nodeID in state[parentID] &&
         compositeColumnID in state[parentID][nodeID]
       )
         delete state[parentID][nodeID][compositeColumnID];
+    },
+    setCompositionState: (state, action: PayloadAction<CompositionStateType>) => {
+      return action.payload;
     },
   },
 });
@@ -72,6 +71,7 @@ export const {
   removeComposition,
   addCompositions,
   removeCompositionParent,
+  setCompositionState,
 } = compositionSlice.actions;
 
 export const compositionReducer = compositionSlice.reducer;

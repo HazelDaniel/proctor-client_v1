@@ -655,7 +655,7 @@ export const DesignCanvas: React.FC<{
     );
 
     // Initialize Yjs synchronization
-    useYjsSync();
+    useYjsSync(edges_, setEdges);
 
     // COMPONENT EVENT HANDLERS
     useEventListener(
@@ -675,7 +675,7 @@ export const DesignCanvas: React.FC<{
     );
 
     const getCanvasPosition = useCallback(
-      (event: React.MouseEvent<Element, MouseEvent>) => {
+      (event: React.MouseEvent) => {
         if (!instance) return { x: undefined, y: undefined };
         let { zoom } = instance.getViewport();
 
@@ -712,7 +712,7 @@ export const DesignCanvas: React.FC<{
 
     // FLOW EVENT HANDLERS
     const onPaneClick = useCallback(
-      (event: React.MouseEvent<Element, MouseEvent>) => {
+      (event: React.MouseEvent) => {
         console.log("the pane picked up the click instead");
 
         // console.log("event current target is ", event.target);

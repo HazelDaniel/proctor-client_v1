@@ -247,10 +247,16 @@ const nodesSlice = createSlice({
 
       state.groupNodes[tableID] = resultGroup;
     },
+    setNodesState: (
+      state,
+      action: PayloadAction<{ groupNodes: StatefulGroupNodeType }>
+    ) => {
+      state.groupNodes = action.payload.groupNodes;
+    },
   },
 });
 
-export const { setNodePosition, setActiveNode, addNodeGroup, updateNodeGroup } =
+export const { setNodePosition, setActiveNode, addNodeGroup, updateNodeGroup, setNodesState } =
   nodesSlice.actions;
 
 const nodesReducer = nodesSlice.reducer;

@@ -71,6 +71,7 @@ export const initialTableCreationFormState: TableCreationFormStateType = {
   columns: {},
   typeMappings: {},
   referenceColumns: {},
+  createdAt: new Date().getTime(),
 };
 
 export const tableCreationFormReducer: (

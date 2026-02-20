@@ -3,6 +3,7 @@
 import { CSSProperties, useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
+  AppDispatch,
   graphSelector,
   nodesStateSelector,
   referenceNodesSelector,
@@ -40,7 +41,7 @@ export const SQLOutputPane: React.FC = () => {
   //prettier-ignore
   const outputPaneOpened = !outputPaneInteract ? settings.outputPane : outputPaneVisible;
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
 
   const graphs = useSelector(graphSelector, isEqual);
   const refLists = useSelector(referenceNodesSelector, isEqual);

@@ -178,6 +178,10 @@ export interface TableGraphStateType {
   nodes: Graph;
 }
 
+export interface CompositionStateType {
+  [key: string]: { [key: NodeCompositeID]: { [key: NodeCompositeID]: number } };
+}
+
 export interface TableCRUDFormStateType extends TableCreationFormStateType {} // & TableUpdateFormStateType
 
 // 
