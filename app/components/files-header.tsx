@@ -15,7 +15,7 @@ import { gqlRequest } from "~/utils/api.client";
 import { LogOut, Trash2 } from "lucide-react";
 
 export const FilesHeader: React.FC = () => {
-  const user = useSelector((state: RootState) => state.auth.user);
+  const { user, isInitialized } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -48,14 +48,23 @@ export const FilesHeader: React.FC = () => {
           <DropdownMenu>
             <DropdownMenuTrigger className="ring-none border-none outline-none focus:outline-none">
               <div className="flex items-center cursor-pointer hover:opacity-80 transition-opacity">
-                <img
-                  src={user?.avatarUrl || "/images/emoji_student_1.png"}
-                  alt="the profile picture of the current user on the files page"
-                  className="w-10 h-10 drop-shadow-md"
-                />
-                <p className="m-4 hidden md:block">
-                  {user?.username || (user?.email?.split("@")[0]) || "User"}
-                </p>
+                {isInitialized ? (
+                  <>
+                    <img
+                      src={user?.avatarUrl || "/images/emoji_student_1.png"}
+                      alt="the profile picture of the current user on the files page"
+                      className="w-10 h-10 drop-shadow-md rounded-full object-cover"
+                    />
+                    <p className="m-4 hidden md:block">
+                      {user?.username || (user?.email?.split("@")[0]) || "User"}
+                    </p>
+                  </>
+                ) : (
+                  <div className="flex items-center animate-pulse gap-4 px-2">
+                    <div className="w-10 h-10 bg-outline1/20 rounded-full" />
+                    <div className="w-20 h-4 bg-outline1/20 rounded hidden md:block" />
+                  </div>
+                )}
               </div>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-56 mt-2">

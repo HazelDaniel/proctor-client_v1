@@ -2,7 +2,6 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useRef,
   useState,
   ReactNode,
 } from 'react';
@@ -54,7 +53,9 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
   const [doc] = useState(() => new Y.Doc());
   const [awareness, setAwareness] = useState<Awareness | null>(null);
   const [connected, setConnected] = useState(false);
-  const socketRef = useRef<Socket | null>(null);
+  // Reactive socket state ensures downstream consumers (e.g. WorkspaceHeader)
+  // re-run their effects when the socket becomes available.
+  const [socket, setSocket] = useState<Socket | null>(null);
 
   useEffect(() => {
     import('y-protocols/awareness').then(({ Awareness }) => {
@@ -66,7 +67,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     if (!awareness) return;
 
     // Connect to the backend Yjs gateway
-    const socket = io('http://localhost:3000', {
+    const newSocket = io('http://localhost:3000', {
       path: '/collab',
       auth: {
         instanceId,
@@ -74,23 +75,25 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
       },
     });
 
-    socketRef.current = socket;
+    // Expose the socket as reactive state immediately after creation so
+    // subscribers can attach listeners before the first server event fires.
+    setSocket(newSocket);
 
-    socket.on('connect', () => {
+    newSocket.on('connect', () => {
       console.log('[Collaboration] Connected to server');
       setConnected(true);
     });
 
-    socket.on('disconnect', () => {
+    newSocket.on('disconnect', () => {
       console.log('[Collaboration] Disconnected from server');
       setConnected(false);
     });
 
-    socket.on('yjs:ready', ({ docId, toolType }) => {
+    newSocket.on('yjs:ready', ({ docId, toolType }) => {
       console.log(`[Collaboration] Document ready: ${docId}, tool: ${toolType}`);
     });
 
-    socket.on('yjs:sync', (data: ArrayBuffer | Uint8Array) => {
+    newSocket.on('yjs:sync', (data: ArrayBuffer | Uint8Array) => {
       const u8 = data instanceof Uint8Array ? data : new Uint8Array(data);
       
       // Apply sync message to the Yjs doc
@@ -104,12 +107,12 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
               const encoder = createEncoder();
               writeVarUint(encoder, 0);
               
-              readSyncMessage(decoder, encoder, doc, socket);
+              readSyncMessage(decoder, encoder, doc, newSocket);
               
               // If there's a reply, send it back
               const reply = toUint8Array(encoder);
               if (reply.length > 1) {
-                socket.emit('yjs:sync', reply);
+                newSocket.emit('yjs:sync', reply);
               }
             }
           });
@@ -117,7 +120,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
       });
     });
 
-    socket.on('yjs:awareness', (data: ArrayBuffer | Uint8Array) => {
+    newSocket.on('yjs:awareness', (data: ArrayBuffer | Uint8Array) => {
       const u8 = data instanceof Uint8Array ? data : new Uint8Array(data);
       import('lib0/decoding').then(({ createDecoder, readVarUint, readVarUint8Array }) => {
         import('y-protocols/awareness').then(({ applyAwarenessUpdate }) => {
@@ -125,7 +128,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
           const msgType = readVarUint(decoder);
           if (msgType === 1) { // MSG_AWARENESS
             const update = readVarUint8Array(decoder);
-            applyAwarenessUpdate(awareness, update, socket);
+            applyAwarenessUpdate(awareness, update, newSocket);
           }
         });
       });
@@ -133,7 +136,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
 
     // Broadcast local awareness updates
     const handleAwarenessUpdate = ({ added, updated, removed }: any, origin: any) => {
-      if (origin !== socket) {
+      if (origin !== newSocket) {
         import('lib0/encoding').then(({ createEncoder, writeVarUint, writeVarUint8Array, toUint8Array }) => {
           import('y-protocols/awareness').then(({ encodeAwarenessUpdate }) => {
             const changed = added.concat(updated, removed);
@@ -141,7 +144,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
             const encoder = createEncoder();
             writeVarUint(encoder, 1); // MSG_AWARENESS
             writeVarUint8Array(encoder, update);
-            socket.emit('yjs:awareness', toUint8Array(encoder));
+            newSocket.emit('yjs:awareness', toUint8Array(encoder));
           });
         });
       }
@@ -150,27 +153,37 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
 
     // Broadcast local Yjs updates to the server
     const handleDocUpdate = (update: Uint8Array, origin: any) => {
-      if (origin !== socket) {
+      if (origin !== newSocket) {
         import('lib0/encoding').then(({ createEncoder, writeVarUint, toUint8Array }) => {
           import('y-protocols/sync').then(({ writeUpdate }) => {
             const encoder = createEncoder();
             writeVarUint(encoder, 0); // MSG_SYNC
             writeUpdate(encoder, update);
-            socket.emit('yjs:sync', toUint8Array(encoder));
+            newSocket.emit('yjs:sync', toUint8Array(encoder));
           });
         });
       }
     };
     doc.on('update', handleDocUpdate);
 
-    // Send initial sync when connected
-    socket.on('connect', () => {
-      import('lib0/encoding').then(({ createEncoder, writeVarUint, toUint8Array }) => {
+    // Send initial sync and local awareness when connected
+    newSocket.on('connect', () => {
+      import('lib0/encoding').then(({ createEncoder, writeVarUint, writeVarUint8Array, toUint8Array }) => {
         import('y-protocols/sync').then(({ writeSyncStep1 }) => {
-          const encoder = createEncoder();
-          writeVarUint(encoder, 0); // MSG_SYNC
-          writeSyncStep1(encoder, doc);
-          socket.emit('yjs:sync', toUint8Array(encoder));
+          import('y-protocols/awareness').then(({ encodeAwarenessUpdate }) => {
+            // 1. Send Sync Step 1
+            const syncEncoder = createEncoder();
+            writeVarUint(syncEncoder, 0); // MSG_SYNC
+            writeSyncStep1(syncEncoder, doc);
+            newSocket.emit('yjs:sync', toUint8Array(syncEncoder));
+
+            // 2. Send Local Awareness State
+            const awarenessEncoder = createEncoder();
+            writeVarUint(awarenessEncoder, 1); // MSG_AWARENESS
+            const update = encodeAwarenessUpdate(awareness, [awareness.clientID]);
+            writeVarUint8Array(awarenessEncoder, update);
+            newSocket.emit('yjs:awareness', toUint8Array(awarenessEncoder));
+          });
         });
       });
     });
@@ -178,7 +191,8 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     return () => {
       doc.off('update', handleDocUpdate);
       awareness.off('update', handleAwarenessUpdate);
-      socket.disconnect();
+      newSocket.disconnect();
+      setSocket(null);
       setConnected(false);
     };
   }, [instanceId, token, doc, awareness]);
@@ -186,7 +200,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
   const value: CollaborationContextValue = {
     doc,
     awareness,
-    socket: socketRef.current,
+    socket,
     connected,
     instanceId,
   };

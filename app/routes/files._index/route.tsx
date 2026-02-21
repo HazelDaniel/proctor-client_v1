@@ -636,11 +636,19 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
         </div>
 
         <div ref={avatarObserverRef} className="h-full ml-[2rem] justify-self-end md:justify-self-start flex-1 flex items-center justify-center max-w-[4rem] w-[4rem]">
-          <img
-            src={avatarUrl || "/images/emoji_student_1.png"}
-            alt="the image representing the author of a file"
-            className="h-[4rem] w-[4rem] aspect-square rounded-full"
-          />
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt="the image representing the author of a file"
+              className="h-[4rem] w-[4rem] aspect-square rounded-full object-cover"
+            />
+          ) : (
+            <span className="h-[4rem] w-[4rem] aspect-square rounded-full bg-outline1/20 flex items-center justify-center">
+              <svg className="w-1/2 h-1/2 opacity-40">
+                <use xlinkHref="#profile"></use>
+              </svg>
+            </span>
+          )}
         </div>
       </li>
   </>

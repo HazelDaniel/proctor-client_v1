@@ -10,8 +10,17 @@ export const api = axios.create({
   },
 });
 
+function redirectToAuth() {
+  if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
+    window.location.href = '/auth';
+  }
+  // Return a promise that never resolves so nothing downstream sees an error
+  return new Promise<never>(() => {});
+}
+
 async function handleUnauthorized(originalRequest: any) {
-  if (originalRequest._retry) return Promise.reject(new Error('Unauthorized'));
+  // Already retried once — don't loop, just redirect silently
+  if (originalRequest._retry) return redirectToAuth();
   originalRequest._retry = true;
 
   try {
@@ -32,14 +41,9 @@ async function handleUnauthorized(originalRequest: any) {
 
     // Retry the original request
     return api(originalRequest);
-  } catch (refreshError) {
-    // If refresh fails, we're definitely not authenticated
-    // Instead of immediate redirect (which can be jarring during loaders), 
-    // we let the caller decide or trigger a redirect if it's a window context.
-    if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
-      window.location.href = '/auth';
-    }
-    return Promise.reject(refreshError);
+  } catch {
+    // Refresh failed — redirect silently, no error bubble
+    return redirectToAuth();
   }
 }
 
@@ -82,6 +86,9 @@ export async function gqlRequest<T = any>(query: string, variables?: Record<stri
   // If we reach here, and there are still errors, they aren't auth-related (or refresh failed)
   if (response.data.errors) {
     const error = response.data.errors[0];
+    if (error.message === 'Unauthorized' || error.extensions?.code === 'UNAUTHENTICATED') {
+      return redirectToAuth();
+    }
     throw new Error(error.message || 'GraphQL Error');
   }
 
