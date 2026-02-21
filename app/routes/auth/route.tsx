@@ -2,7 +2,7 @@ import { Link, useSearchParams } from "@remix-run/react";
 
 import { Logo } from "~/components/logo";
 import { useState } from "react";
-import { gqlRequest } from "~/utils/api.client";
+import { gqlRequest } from "~/utils/api";
 import { Checkbox } from "~/components/ui/checkbox";
 
 export const AuthPage: React.FC = () => {

@@ -1,6 +1,6 @@
 import { Await, ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect, useLoaderData, useFetcher } from "@remix-run/react";
 import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
-import type { MetaFunction } from "@remix-run/node";
+import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { FilesHeader } from "~/components/files-header";
 import {
   ResizableHandle,
@@ -31,7 +31,7 @@ import {
 } from "~/components/ui/dialog";
 import InvitationsTab from "~/components/invitations-tab";
 import { store } from "~/store";
-import { gqlRequest } from "~/utils/api.client";
+import { gqlRequest } from "~/utils/api";
 import { ToolInstanceType } from "~/types";
 
 export const meta: MetaFunction = () => {
@@ -171,13 +171,58 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
 };
 
 
-export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
-  const state = store.getState();
-  // Ensure we only redirect after we've attempted to initialize auth
-  if (state.auth.isInitialized && !state.auth.isAuthenticated) {
+import { setUser, logout } from "~/reducers/auth.reducer";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const cookieHeader = request.headers.get("Cookie");
+  let headers: Record<string, string> | undefined = undefined;
+  
+  if (cookieHeader) {
+    const cookies = Object.fromEntries(
+      cookieHeader.split('; ').map(c => {
+        const [key, ...v] = c.split('=');
+        return [key, decodeURIComponent(v.join('='))];
+      })
+    );
+    if (cookies.access_token) {
+      console.log("access token is ", cookies.access_token);
+      headers = {
+        Authorization: `Bearer ${cookies.access_token}`,
+        Cookie: cookieHeader
+      };
+    } else {
+      headers = { Cookie: cookieHeader };
+    }
+  }
+
+  let user = null;
+  // Fetch user on the server to prevent initial render without auth
+  try {
+    console.log("getting current user ...");
+    const data = await gqlRequest(`
+      query GetCurrentUser {
+        getCurrentUser {
+          id
+          email
+          username
+          emailVerified
+          avatarUrl
+        }
+      }
+    `, undefined, headers);
+
+    console.log("data is ", data.getCurrentUser);
+    if (data.getCurrentUser) {
+      user = data.getCurrentUser;
+    } else {
+      return redirect("/auth");
+    }
+  } catch (err) {
+    console.log(err);
     return redirect("/auth");
   }
 
+  // Fetch the rest of the data in parallel on the server
   const receivedInvitations = gqlRequest(`
     query MyReceivedInvitations {
       myReceivedInvitations {
@@ -192,7 +237,7 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
         memberCount
       }
     }
-  `).then(res => res.myReceivedInvitations);
+  `, undefined, headers).then(res => res.myReceivedInvitations);
 
   const pendingInvitations = gqlRequest(`
     query MyPendingInvites {
@@ -207,7 +252,7 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
         memberCount
       }
     }
-  `).then(res => res.myPendingInvites);
+  `, undefined, headers).then(res => res.myPendingInvites);
 
 
   const toolInstances = gqlRequest(`
@@ -220,10 +265,8 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
         name
       }
     }
-  `).then(res => {
-    console.debug("[FilesLoader] GraphQL raw response:", res);
+  `, undefined, headers).then(res => {
     if (!res?.toolInstances || !Array.isArray(res.toolInstances)) {
-      console.warn("[FilesLoader] Unexpected toolInstances format or missing data:", res);
       return [];
     }
     return res.toolInstances.map((t: any) => ({
@@ -234,15 +277,10 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
       name: t.name || "Untitled Project",
     }));
   }).catch(err => {
-    console.error("[FilesLoader] gqlRequest failed for toolInstances:", err);
-    if (err.message === 'Unauthorized' || err.response?.status === 401 || err.message === 'Forbidden' || err.response?.status === 403) {
+    if (err.message?.includes('Unauthorized') || err.message?.includes('Forbidden')) {
       return redirect("/auth");
     }
-    const message = err.message || (err.errors?.[0]?.message) || "Unknown error";
-    if (message.includes('Unauthorized') || message.includes('Forbidden')) {
-      return redirect("/auth");
-    }
-    throw new Error(message);
+    return []; // Return empty array or handle error properly instead of just throwing
   });
 
   /* Fetch archived projects */
@@ -257,7 +295,7 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
         archivedAt
       }
     }
-  `).then(res => {
+  `, undefined, headers).then(res => {
     if (!res?.myArchivedToolInstances || !Array.isArray(res.myArchivedToolInstances)) {
       return [];
     }
@@ -270,24 +308,28 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
       archivedAt: t.archivedAt ? new Date(isNaN(+t.archivedAt) ? t.archivedAt : +t.archivedAt) : new Date(),
     }));
   }).catch(err => {
-    console.error("[FilesLoader] Failed to fetch archived projects:", err);
-    if (err.message === 'Unauthorized' || err.response?.status === 401 || err.message === 'Forbidden' || err.response?.status === 403) {
-      return redirect("/auth");
-    }
-    const message = err.message || (err.errors?.[0]?.message) || "Unknown error";
-    if (message.includes('Unauthorized') || message.includes('Forbidden')) {
-      return redirect("/auth");
-    }
     return [];
   });
 
   return defer({
+    user,
     receivedInvitations,
     pendingInvitations,
     toolInstances,
     archivedProjects,
   });
 };
+
+export const clientLoader = async ({ serverLoader }: ClientLoaderFunctionArgs) => {
+  const data = await serverLoader();
+  if (data.user) {
+    store.dispatch(setUser(data.user));
+  } else {
+    store.dispatch(logout());
+  }
+  return data;
+};
+clientLoader.hydrate = true;
 
 
 export const InvitationsTabArea: React.FC = () => {

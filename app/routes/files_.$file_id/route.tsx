@@ -1,4 +1,5 @@
 import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, Link, json, redirect, useLoaderData } from "@remix-run/react";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { useDispatch, useSelector } from "react-redux";
 import type { MetaFunction } from "@remix-run/node";
 import useEventListener from "~/hooks/useevent";
@@ -42,9 +43,10 @@ import {
 } from "~/contexts/chat-bubble.context";
 import { selectChatBubbles } from "~/reducers/chat-bubble.reducer";
 import { CollaborationProvider } from "~/contexts/collaboration.context";
+import { setUser, logout } from "~/reducers/auth.reducer";
 import { useParams } from "@remix-run/react";
 import { store } from "~/store";
-import { gqlRequest } from "~/utils/api.client";
+import { gqlRequest } from "~/utils/api";
 
 export const meta: MetaFunction = () => {
   return [
@@ -106,12 +108,48 @@ export const clientAction = async ({ params, request }: ClientActionFunctionArgs
 };
 
 
-export const clientLoader = async ({ params }: ClientLoaderFunctionArgs) => {
-  const state = store.getState();
+export const loader = async ({ params, request }: LoaderFunctionArgs) => {
   const file_id = params.file_id;
+  
+  const cookieHeader = request.headers.get("Cookie");
+  let headers: Record<string, string> | undefined = undefined;
+  
+  if (cookieHeader) {
+    const cookies = Object.fromEntries(
+      cookieHeader.split('; ').map(c => {
+        const [key, ...v] = c.split('=');
+        return [key, decodeURIComponent(v.join('='))];
+      })
+    );
+    if (cookies.access_token) {
+      headers = {
+        Authorization: `Bearer ${cookies.access_token}`,
+        Cookie: cookieHeader
+      };
+    } else {
+      headers = { Cookie: cookieHeader };
+    }
+  }
 
-  // 1. Check basic authentication
-  if (state.auth.isInitialized && !state.auth.isAuthenticated) {
+  let user = null;
+  try {
+    const data = await gqlRequest(`
+      query GetCurrentUser {
+        getCurrentUser {
+          id
+          email
+          username
+          emailVerified
+          avatarUrl
+        }
+      }
+    `, undefined, headers);
+    if (data.getCurrentUser) {
+      user = data.getCurrentUser;
+    } else {
+      return redirect("/auth");
+    }
+  } catch (err) {
     return redirect("/auth");
   }
 
@@ -127,15 +165,26 @@ export const clientLoader = async ({ params }: ClientLoaderFunctionArgs) => {
           ownerId
         }
       }
-    `, { instanceId: file_id });
+    `, { instanceId: file_id }, headers);
     toolInstance = res.toolInstance;
   } catch (err) {
     console.error("Access denied:", err);
     return redirect("/auth");
   }
 
-  return json({ designId: file_id, toolInstance });
+  return json({ designId: file_id, toolInstance, user });
 };
+
+export const clientLoader = async ({ serverLoader }: ClientLoaderFunctionArgs) => {
+  const data = await serverLoader();
+  if (data.user) {
+    store.dispatch(setUser(data.user));
+  } else {
+    store.dispatch(logout());
+  }
+  return data;
+};
+clientLoader.hydrate = true;
 
 
 

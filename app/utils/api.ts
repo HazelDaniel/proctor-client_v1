@@ -77,11 +77,11 @@ api.interceptors.response.use(
 /**
  * Helper to execute GraphQL queries/mutations
  */
-export async function gqlRequest<T = any>(query: string, variables?: Record<string, any>): Promise<T> {
+export async function gqlRequest<T = any>(query: string, variables?: Record<string, any>, headers?: Record<string, string>): Promise<T> {
   const response = await api.post('', {
     query,
     variables,
-  });
+  }, { headers });
 
   // If we reach here, and there are still errors, they aren't auth-related (or refresh failed)
   if (response.data.errors) {

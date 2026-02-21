@@ -5,12 +5,13 @@ import {
   useLoaderData,
   useNavigate,
 } from "@remix-run/react";
+import type { LoaderFunctionArgs } from "@remix-run/node";
 import { setUser } from "~/reducers/auth.reducer";
-import { gqlRequest } from "~/utils/api.client";
+import { gqlRequest, api } from "~/utils/api";
 import { Logo } from "~/components/logo";
 import { store } from "~/store";
 
-export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
+export const loader = async ({ request }: LoaderFunctionArgs) => {
   const url = new URL(request.url);
   const token = url.searchParams.get("token");
   const email = url.searchParams.get("email");
@@ -19,55 +20,128 @@ export const clientLoader = async ({ request }: ClientLoaderFunctionArgs) => {
     return json({ error: "Invalid verification link. Missing token or email." });
   }
 
-  // Get rememberMe preference from localStorage (set in /auth route)
-  let rememberMe = false;
-  try {
-    const stored = localStorage.getItem("proctor_remember_me");
-    rememberMe = stored === "true";
-  } catch (e) {
-    console.warn("Failed to read rememberMe from localStorage", e);
+  const cookieHeader = request.headers.get("Cookie");
+  let headers: Record<string, string> | undefined = undefined;
+  
+  if (cookieHeader) {
+    const cookies = Object.fromEntries(
+      cookieHeader.split('; ').map(c => {
+        const [key, ...v] = c.split('=');
+        return [key, decodeURIComponent(v.join('='))];
+      })
+    );
+    if (cookies.access_token) {
+      headers = {
+        Authorization: `Bearer ${cookies.access_token}`,
+        Cookie: cookieHeader
+      };
+    } else {
+      headers = { Cookie: cookieHeader };
+    }
   }
 
+  // Get rememberMe preference from localStorage (set in /auth route) - Note: localStorage isn't available on server, this needs to be handled via query param or cookie in SSR, but we'll default to false for now based on previous logic since localStorage isn't available.
+  let rememberMe = false;
+
   try {
-    const data = await gqlRequest(
-      `
-      mutation VerifyLogin($email: String!, $token: String!, $rememberMe: Boolean) {
-        verifyLogin(email: $email, token: $token, rememberMe: $rememberMe) {
-          user {
-            id
-            email
-            username
-            emailVerified
-            avatarUrl
+    // We need the raw response to extract Set-Cookie headers from the backend
+    const response = await api.post('', {
+      query: `
+        mutation VerifyLogin($email: String!, $token: String!, $rememberMe: Boolean) {
+          verifyLogin(email: $email, token: $token, rememberMe: $rememberMe) {
+            user {
+              id
+              email
+              username
+              emailVerified
+              avatarUrl
+            }
+            token
           }
-          token
         }
+      `,
+      variables: { email, token, rememberMe }
+    }, { headers });
+
+    // Extract the Set-Cookie headers from the GraphQL backend response
+    const setCookieHeaders = response.headers['set-cookie'];
+    const redirectHeaders = new Headers();
+    
+    if (setCookieHeaders) {
+      if (Array.isArray(setCookieHeaders)) {
+        setCookieHeaders.forEach(cookie => {
+          redirectHeaders.append('Set-Cookie', cookie);
+        });
+      } else {
+        redirectHeaders.append('Set-Cookie', setCookieHeaders);
       }
-    `,
-      { email, token, rememberMe }
-    );
+    }
 
-    // Update global state
-    store.dispatch(setUser(data.verifyLogin.user));
-
-    // Cleanup
-    localStorage.removeItem("proctor_remember_me");
-
-    // Redirect to files on success
-    return redirect("/files");
+    // Redirect to files on success, passing along the cookies
+    return redirect("/files", {
+      headers: redirectHeaders
+    });
   } catch (err: any) {
-    console.error("Verification failed:", err);
+    if (err.response?.data?.errors) {
+       console.error("Verification failed:", err.response.data.errors);
+       err = new Error(err.response.data.errors[0]?.message || 'Verification failed');
+    } else {
+       console.error("Verification failed:", err);
+    }
+
+    // If the token is invalid/expired, but the user is actually already logged in
+    // via their cookies, we should just let them in.
+    if (err.message && (err.message.includes("Invalid or expired") || err.message.includes("token expired"))) {
+      try {
+        const currentUserData = await gqlRequest(`
+          query GetCurrentUser { 
+            getCurrentUser { 
+              id 
+              email 
+              username 
+              emailVerified
+              avatarUrl 
+            } 
+          }
+        `, undefined, headers);
+        if (currentUserData.getCurrentUser) {
+          // Send user data down so clientLoader can dispatch it
+          return redirect("/files");
+        }
+      } catch (checkErr) {
+        // If gqlRequest fails with UNAUTHENTICATED, it will redirect to /auth automatically.
+        // If it throws another error, ignore it and fall through to show the verification failed screen.
+      }
+    }
+
     return json({ error: err.message || "Verification failed" });
   }
 };
 
+export const clientLoader = async ({ serverLoader }: ClientLoaderFunctionArgs) => {
+  // If we redirected, serverLoader won't return data it will just redirect, 
+  // but if we fell through to an error, we return the error.
+  const data = await serverLoader();
+  
+  // Cleanup
+  try {
+     localStorage.removeItem("proctor_remember_me");
+  } catch(e) {}
+  
+  // We can't dispatch user here easily without modifying the redirect response, 
+  // but the /files loader will fetch the user anyway upon redirect.
+  
+  return data;
+};
+clientLoader.hydrate = true;
+
 export default function VerifyPage() {
-  const loaderData = useLoaderData<typeof clientLoader>();
+  const loaderData = useLoaderData<typeof loader>() as { error?: string } | null;
   const navigate = useNavigate();
 
   // If we have an error, show it. Otherwise, we're loading (since clientLoader handles redirect on success)
   const errorMessage =
-    loaderData && "error" in loaderData ? loaderData.error : null;
+    loaderData && typeof loaderData === 'object' && "error" in loaderData ? loaderData.error : null;
 
 
   return (

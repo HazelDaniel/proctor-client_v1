@@ -11,7 +11,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "~/store";
 import { logout } from "~/reducers/auth.reducer";
 import { useNavigate } from "@remix-run/react";
-import { gqlRequest } from "~/utils/api.client";
+import { gqlRequest } from "~/utils/api";
 import { LogOut, Trash2 } from "lucide-react";
 
 export const FilesHeader: React.FC = () => {
