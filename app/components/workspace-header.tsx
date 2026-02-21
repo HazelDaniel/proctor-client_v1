@@ -22,7 +22,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { Form, useActionData, useNavigation, useFetcher } from "@remix-run/react";
+import { Form, useActionData, useNavigation, useFetcher, useNavigate } from "@remix-run/react";
 import { Loader2 } from "lucide-react";
 
 export interface WorkspaceHeaderProps {
@@ -39,6 +39,7 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ initialName, i
 
   const actionData = useActionData<any>();
   const navigation = useNavigation();
+  const navigate = useNavigate();
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [name, setName] = useState(initialName || "untitled_project");
 
@@ -254,7 +255,14 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ initialName, i
             </DropdownMenuItem>
 
             <DropdownMenuSeparator className="bg-outline1 w-full h-[1px]" />
-            <DropdownMenuItem className="rounded-sm p-4 cursor-pointer text-danger">
+            <DropdownMenuItem 
+              className="rounded-sm p-4 cursor-pointer text-danger"
+              onSelect={() => {
+                // Navigating away from the route unmounts CollaborationProvider,
+                // which automatically triggers its cleanup (socket.disconnect(), doc cleanup).
+                navigate("/files");
+              }}
+            >
               leave session
             </DropdownMenuItem>
           </DropdownMenuContent>
