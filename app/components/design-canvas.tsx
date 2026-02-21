@@ -368,9 +368,9 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
             }
           >
             <span className="absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"></span>
-            <svg className="w-full h-full scale-75">
-              <use xlinkHref="#t"></use>
-            </svg>
+              <svg  viewBox="0 0 29 33" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full scale-75">
+                <path d="M0.517548 1.12873C0.408752 0.709552 0.848456 0.359178 1.23265 0.559004L28.0631 14.5137C28.4908 14.7364 28.3861 15.3761 27.9097 15.4513L14.4079 17.5835C13.8439 17.6725 13.3792 18.0742 13.2094 18.6194L9.28437 31.2232C9.1348 31.7035 8.44894 31.6872 8.32256 31.2002L0.517548 1.12873Z" stroke="currentColor"/>
+              </svg>
           </button>
         </li>
 

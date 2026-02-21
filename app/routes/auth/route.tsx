@@ -124,18 +124,17 @@ export const AuthPage: React.FC = () => {
                 : "Send Magic Link"}
           </button>
 
-          <div className="flex justify-center items-center mt-4">
+          {/* <div className="flex justify-center items-center mt-4">
             <span className="flex-1 h-1 bg-outline1 rounded mr-4"></span>
             <p className="text-outline1d text-md font-medium">social login (coming soon)</p>
             <span className="flex-1 h-1 bg-outline1 rounded ml-4"></span>
-          </div>
+          </div> */}
 
-          <ul className="w-full h-max flex gap-4 justify-center mt-2 mb-8 opacity-50 pointer-events-none">
-            {/* Social icons removed for brevity, keeping only visual structure */}
+          {/* <ul className="w-full h-max flex gap-4 justify-center mt-2 mb-8 opacity-50 pointer-events-none">
             <li className="w-8 h-8 bg-outline1 rounded-full"></li>
             <li className="w-8 h-8 bg-outline1 rounded-full"></li>
             <li className="w-8 h-8 bg-outline1 rounded-full"></li>
-          </ul>
+          </ul> */}
 
           <div className="flex w-[90%] justify-between mx-auto h-max mb-16">
             <p className="text-lg text-outline1d md:text-md">

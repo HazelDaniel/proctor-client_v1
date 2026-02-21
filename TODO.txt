@@ -1,4 +1,8 @@
 [todo]: use the broadcast api to make sure that only one tab per toolinstance is opened. one tool instance can't be opened in multiple tabs
+[todo]: add table highlight color variable with value (any of these):
+	- #99ff25
+	- #25ffbd
+	- ##ff25b0
 
 (validations)
 
