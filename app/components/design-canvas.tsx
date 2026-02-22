@@ -364,12 +364,12 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
           <button
             className={
               "w-[80%] h-[80%] rounded-md flex items-center justify-center border-outline1/35 border-2 rounded-tr-none relative" +
-              `${designPaneState.activeTab === "text" ? " active" : ""}`
+              `${designPaneState.activeTab === "text" ? " active text-accent" : ""}`
             }
           >
-            <span className="absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"></span>
-              <svg  viewBox="0 0 29 33" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full scale-75">
-                <path d="M0.517548 1.12873C0.408752 0.709552 0.848456 0.359178 1.23265 0.559004L28.0631 14.5137C28.4908 14.7364 28.3861 15.3761 27.9097 15.4513L14.4079 17.5835C13.8439 17.6725 13.3792 18.0742 13.2094 18.6194L9.28437 31.2232C9.1348 31.7035 8.44894 31.6872 8.32256 31.2002L0.517548 1.12873Z" stroke="currentColor"/>
+            <span className={"absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"}></span>
+              <svg viewBox="0 0 33 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="size-full scale-75">
+                <path d="M12.8812 33.4262C12.6148 34.3964 11.2436 34.41 10.958 33.4453L1.5 1.5L30.8157 15.5062C31.6862 15.9221 31.5212 17.2077 30.574 17.3904L20.2034 19.3902C17.9609 19.8227 16.1583 21.4907 15.5536 23.6931L12.8812 33.4262Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
               </svg>
           </button>
         </li>
@@ -389,7 +389,7 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
               <button
                 className={
                   "w-[80%] h-[80%] rounded-md flex items-center justify-center border-outline1/35 border-2 rounded-tr-none relative" +
-                  `${designPaneState.activeTab === "table" ? " active" : ""}`
+                  `${designPaneState.activeTab === "table" ? " active text-accent" : ""}`
                 }
               >
                 <span className="absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"></span>
@@ -425,7 +425,7 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
           <div
             className={
               "w-[80%] h-[80%] rounded-md flex items-center justify-center border-outline1/35 border-2 rounded-tr-none relative" +
-              `${designPaneState.activeTab === "comment" ? " active" : ""}`
+              `${designPaneState.activeTab === "comment" ? " active text-accent" : ""}`
             }
           >
             <span className="absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"></span>

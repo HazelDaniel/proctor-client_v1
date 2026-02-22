@@ -185,7 +185,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       })
     );
     if (cookies.access_token) {
-      console.log("access token is ", cookies.access_token);
       headers = {
         Authorization: `Bearer ${cookies.access_token}`,
         Cookie: cookieHeader
@@ -198,7 +197,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   let user = null;
   // Fetch user on the server to prevent initial render without auth
   try {
-    console.log("getting current user ...");
     const data = await gqlRequest(`
       query GetCurrentUser {
         getCurrentUser {
@@ -211,7 +209,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       }
     `, undefined, headers);
 
-    console.log("data is ", data.getCurrentUser);
     if (data.getCurrentUser) {
       user = data.getCurrentUser;
     } else {
