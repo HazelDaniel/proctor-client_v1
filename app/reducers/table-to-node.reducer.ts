@@ -222,7 +222,7 @@ export const tableToNodesSlice = createSlice({
           );
           return `${nodeID}:${resComp}`;
         });
-        const generatedUUID = UUIDv7();
+        // const generatedUUID = UUIDv7();
         const resColumn =
           state.groupNodes[parentID].nodes[newNodeID].data.column;
         if (!resColumn) return;

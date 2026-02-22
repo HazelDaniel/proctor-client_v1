@@ -358,13 +358,13 @@ const DesignPanel: React.FC = React.memo(function DesignPanelInner() {
           onClick={(e) => {
             e.stopPropagation();
             dispatch(setActiveNode({ activeNodeID: null }));
-            designPaneDispatch(__setActiveTab("text"));
+            designPaneDispatch(__setActiveTab("select"));
           }}
         >
           <button
             className={
               "w-[80%] h-[80%] rounded-md flex items-center justify-center border-outline1/35 border-2 rounded-tr-none relative" +
-              `${designPaneState.activeTab === "text" ? " active text-accent" : ""}`
+              `${designPaneState.activeTab === "select" ? " active text-accent" : ""}`
             }
           >
             <span className={"absolute top-[-0.5rem] right-[-0.5rem] w-4 h-4 scale-75 origin-center bg-canvas"}></span>

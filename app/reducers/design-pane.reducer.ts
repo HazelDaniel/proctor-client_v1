@@ -8,7 +8,7 @@ export interface DesignPaneActionType<T> {
 }
 
 export interface DesignPaneStateType {
-  activeTab: "comment" | "table" | "text" | null;
+  activeTab: "comment" | "table" | "select" | null;
 }
 
 export const initialDesignPaneState: DesignPaneStateType = {
@@ -27,7 +27,7 @@ export const designPaneReducer: (
       newState.activeTab = action.payload as
         | "comment"
         | "table"
-        | "text"
+        | "select"
         | null;
       return newState;
     }
@@ -40,8 +40,8 @@ export const designPaneReducer: (
 // ACTION PRODUCERS
 
 export const __setActiveTab: (
-  tab: "comment" | "table" | "text" | null
-) => DesignPaneActionType<"comment" | "table" | "text" | null> = (tab) => {
+  tab: "comment" | "table" | "select" | null
+) => DesignPaneActionType<"comment" | "table" | "select" | null> = (tab) => {
   return {
     type: "setActiveTab",
     payload: tab,
