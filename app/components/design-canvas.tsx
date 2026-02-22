@@ -67,6 +67,7 @@ import {
   setActiveNode,
   setNodePosition,
   updateNodeGroup,
+  removeNodeGroup,
 } from "~/reducers/nodes.reducer";
 import {
   activeNodeSelector,
@@ -100,7 +101,7 @@ import { BidirectionalEdge } from "./bidirectional-edge";
 import { TableCreationForm } from "./table-creation-form";
 import { parseNodeID } from "~/utils/node.utils";
 import { TableUpdateForm } from "./table-update-form";
-import { download, upload } from "~/reducers/table-to-node.reducer";
+import { download, upload, removeGroupNode } from "~/reducers/table-to-node.reducer";
 import {
   __passComposites,
   __retractComposites,
@@ -115,6 +116,7 @@ import { __addNodeTable } from "~/reducers/utils/shared-functions";
 import {
   addConnection,
   hasOutboundEdges,
+  hasInboundEdges,
   removeConnection,
 } from "~/reducers/graph.reducer";
 import {
@@ -585,19 +587,59 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
   }, [id, groupNode]);
 
   const tableUpdateModal = useSelector(tableUpdateModalSelector);
-  // console.log("table update form is opened ? : ", tableUpdateModal.open);
-  // console.log("is saved table id:  ", savedTable?.tableID, " and id is : ",  id);
+  
+  const isActive = useSelector(activeNodeSelector) === id;
+  const { designPaneState } = useContext(designPaneContext) as DesignPaneContextValueType;
+  const graph = useSelector(graphSelector);
+
+  const handleNodeClick = useCallback((e: React.MouseEvent) => {
+    if (designPaneState.activeTab === "select") {
+      e.stopPropagation();
+      dispatch(setActiveNode({ activeNodeID: isActive ? null : id }));
+    }
+  }, [designPaneState.activeTab, isActive, id, dispatch]);
 
   return (
     <div
-      className="flex flex-col table-node-group relative overflow-y-visible"
+      className={`flex flex-col table-node-group relative overflow-y-visible ${isActive ? "ring-2 ring-accent shadow-lg transition-all" : ""}`}
       style={
         {
           "--node-width-here": "20rem",
           "--node-children-here": childrenCount,
         } as unknown as CSSProperties
       }
+      onClick={handleNodeClick}
     >
+      {isActive && (
+        <div className="absolute top-[-3.5rem] left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-canvas p-1 rounded-md shadow-md border border-outline1/35 z-50">
+          <button 
+            className="p-1.5 hover:bg-outline1/20 rounded text-red-500 transition-colors"
+            title="Delete Table"
+            onClick={(e) => {
+              e.stopPropagation();
+              const hasOutbound = hasOutboundEdges(graph, id, "table");
+              const hasInbound = hasInboundEdges(graph, id, "table");
+              if (hasOutbound || hasInbound) {
+                alert("Cannot delete table because it has relationships with other tables. Please remove the relationships first.");
+                return;
+              }
+              dispatch(removeNodeGroup({ groupID: id }));
+              dispatch(removeGroupNode({ groupID: id }));
+              dispatch(removeCompositionParent(id as NodeCompositeID));
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+          </button>
+          
+          <button className="p-1.5 hover:bg-outline1/20 rounded text-outline1d transition-colors" title="Lock Table" onClick={(e) => e.stopPropagation()}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          </button>
+          
+          <button className="p-1.5 hover:bg-outline1/20 rounded text-outline1d transition-colors" title="Spotlight" onClick={(e) => e.stopPropagation()}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+          </button>
+        </div>
+      )}
       <div className="group-head-handle relative  w-[--node-width-here] h-8 min-h-8 mx-auto bg-canvas ring-1 rounded-[3px] ring-outline1/45 flex justify-end px-2 items-center">
         <div className="grid grid-cols-2 h-[70%] w-8 md:w-6 y-centered-absolute left-1 scale-[0.8]">
           <span className="w-1 h-1 rounded-full bg-outline1d"></span>
@@ -752,6 +794,7 @@ export const DesignCanvas: React.FC<{
         switch (event.key) {
           case "Escape": {
             designPaneDispatch(__setActiveTab(null));
+            dispatch(setActiveNode({ activeNodeID: null }));
             break;
           }
           default:
@@ -1041,7 +1084,8 @@ export const DesignCanvas: React.FC<{
       <>
         <TableUpdateProvider value={updateFormValue}>
           <EdgeProvider value={edgeContextValue}>
-            <ReactFlow
+            <DesignPaneProvider value={designPaneValue}>
+              <ReactFlow
               nodes={nodes}
               nodeTypes={
                 tableNodeTypes as unknown as {
@@ -1108,13 +1152,12 @@ export const DesignCanvas: React.FC<{
               <Background />
               <CursorsRenderer />
 
-              <DesignPaneProvider value={designPaneValue}>
-                <ChatBubbleView />
-                <CanvasPanel />
-              </DesignPaneProvider>
+              <ChatBubbleView />
+              <CanvasPanel />
 
               <Controls />
-            </ReactFlow>
+              </ReactFlow>
+            </DesignPaneProvider>
           </EdgeProvider>
         </TableUpdateProvider>
       </>

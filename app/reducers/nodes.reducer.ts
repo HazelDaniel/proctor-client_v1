@@ -253,10 +253,19 @@ const nodesSlice = createSlice({
     ) => {
       state.groupNodes = action.payload.groupNodes;
     },
+    removeNodeGroup: (state, action: PayloadAction<{ groupID: string }>) => {
+      const { groupID } = action.payload;
+      if (state.groupNodes[groupID]) {
+        delete state.groupNodes[groupID];
+      }
+      if (state.activeNode === groupID) {
+        state.activeNode = null;
+      }
+    },
   },
 });
 
-export const { setNodePosition, setActiveNode, addNodeGroup, updateNodeGroup, setNodesState } =
+export const { setNodePosition, setActiveNode, addNodeGroup, updateNodeGroup, setNodesState, removeNodeGroup } =
   nodesSlice.actions;
 
 const nodesReducer = nodesSlice.reducer;
