@@ -70,6 +70,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     // Connect to the backend Yjs gateway
     const newSocket = io(API_BASE_URL, {
       path: '/collab',
+      transports: ['websocket', 'polling'],
       auth: {
         instanceId,
         token,
