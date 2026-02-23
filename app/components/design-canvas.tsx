@@ -601,7 +601,7 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
 
   return (
     <div
-      className={`flex flex-col table-node-group relative overflow-y-visible ${isActive ? "ring-2 ring-accent shadow-lg transition-all" : ""}`}
+      className={`flex flex-col table-node-group relative overflow-y-visible ${isActive ? "ring-4 ring-offset-2 ring-[#ff25b0] shadow-lg transition-all rounded-sm" : ""}`}
       style={
         {
           "--node-width-here": "20rem",

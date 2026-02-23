@@ -9,6 +9,7 @@ import * as Y from 'yjs';
 import { io, Socket } from 'socket.io-client';
 
 import type { Awareness } from 'y-protocols/awareness';
+import { API_BASE_URL } from '../utils/config';
 
 export interface CollaborationContextValue {
   doc: Y.Doc | null;
@@ -67,7 +68,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     if (!awareness) return;
 
     // Connect to the backend Yjs gateway
-    const newSocket = io('http://localhost:3000', {
+    const newSocket = io(API_BASE_URL, {
       path: '/collab',
       auth: {
         instanceId,

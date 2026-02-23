@@ -33,7 +33,7 @@ export const AuthPage: React.FC = () => {
       
       setSent(true);
     } catch (err: any) {
-      setError(err.message || "Failed to request login");
+      setError(err || "Failed to request login");
     } finally {
       setLoading(false);
     }

@@ -1,6 +1,6 @@
 import axios from 'axios';
+import { GQL_URL } from './config';
 
-const GQL_URL = 'http://localhost:3000/graphql';
 
 export const api = axios.create({
   baseURL: GQL_URL,
