@@ -133,6 +133,8 @@ import { EdgeProvider } from "~/contexts/edge.context";
 import { Send } from "lucide-react";
 import { useCollaboration } from "~/contexts/collaboration.context";
 import { useYjsSync } from "~/hooks/use-yjs-sync";
+import { useParams } from "@remix-run/react";
+import { useChatSocket } from "~/hooks/use-chat-socket";
 
 export const CursorsRenderer: React.FC = React.memo(function CursorsRendererInner() {
   const { awareness } = useCollaboration();
@@ -231,12 +233,23 @@ export const ChatBubble: React.FC<{ pos: XYPosition; id: string }> = ({
 
   const chatInputRef = useRef<HTMLTextAreaElement | null>(null);
 
+  const { file_id } = useParams();
+  const { sendMessage } = useChatSocket(file_id || "");
+
   const handleOnBlur: FocusEventHandler<HTMLTextAreaElement> = (e) => {
     e.preventDefault();
     if (!!!initialChatText.trim()) {
       chatBubbleDispatch(__removeBubble(id));
       return;
     }
+    
+    // Send message to project chat
+    sendMessage(initialChatText, 'bubble', {
+      x: pos.x,
+      y: pos.y,
+      bubbleId: id
+    });
+
     chatBubbleDispatch(__updateBubble(id, { hasComments: true }));
   };
 

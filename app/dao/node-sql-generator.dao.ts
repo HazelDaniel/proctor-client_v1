@@ -242,16 +242,17 @@ export class NodeSQLGeneratorDao {
           : name;
 
       resultSQL += `${INDENT}PRIMARY KEY (${resName})`;
-
-      parentGroup.nodes[resColumnID].data.column!.outputSQL = resultSQL;
     }
+
     if (
       (index === "FOREIGN" || index == "COMPOSITE_FOREIGN") &&
       !likelySurrogate
     ) {
       const target = likelySurrogate
         ? resColumnID
-        : this.graph.nodes.adjList[NodeID][0];
+        : this.graph.nodes.adjList[NodeID] ? this.graph.nodes.adjList[NodeID][0] : undefined;
+
+      if (!target) return "";
 
       const [referenceParentID] = parseNodeID(target as NodeCompositeID);
 
@@ -264,10 +265,11 @@ export class NodeSQLGeneratorDao {
       }
 
       if (index === "FOREIGN") {
+        const refNode = refGroup.nodes[target as string];
         resultSQL += `${INDENT}FOREIGN KEY (${name}) REFERENCES ${
           refGroup.data.label
         }(${
-          refGroup.nodes[target as string]?.data?.column?.name || UNPARSED_TOKEN_MARKER
+          refNode?.data?.column?.name || UNPARSED_TOKEN_MARKER
         }) ON DELETE ${ondelete}${
           shouldDefer && sccGroup.includes(referenceParentID) ? " DEFERRABLE INITIALLY DEFERRED" : ""
         }`;

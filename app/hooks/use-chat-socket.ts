@@ -12,6 +12,8 @@ const FETCH_MESSAGES_QUERY = `
       instanceId
       senderId
       content
+      type
+      metadata
       createdAt
     }
   }
@@ -48,9 +50,9 @@ export function useChatSocket(instanceId: string) {
     };
   }, [dispatch, isAuthenticated, instanceId]);
 
-  const sendMessage = (content: string) => {
+  const sendMessage = (content: string, type: string = 'normal', metadata: any = {}) => {
     if (socketRef.current && socketRef.current.connected) {
-      socketRef.current.emit('sendMessage', { content });
+      socketRef.current.emit('sendMessage', { content, type, metadata });
     }
   };
 

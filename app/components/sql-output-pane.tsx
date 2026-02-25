@@ -95,7 +95,7 @@ export const SQLOutputPane: React.FC = () => {
         <SheetTitle className="sr-only">
           output pane of the db design
         </SheetTitle>
-        <SheetContent className="bg-primary w-[80%] pt-16 flex flex-col md:min-w-[40rem] border-none">
+        <SheetContent className="bg-primary w-[80%] pt-16 flex flex-col md:min-w-[40rem] border-none mt-8">
           <SheetHeader>
             <div className="flex justify-between h-max">
               <p className="h-4 w-max text-muted-foreground">Output SQL</p>

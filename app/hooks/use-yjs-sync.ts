@@ -85,8 +85,9 @@ export const useYjsSync = (
       const remoteEdges = Array.from(yEdges.values()) as Edge[];
       setEdges(remoteEdges);
 
-      const remoteGraph = yGraphs.get('current') as TableGraphStateType | undefined;
-      if (remoteGraph) {
+      const remoteGraphMap = yGraphs.get('current');
+      if (remoteGraphMap) {
+        const remoteGraph = (remoteGraphMap instanceof Y.AbstractType ? remoteGraphMap.toJSON() : remoteGraphMap) as TableGraphStateType;
         dispatch(setGraphState(remoteGraph));
       }
 
@@ -113,8 +114,9 @@ export const useYjsSync = (
       setEdges(initialEdges);
     }
 
-    const initialGraph = yGraphs.get('current') as TableGraphStateType | undefined;
-    if (initialGraph) {
+    const initialGraphMap = yGraphs.get('current');
+    if (initialGraphMap) {
+      const initialGraph = (initialGraphMap instanceof Y.AbstractType ? initialGraphMap.toJSON() : initialGraphMap) as TableGraphStateType;
       dispatch(setGraphState(initialGraph));
     }
 

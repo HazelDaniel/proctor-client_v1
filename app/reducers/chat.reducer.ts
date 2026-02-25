@@ -6,6 +6,12 @@ export interface ChatMessage {
   senderId: string;
   content: string;
   createdAt: string;
+  type?: 'normal' | 'bubble';
+  metadata?: {
+    x?: number;
+    y?: number;
+    bubbleId?: string;
+  };
   senderName?: string;
   senderAvatarUrl?: string;
 }

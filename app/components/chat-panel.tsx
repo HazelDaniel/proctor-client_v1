@@ -3,7 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { useChatSocket } from '../hooks/use-chat-socket';
 import { setChatOpen } from '../reducers/chat.reducer';
-import { X, Send, MessageSquare } from 'lucide-react';
+import { X, Send, MessageSquare, MapPin } from 'lucide-react';
+import { useReactFlow } from '@xyflow/react';
 import { gqlRequest } from '../utils/api';
 import { setMessages } from '../reducers/chat.reducer';
 
@@ -14,6 +15,8 @@ const CHAT_HISTORY_QUERY = `
       instanceId
       senderId
       content
+      type
+      metadata
       createdAt
     }
   }
@@ -32,6 +35,13 @@ export function ChatPanel({ instanceId }: ChatPanelProps) {
   const { sendMessage } = useChatSocket(instanceId);
   const [inputValue, setInputValue] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { setCenter } = useReactFlow();
+
+  const handleJumpToBubble = (metadata: any) => {
+    if (metadata?.x !== undefined && metadata?.y !== undefined) {
+      setCenter(metadata.x, metadata.y, { zoom: 1.5, duration: 800 });
+    }
+  };
 
   useEffect(() => {
     if (!instanceId) return;
@@ -43,7 +53,11 @@ export function ChatPanel({ instanceId }: ChatPanelProps) {
         if (res.chatMessages) {
           // Reversing since array comes latest first or oldest first depending on backend
           // Assuming backend returns newest first for limit, we should sort oldest first for display
-          const sorted = [...res.chatMessages].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+          const mapped = res.chatMessages.map((msg: any) => ({
+            ...msg,
+            metadata: typeof msg.metadata === 'string' ? JSON.parse(msg.metadata) : msg.metadata,
+          }));
+          const sorted = [...mapped].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
           dispatch(setMessages({ instanceId, messages: sorted }));
         }
       } catch (err) {
@@ -107,12 +121,21 @@ export function ChatPanel({ instanceId }: ChatPanelProps) {
                 )}
                 
                 <div 
-                  className={`relative max-w-[85%] px-3 py-2 rounded-2xl ${
+                  onClick={() => msg.type === 'bubble' && handleJumpToBubble(msg.metadata)}
+                  className={`relative max-w-[85%] px-3 py-2 rounded-2xl transition-all ${
+                    msg.type === 'bubble' ? 'cursor-pointer hover:scale-[1.02] active:scale-[0.98]' : ''
+                  } ${
                     isMe 
                       ? 'bg-blue-600 text-white rounded-tr-sm shadow-sm' 
                       : 'bg-outline1/30 text-fg rounded-tl-sm shadow-sm'
-                  }`}
+                  } ${msg.type === 'bubble' ? 'border-2 border-accent/50' : ''}`}
                 >
+                  {msg.type === 'bubble' && (
+                    <div className="flex items-center gap-1.5 mb-1.5 pb-1.5 border-b border-white/20">
+                      <MapPin className="w-3.5 h-3.5" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider">Canvas Location</span>
+                    </div>
+                  )}
                   <p className="whitespace-pre-wrap word-break tracking-tight">{msg.content}</p>
                 </div>
                 <span className="text-[9px] text-secondaryText mt-1 opacity-60 px-1">{time}</span>
