@@ -254,7 +254,7 @@ export const ChatBubble: React.FC<{ pos: XYPosition; id: string }> = ({
   return (
     <>
       <div
-        className={`floating-portal-item w-8 h-8 bg-accentBright absolute p-1 overflow-visible`}
+        className={`floating-portal-item w-8 h-8 bg-primary/80 absolute p-1 overflow-visible`}
         style={
           {
             "--pos-x": `${pos.x}px`,
@@ -263,7 +263,7 @@ export const ChatBubble: React.FC<{ pos: XYPosition; id: string }> = ({
           } as CSSProperties
         }
       >
-        <div className="size-full scale-[0.95] bg-outline1d rounded-full origin-top-right"></div>
+        <div className="size-full scale-[0.95] bg-[radial-gradient(circle_at_center,rgba(207,170,239,1),_rgba(107,70,239,1))] rounded-full origin-top-right outline-accent outline-2"></div>
       </div>
 
       <form
@@ -287,14 +287,6 @@ export const ChatBubble: React.FC<{ pos: XYPosition; id: string }> = ({
           onChange={handleOnChange}
           onBlur={handleOnBlur}
         ></textarea>
-        {/* 
-        <button
-          type="submit"
-          className="z-[9] h-5 bg-outline1d w-8 self-end rounded-sm mt-2"
-          onClick={handleOnSubmitClick}
-        >
-          <Send fill="canvas" />
-        </button> */}
       </form>
     </>
   );

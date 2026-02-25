@@ -33,7 +33,8 @@ export const AuthPage: React.FC = () => {
       
       setSent(true);
     } catch (err: any) {
-      setError(err || "Failed to request login");
+      const message = err instanceof Error ? err.message : String(err || "Failed to request login");
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -47,7 +48,7 @@ export const AuthPage: React.FC = () => {
         </div>
         <h2 className="text-2xl font-semibold mb-4">Check your email</h2>
         <p className="text-secondaryText max-w-md">
-          We've sent a magic login link to <strong>{email}</strong>. 
+          We&apos;ve sent a magic login link to <strong>{email}</strong>. 
           Please check your inbox (and spam folder) to continue.
         </p>
         <button 
@@ -110,7 +111,7 @@ export const AuthPage: React.FC = () => {
             </label>
           </div>
 
-          {error && <p className="text-red-500 mb-4 text-sm">{error}</p>}
+          {error ? <p className="text-red-500 mb-4 text-sm">{error}</p> : null}
 
           <button
             type="submit"
