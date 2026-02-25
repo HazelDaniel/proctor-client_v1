@@ -47,6 +47,7 @@ import { setUser, logout } from "~/reducers/auth.reducer";
 import { useParams } from "@remix-run/react";
 import { store } from "~/store";
 import { gqlRequest } from "~/utils/api";
+import { ChatPanel } from "~/components/chat-panel";
 
 export const meta: MetaFunction = () => {
   return [
@@ -465,6 +466,12 @@ export const DesignsPage: React.FC = React.memo(function DesignPageMemoized () {
             id="design-canvas-wrapper"
           >
             <DesignCanvas instance={instance} setInstance={setInstance} />
+            
+            <div className="absolute right-0 top-0 h-full w-[350px] z-20 pointer-events-none">
+              <div className="h-full w-full pointer-events-auto">
+                <ChatPanel instanceId={fileId} />
+              </div>
+            </div>
           </div>
 
           <WorkspaceSidetab />

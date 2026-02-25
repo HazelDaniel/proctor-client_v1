@@ -13,6 +13,7 @@ import { logout } from "~/reducers/auth.reducer";
 import { useNavigate } from "@remix-run/react";
 import { gqlRequest } from "~/utils/api";
 import { LogOut, Trash2 } from "lucide-react";
+import { NotificationBell } from "./notification-bell";
 
 export const FilesHeader: React.FC = () => {
   const { user, isInitialized } = useSelector((state: RootState) => state.auth);
@@ -88,28 +89,7 @@ export const FilesHeader: React.FC = () => {
           </DropdownMenu>
 
           <div className="flex flex-col items-center justify-center w-10 h-full ml-4 border-l border-outline1/50 pl-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="ring-none border-none *:outline-none *:focus:outline-none">
-                <span className="w-[80%] h-8 flex justify-center items-center cursor-pointer hover:rotate-[-15deg] origin-top duration-150 ease-linear my-auto">
-                  <svg className="w-8 h-8">
-                    <use xlinkHref="#bell"></use>
-                  </svg>
-                </span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuLabel>Notification</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="hover:bg-black/50 hover:text-white focus:bg-black/50 focus:text-white">
-                  a notification on your last project
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-black/50 hover:text-white focus:bg-black/50 focus:text-white">
-                  another notification on your last project
-                </DropdownMenuItem>
-                <DropdownMenuItem className="hover:bg-black/50 hover:text-white focus:bg-black/50 focus:text-white">
-                  a third notification on your last project
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <NotificationBell />
           </div>
         </div>
         <span className="h-[60%] md:h-[80%] w-[3px] bg-outline1 y-centered-absolute right-0 rounded"></span>

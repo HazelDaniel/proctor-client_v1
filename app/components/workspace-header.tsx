@@ -23,7 +23,8 @@ import {
   DialogTrigger,
 } from "./ui/dialog";
 import { Form, useActionData, useNavigation, useFetcher, useNavigate } from "@remix-run/react";
-import { Loader2 } from "lucide-react";
+import { Loader2, MessageSquare } from "lucide-react";
+import { toggleChat } from "~/reducers/chat.reducer";
 
 export interface WorkspaceHeaderProps {
   initialName?: string;
@@ -175,8 +176,16 @@ export const WorkspaceHeader: React.FC<WorkspaceHeaderProps> = ({ initialName, i
           )}
         </ul>
 
-        <span className="w-8 h-8 flex items-center justify-center">
-          <svg className="w-full h-full">
+        <span 
+          className="w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-outline1/50 rounded transition-colors tooltip"
+          title="Toggle Project Chat"
+          onClick={() => dispatch(toggleChat())}
+        >
+          <MessageSquare className="w-5 h-5 text-primary opacity-80" />
+        </span>
+
+        <span className="w-8 h-8 flex items-center justify-center cursor-pointer hover:bg-outline1/50 rounded transition-colors" title="Export">
+          <svg className="w-[80%] h-[80%]">
             <use xlinkHref="#export"></use>
           </svg>
         </span>

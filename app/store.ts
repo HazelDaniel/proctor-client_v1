@@ -23,6 +23,8 @@ import { parseNodeID } from "./utils/node.utils";
 import { graphReducer } from "./reducers/graph.reducer";
 import { updateFormModalReducer } from "./reducers/update-form-modal.reducer";
 import authReducer from "./reducers/auth.reducer";
+import { notificationReducer } from "./reducers/notification.reducer";
+import { chatReducer } from "./reducers/chat.reducer";
 
 const rootReducer = combineReducers({
   workspace: workspaceReducer,
@@ -33,6 +35,8 @@ const rootReducer = combineReducers({
   graphs: graphReducer,
   tableUpdateModal: updateFormModalReducer,
   auth: authReducer,
+  notification: notificationReducer,
+  chat: chatReducer,
 });
 
 const persistConfig: PersistConfig<{
@@ -44,10 +48,12 @@ const persistConfig: PersistConfig<{
   graphs: ReturnType<typeof graphReducer>;
   tableUpdateModal: ReturnType<typeof updateFormModalReducer>;
   auth: ReturnType<typeof authReducer>;
+  notification: ReturnType<typeof notificationReducer>;
+  chat: ReturnType<typeof chatReducer>;
 }> = {
   key: "root",
   // whitelist: ["workspace", "types"],
-  whitelist: ["workspace", "auth"],
+  whitelist: ["workspace", "auth", "notification"],
   storage: new PersistoreStore(),
 };
 
