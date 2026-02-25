@@ -21,6 +21,7 @@ import {
   ViewportPortal,
   XYPosition,
   addEdge,
+  applyEdgeChanges,
   useEdgesState,
 } from "@xyflow/react";
 import React, {
@@ -267,7 +268,7 @@ export const ChatBubble: React.FC<{ pos: XYPosition; id: string }> = ({
       </div>
 
       <form
-        className={`bubble-chat-input flex flex-col w-60 h-[8rem] rounded-lg bg-outline1 border-4 border-outline1 text-sm p-2 text-outline1d outline-none shadow-md ${
+        className={`bubble-chat-input flex flex-col w-60 h-[8rem] rounded-lg bg-accent/60 border-4 border-primary/80 text-sm p-2 text-outline1d outline-none shadow-md ${
           lastAddedBubble?.data.id !== id || lastAddedBubble?.hasComments
             ? "hidden"
             : "flex"
@@ -1039,8 +1040,10 @@ export const DesignCanvas: React.FC<{
             setTableSyncCount((prev) => prev + 1);
           }
         });
+        // Apply changes to local edge state so Yjs sync picks them up
+        setEdges((eds) => applyEdgeChanges(changes, eds));
       },
-      [edges_]
+      [edges_, setEdges]
     );
 
     // EFFECTS

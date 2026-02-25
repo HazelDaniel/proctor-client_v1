@@ -99,6 +99,35 @@ export const useYjsSync = (
 
     doc.on('afterTransaction', handleTransaction);
 
+    // Hydrate local/Redux state from the current Yjs maps immediately.
+    // The initial server sync may have already been applied to the Y.Doc
+    // before this observer was registered, so we read the current state now.
+    const initialGroupNodes = yGroupNodes.toJSON() as StatefulGroupNodeType;
+    if (Object.keys(initialGroupNodes).length > 0) {
+      dispatch(setNodesState({ groupNodes: initialGroupNodes }));
+      dispatch(syncGroupNodes(initialGroupNodes));
+    }
+
+    const initialEdges = Array.from(yEdges.values()) as Edge[];
+    if (initialEdges.length > 0) {
+      setEdges(initialEdges);
+    }
+
+    const initialGraph = yGraphs.get('current') as TableGraphStateType | undefined;
+    if (initialGraph) {
+      dispatch(setGraphState(initialGraph));
+    }
+
+    const initialComposition = yComposition.toJSON() as CompositionStateType;
+    if (Object.keys(initialComposition).length > 0) {
+      dispatch(setCompositionState(initialComposition));
+    }
+
+    const initialTypeMappings = yTypeMappings.toJSON() as Record<string, string[]>;
+    if (Object.keys(initialTypeMappings).length > 0) {
+      dispatch(setTypeMappings(initialTypeMappings));
+    }
+
     return () => {
       doc.off('afterTransaction', handleTransaction);
     };
