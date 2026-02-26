@@ -1,4 +1,6 @@
+0. refresh token fails to re-issue a new access token. instead, the interceptors keep redirecting me to auth
 1. after refresh, the page inconsistently goes between not getting the correct number of nodes (check edges too) from persistence (and not rendering them) and getting it on the next refresh
+
 n. name not correctly updated for some referencing foreign key columns until their references are removed
 	> ..  
 	[FIX]
