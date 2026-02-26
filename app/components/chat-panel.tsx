@@ -18,6 +18,11 @@ const CHAT_HISTORY_QUERY = `
       type
       metadata
       createdAt
+      sender {
+        id
+        username
+        avatarUrl
+      }
     }
   }
 `;
@@ -117,7 +122,20 @@ export function ChatPanel({ instanceId }: ChatPanelProps) {
               <div key={msg.id || idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
                 {/* Sender name for others */}
                 {!isMe && (
-                  <span className="text-[10px] text-secondaryText mb-1 ml-1">{msg.senderId.slice(0, 8)}</span> // Assuming senderName isn't loaded yet
+                  <div className="flex items-center gap-2 mb-1 ml-1">
+                    {msg.sender?.avatarUrl ? (
+                      <img 
+                        src={msg.sender.avatarUrl} 
+                        alt={msg.sender.username || 'User'} 
+                        className="w-5 h-5 rounded-full ring-1 ring-accent/20"
+                      />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full bg-outline1/50 flex items-center justify-center text-[10px]">
+                        {msg.sender?.username?.[0] || 'U'}
+                      </div>
+                    )}
+                    <span className="text-[10px] text-secondaryText">{msg.sender?.username || msg.senderId.slice(0, 8)}</span>
+                  </div>
                 )}
                 
                 <div 

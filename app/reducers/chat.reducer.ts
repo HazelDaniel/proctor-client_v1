@@ -12,8 +12,11 @@ export interface ChatMessage {
     y?: number;
     bubbleId?: string;
   };
-  senderName?: string;
-  senderAvatarUrl?: string;
+  sender?: {
+    id: string;
+    username?: string;
+    avatarUrl?: string;
+  };
 }
 
 interface ChatState {

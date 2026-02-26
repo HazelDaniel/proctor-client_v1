@@ -15,6 +15,11 @@ const FETCH_MESSAGES_QUERY = `
       type
       metadata
       createdAt
+      sender {
+        id
+        username
+        avatarUrl
+      }
     }
   }
 `;
