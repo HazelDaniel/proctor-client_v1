@@ -10,6 +10,7 @@ import React, {
 import { WorkspaceHeader } from "~/components/workspace-header";
 import { WorkspaceSidetab } from "~/components/workspace-sidetab";
 import {
+  RootState,
   settingsSelector,
 } from "~/store";
 import {
@@ -165,6 +166,18 @@ export const clientLoader = async ({ serverLoader }: ClientLoaderFunctionArgs) =
 };
 clientLoader.hydrate = true;
 
+export const ChatPanelWrapper: React.FC<{fileId: string}> = ({fileId}) => {
+  const isOpen = useSelector((state: RootState) => state.chat.isOpen);
+
+  return <>
+    <div className={`absolute right-0 top-0 h-full w-[350px] ${isOpen ? " z-20 " : " z-[-1_!important] "} pointer-events-none`}>
+      <div className="h-full w-full pointer-events-auto">
+        <ChatPanel instanceId={fileId} />
+      </div>
+    </div>
+  </>
+}
+
 export const DesignsPage: React.FC = React.memo(function DesignPageMemoized () {
   const [_, setWindowSize] = useState<number>(window.innerWidth);
   const [instance, setInstance] =
@@ -196,12 +209,9 @@ export const DesignsPage: React.FC = React.memo(function DesignPageMemoized () {
               id="design-canvas-wrapper"
             >
               <DesignCanvas instance={instance} setInstance={setInstance} />
-              
-              <div className="absolute right-0 top-0 h-full w-[350px] z-20 pointer-events-none">
-                <div className="h-full w-full pointer-events-auto">
-                  <ChatPanel instanceId={fileId} />
-                </div>
-              </div>
+
+              <ChatPanelWrapper fileId={`${fileId}`}/>
+
             </div>
 
             <WorkspaceSidetab />

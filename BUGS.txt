@@ -1,29 +1,5 @@
-1. composite columns not showing
-	> composite columns are not showing up after i 'flushed' the node context state to the UI
-	[FIX] (done)
-		- check with the validation logics
-
-2. created types not immediately reflecting on the table creation state
-	> .. 
-	[FIX] (done)
-		- pass the globaltype mappings to the creation form state for validation
-
-3. composite columns picking up duplicates
-	> .. when the composite columns of a composite key are selected in the creation form, it shows duplicate
-	[FIX] (done)
-		- 
-
-4. composite column select list not displaying columns created after the composite key
-	> ..  even if the composite was updated after the columns creation
-	[FIX] (done)
-		- i suspect the error is coming from local states of the select components, more specifically, dependencies
-
-5. the margin is shrinking up between last two table columns either when a table column count is more than 9
-	> ..   or when there are more composite foreign keys than one in the table
-	[FIX] (done)
-		- issue was with a constant factor that the table height depends on
-
-6. name not correctly updated for some referencing foreign key columns until their references are removed
+1. after refresh, the page inconsistently goes between not getting the correct number of nodes (check edges too) from persistence (and not rendering them) and getting it on the next refresh
+n. name not correctly updated for some referencing foreign key columns until their references are removed
 	> ..  
 	[FIX]
 		- 

@@ -1,5 +1,8 @@
 import axios from 'axios';
+import { redirect } from '@remix-run/react';
 import { GQL_URL } from './config';
+import { store } from '~/store';
+import { setUser } from '~/reducers/auth.reducer';
 
 
 export const api = axios.create({
@@ -11,11 +14,16 @@ export const api = axios.create({
 });
 
 function redirectToAuth() {
-  if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
-    window.location.href = '/auth';
+  if (typeof window !== 'undefined') {
+    if (!window.location.pathname.startsWith('/auth')) {
+      window.location.href = '/auth';
+    }
+    // Return a promise that never resolves so nothing downstream sees an error
+    return new Promise<never>(() => {});
+  } else {
+    // On the server, throw a redirect
+    throw redirect('/auth');
   }
-  // Return a promise that never resolves so nothing downstream sees an error
-  return new Promise<never>(() => {});
 }
 
 async function handleUnauthorized(originalRequest: any) {
@@ -25,13 +33,20 @@ async function handleUnauthorized(originalRequest: any) {
 
   try {
     // Attempt to refresh the token using the refresh_token cookie
-    await axios.post(
+    const response = await axios.post(
       GQL_URL,
       {
         query: `
           mutation RefreshToken {
             refreshToken {
               token
+              user {
+                id
+                email
+                username
+                emailVerified
+                avatarUrl
+              }
             }
           }
         `,
@@ -39,10 +54,16 @@ async function handleUnauthorized(originalRequest: any) {
       { withCredentials: true }
     );
 
+    const refreshData = response.data?.data?.refreshToken;
+    if (refreshData?.user) {
+      // Sync Redux state
+      store.dispatch(setUser(refreshData.user));
+    }
+
     // Retry the original request
     return api(originalRequest);
-  } catch {
-    // Refresh failed — redirect silently, no error bubble
+  } catch (error) {
+    // Refresh failed or returned error — redirect
     return redirectToAuth();
   }
 }
@@ -60,6 +81,15 @@ api.interceptors.response.use(
         return handleUnauthorized(response.config);
       }
     }
+
+    // Special case for getCurrentUser returning null unexpectedly
+    if (response.data?.data && 'getCurrentUser' in response.data.data && !response.data.data.getCurrentUser) {
+       // Only trigger if we aren't already on an auth page
+       if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/auth')) {
+          return handleUnauthorized(response.config);
+       }
+    }
+
     return response;
   },
   async (error) => {
