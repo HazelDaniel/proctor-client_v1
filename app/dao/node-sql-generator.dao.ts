@@ -131,6 +131,10 @@ export class NodeSQLGeneratorDao {
           resultNode.data.column.index === "FOREIGN") &&
         !hasOutgoingNeighbors(this.graph.nodes, nodeID)
       ) {
+        // Fallback for COMPOSITE_FOREIGN: check if it has compositeOn data
+        if (resultNode.data.column.index === "COMPOSITE_FOREIGN" && (resultNode.data.column.compositeOn?.length || 0) > 0) {
+          continue;
+        }
         //prettier-ignore
         throw new Error( `table '${label}' has unresolved references. check that all foreign keys are referencing`);
       }
@@ -248,9 +252,14 @@ export class NodeSQLGeneratorDao {
       (index === "FOREIGN" || index == "COMPOSITE_FOREIGN") &&
       !likelySurrogate
     ) {
-      const target = likelySurrogate
+      let target = likelySurrogate
         ? resColumnID
         : this.graph.nodes.adjList[NodeID] ? this.graph.nodes.adjList[NodeID][0] : undefined;
+
+      // Fallback for COMPOSITE_FOREIGN: use compositeOn data if graph is missing
+      if (!target && index === "COMPOSITE_FOREIGN" && (node.data.column.compositeOn?.length || 0) > 0) {
+        target = node.data.column.compositeOn![0];
+      }
 
       if (!target) return "";
 

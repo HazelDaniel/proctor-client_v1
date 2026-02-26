@@ -9,6 +9,8 @@ import {
 } from '~/store';
 import { isEqual } from '~/utils/comparison';
 import { useCollaboration } from '~/contexts/collaboration.context';
+import { addEdge, createGraph } from '~/utils/graph.utils';
+import { parseNodeID } from '~/utils/node.utils';
 
 import { Edge } from '@xyflow/react';
 import { setNodesState } from '~/reducers/nodes.reducer';
@@ -86,8 +88,29 @@ export const useYjsSync = (
       setEdges(remoteEdges);
 
       const remoteGraphMap = yGraphs.get('current');
+      let remoteGraph: TableGraphStateType | undefined;
       if (remoteGraphMap) {
-        const remoteGraph = (remoteGraphMap instanceof Y.AbstractType ? remoteGraphMap.toJSON() : remoteGraphMap) as TableGraphStateType;
+        remoteGraph = (remoteGraphMap instanceof Y.AbstractType ? remoteGraphMap.toJSON() : remoteGraphMap) as TableGraphStateType;
+      }
+
+      // Self-healing: reconstruct graph if empty but edges exist
+      if ((!remoteGraph || Object.keys(remoteGraph.nodes.adjList).length === 0) && remoteEdges.length > 0) {
+        const healedGraph: TableGraphStateType = {
+          tables: createGraph(),
+          nodes: createGraph(),
+        };
+        remoteEdges.forEach((edge) => {
+          addEdge(healedGraph.nodes, edge.source, edge.target);
+          const [sourceTable] = parseNodeID(edge.source as NodeCompositeID);
+          const [targetTable] = parseNodeID(edge.target as NodeCompositeID);
+          if (sourceTable && targetTable) {
+            addEdge(healedGraph.tables, sourceTable, targetTable);
+          }
+        });
+        remoteGraph = healedGraph;
+      }
+
+      if (remoteGraph) {
         dispatch(setGraphState(remoteGraph));
       }
 
@@ -115,8 +138,29 @@ export const useYjsSync = (
     }
 
     const initialGraphMap = yGraphs.get('current');
+    let initialGraph: TableGraphStateType | undefined;
     if (initialGraphMap) {
-      const initialGraph = (initialGraphMap instanceof Y.AbstractType ? initialGraphMap.toJSON() : initialGraphMap) as TableGraphStateType;
+      initialGraph = (initialGraphMap instanceof Y.AbstractType ? initialGraphMap.toJSON() : initialGraphMap) as TableGraphStateType;
+    }
+
+    // Self-healing: reconstruct graph if empty but edges exist
+    if ((!initialGraph || Object.keys(initialGraph.nodes.adjList).length === 0) && initialEdges.length > 0) {
+      const healedGraph: TableGraphStateType = {
+        tables: createGraph(),
+        nodes: createGraph(),
+      };
+      initialEdges.forEach((edge) => {
+        addEdge(healedGraph.nodes, edge.source, edge.target);
+        const [sourceTable] = parseNodeID(edge.source as NodeCompositeID);
+        const [targetTable] = parseNodeID(edge.target as NodeCompositeID);
+        if (sourceTable && targetTable) {
+          addEdge(healedGraph.tables, sourceTable, targetTable);
+        }
+      });
+      initialGraph = healedGraph;
+    }
+
+    if (initialGraph) {
       dispatch(setGraphState(initialGraph));
     }
 
