@@ -41,7 +41,7 @@ export const useYjsSync = (
   setEdges: (edges: Edge[] | ((edges: Edge[]) => Edge[])) => void
 ) => {
   const dispatch = useDispatch();
-  const { doc, connected } = useCollaboration();
+  const { doc, connected, synced } = useCollaboration();
 
   // Redux selectors — groupNodes is the raw { [groupId]: GroupNode } object
   const groupNodes = useSelector(nodesGroupSelector, isEqual);
@@ -56,9 +56,9 @@ export const useYjsSync = (
   //  Yjs → Redux  (observe remote changes, dispatch to Redux)
   // ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!doc || !connected) return;
+    if (!doc || !synced) return;
 
-    console.log('[YjsSync] Setting up Yjs → Redux observers');
+    console.log('[YjsSync] Setting up Yjs → Redux observers (synced)');
 
     const yGroupNodes = doc.getMap<any>('groupNodes');
     const yEdges = doc.getMap<any>('edges');
@@ -177,7 +177,7 @@ export const useYjsSync = (
     return () => {
       doc.off('afterTransaction', handleTransaction);
     };
-  }, [doc, connected, dispatch, setEdges]);
+  }, [doc, synced, dispatch, setEdges]);
 
   // ──────────────────────────────────────────────────────────
   //  Redux → Yjs: Sync groupNodes

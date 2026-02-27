@@ -268,7 +268,7 @@ export const ChatBubble: React.FC<{ pos: XYPosition; id: string }> = ({
   return (
     <>
       <div
-        className={`floating-portal-item w-8 h-8 bg-primary/80 absolute p-1 overflow-visible`}
+        className={`floating-portal-item w-8 h-8 bg-outline1/50 absolute p-1 overflow-visible`}
         style={
           {
             "--pos-x": `${pos.x}px`,
@@ -281,7 +281,7 @@ export const ChatBubble: React.FC<{ pos: XYPosition; id: string }> = ({
       </div>
 
       <form
-        className={`bubble-chat-input flex flex-col w-60 h-[8rem] rounded-lg bg-accent/60 border-4 border-primary/80 text-sm p-2 text-outline1d outline-none shadow-md ${
+        className={`bubble-chat-input flex flex-col w-60 h-[8rem] rounded-lg bg-[rgba(107,70,239,1)]/60 border-4 border-primary/20 text-sm p-2 text-outline1d outline-none shadow-md ${
           lastAddedBubble?.data.id !== id || lastAddedBubble?.hasComments
             ? "hidden"
             : "flex"

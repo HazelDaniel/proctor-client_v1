@@ -30,6 +30,8 @@ export const AuthPage: React.FC = () => {
       
       // Persist rememberMe preference for the verification step
       localStorage.setItem("proctor_remember_me", String(rememberMe));
+      // Also set as a cookie so the SSR verify loader can read it
+      document.cookie = `proctor_remember_me=${rememberMe}; path=/; max-age=300; SameSite=Lax`;
       
       setSent(true);
     } catch (err: any) {

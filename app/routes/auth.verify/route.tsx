@@ -40,8 +40,15 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     }
   }
 
-  // Get rememberMe preference from localStorage (set in /auth route) - Note: localStorage isn't available on server, this needs to be handled via query param or cookie in SSR, but we'll default to false for now based on previous logic since localStorage isn't available.
-  let rememberMe = false;
+  // Read rememberMe from cookie (set by the /auth page before submit).
+  // Cookies are available during SSR, unlike localStorage.
+  let rememberMe = true;
+  if (cookieHeader) {
+    const rmCookie = cookieHeader.split('; ').find(c => c.startsWith('proctor_remember_me='));
+    if (rmCookie) {
+      rememberMe = rmCookie.split('=')[1] !== 'false';
+    }
+  }
 
   try {
     // We need the raw response to extract Set-Cookie headers from the backend
