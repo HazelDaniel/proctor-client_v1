@@ -1,4 +1,4 @@
-/* eslint-disable no-extra-boolean-cast */
+import { toast } from "sonner";
 //prettier-ignore
 import {  NodeCompositeID, TableGraphStateType } from "~/types";
 import { NodesStateType } from "~/reducers/nodes.reducer";
@@ -201,7 +201,8 @@ export class NodeSQLGeneratorDao {
     const [colParentID] = parseNodeID(resColumnID);
     const parentGroup = this.nodes.groupNodes[colParentID];
     if (!parentGroup) {
-      console.warn(`Parent group ${colParentID} not found for column ${columnID}`);
+      toast.error(`Table group not found: ${colParentID}`);
+      // console.warn(`Parent group ${colParentID} not found for column ${columnID}`);
       return "";
     }
     let node = parentGroup.nodes[columnID];
@@ -211,7 +212,8 @@ export class NodeSQLGeneratorDao {
       node = structuredClone(parentGroup.nodes[resColumnID]);
 
       if (!node) {
-        console.warn(`Node ${columnID} (or surrogate base) not found in group ${colParentID}`);
+        toast.error(`Column node not found: ${columnID}`);
+        // console.warn(`Node ${columnID} (or surrogate base) not found in group ${colParentID}`);
         return "";
       }
 
@@ -220,9 +222,10 @@ export class NodeSQLGeneratorDao {
     const { id: NodeID } = node;
 
     if (!node.data.column) {
-      console.warn(
-        `there's no corresponding column to parse for this id: ${resColumnID}`
-      );
+      toast.error(`No corresponding column to parse for ID: ${resColumnID}`);
+      // console.warn(
+      //   `there's no corresponding column to parse for this id: ${resColumnID}`
+      // );
       return "";
     }
 
@@ -269,7 +272,8 @@ export class NodeSQLGeneratorDao {
 
       const refGroup = this.nodes.groupNodes[referenceParentID];
       if (!refGroup) {
-        console.warn(`Reference parent group ${referenceParentID} not found`);
+        toast.error(`Referenced table not found: ${referenceParentID}`);
+        // console.warn(`Reference parent group ${referenceParentID} not found`);
         return "";
       }
 

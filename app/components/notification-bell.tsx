@@ -5,6 +5,7 @@ import { RootState } from '../store';
 import { markReadLocally, markAllReadLocally, NotificationItem, setNotifications, setUnreadCount } from '../reducers/notification.reducer';
 import { gqlRequest } from '../utils/api';
 import { Link } from '@remix-run/react';
+import { toast } from 'sonner';
 
 const NOTIFICATIONS_QUERY = `
   query GetNotifications($limit: Int) {
@@ -65,7 +66,8 @@ export function NotificationBell() {
           dispatch(setUnreadCount(countRes.unreadNotificationCount));
         }
       } catch (err) {
-        console.error('Failed to fetch notifications', err);
+        toast.error('Failed to fetch notifications');
+        // console.error('Failed to fetch notifications', err);
       }
     };
     
@@ -94,6 +96,7 @@ export function NotificationBell() {
       await gqlRequest(MARK_READ_MUTATION, { id });
       dispatch(markReadLocally(id));
     } catch (err) {
+      // toast.error('Failed to mark read');
       console.error('Failed to mark read', err);
     }
   };
@@ -103,6 +106,7 @@ export function NotificationBell() {
       await gqlRequest(MARK_ALL_READ_MUTATION, {});
       dispatch(markAllReadLocally());
     } catch (err) {
+      toast.error('Failed to mark all read');
       console.error('Failed to mark all read', err);
     }
   };

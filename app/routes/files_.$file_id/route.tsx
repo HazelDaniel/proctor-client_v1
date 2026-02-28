@@ -1,5 +1,7 @@
 import { ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, json, redirect, useLoaderData } from "@remix-run/react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
+import { toast } from "sonner";
+import { setToastMessage } from "~/utils/toast.server";
 import { useDispatch, useSelector } from "react-redux";
 import type { MetaFunction } from "@remix-run/node";
 import useEventListener from "~/hooks/useevent";
@@ -60,7 +62,8 @@ export const clientAction = async ({ params, request }: ClientActionFunctionArgs
 
       return json({ success: true, message: `Invitation sent to ${email}` });
     } catch (err: any) {
-      console.error("Failed to create invite:", err);
+      toast.error("Failed to send invitation");
+      // console.error("Failed to create invite:", err);
       return json({ error: err.message || "Failed to send invitation" }, { status: 500 });
     }
   }
@@ -80,6 +83,7 @@ export const clientAction = async ({ params, request }: ClientActionFunctionArgs
       `, { instanceId, name });
       return json({ success: true, name });
     } catch (err: any) {
+      toast.error("Failed to rename project");
       return json({ error: err.message || "Failed to rename" }, { status: 500 });
     }
   }
@@ -149,7 +153,11 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     toolInstance = res.toolInstance;
   } catch (err) {
     console.error("Access denied:", err);
-    return redirect("/auth");
+    return redirect("/auth", {
+      headers: {
+        "Set-Cookie": await setToastMessage(request, { message: "Access denied or project not found", type: "error" })
+      }
+    });
   }
 
   return json({ designId: file_id, toolInstance, user });

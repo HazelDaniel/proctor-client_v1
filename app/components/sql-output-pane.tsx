@@ -10,6 +10,7 @@ import {
   typeMappingSelector,
   workspaceSelectors,
 } from "~/store";
+import { toast } from "sonner";
 
 import { isEqual } from "~/utils/comparison.js";
 import {
@@ -110,6 +111,12 @@ export const SQLOutputPane: React.FC = () => {
                       generator.run();
                       setOutputSQL(generator.code);
                     } catch (err) {
+                      if (err instanceof Error) {
+                        toast.error(err.message);
+                      } else {
+                        toast.error("Failed to generate SQL");
+                      }
+                      setOutputSQL('');
                       console.error(err);
                     }
                   }}

@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 import * as Y from 'yjs';
 import { io, Socket } from 'socket.io-client';
+import { toast } from "sonner";
 
 import type { Awareness } from 'y-protocols/awareness';
 import { API_BASE_URL } from '../utils/config';
@@ -51,6 +52,7 @@ export const useCollaboration = (): CollaborationContextValue => {
   if (!context) {
     // Return safe null values instead of throwing
     // This allows components to work even without the provider
+    toast.error("Collaboration session not found. Please try reloading.");
     console.error("no collaboration context set!");
     return {
       doc: null,

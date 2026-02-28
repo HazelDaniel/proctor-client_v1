@@ -7,6 +7,7 @@ import { X, Send, MessageSquare, MapPin } from 'lucide-react';
 import { useReactFlow } from '@xyflow/react';
 import { gqlRequest } from '../utils/api';
 import { setMessages } from '../reducers/chat.reducer';
+import { toast } from 'sonner';
 
 const CHAT_HISTORY_QUERY = `
   query GetChatHistory($instanceId: String!, $limit: Int) {
@@ -66,7 +67,8 @@ export function ChatPanel({ instanceId }: ChatPanelProps) {
           dispatch(setMessages({ instanceId, messages: sorted }));
         }
       } catch (err) {
-        console.error('Failed to fetch chat history', err);
+        toast.error('Failed to fetch chat history');
+        // console.error('Failed to fetch chat history', err);
       }
     };
 

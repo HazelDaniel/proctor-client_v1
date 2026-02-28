@@ -14,6 +14,7 @@ import { useNavigate } from "@remix-run/react";
 import { gqlRequest } from "~/utils/api";
 import { LogOut, Trash2 } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
+import { toast } from "sonner";
 
 export const FilesHeader: React.FC = () => {
   const { user, isInitialized } = useSelector((state: RootState) => state.auth);
@@ -29,7 +30,8 @@ export const FilesHeader: React.FC = () => {
         }
       `);
     } catch (err) {
-      console.error("Server-side logout failed:", err);
+      toast.error("Failed to logout from server");
+      // console.error("Server-side logout failed:", err);
     } finally {
       // 2. Clear local state and redirect regardless of server success
       dispatch(logout());
@@ -39,7 +41,7 @@ export const FilesHeader: React.FC = () => {
 
   const handleDeleteAccount = () => {
     // Placeholder for now
-    alert("Delete account functionality coming soon.");
+    toast.info("Delete account functionality coming soon.");
   };
 
   return (

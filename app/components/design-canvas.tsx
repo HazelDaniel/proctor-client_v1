@@ -3,6 +3,7 @@
 /* eslint-disable no-extra-boolean-cast */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react/prop-types */
+import { toast } from "sonner";
 import {
   Background,
   ConnectionMode,
@@ -626,7 +627,7 @@ const GroupTableNode: React.FC<NodeProps> = ({ id, data }) => {
               const hasOutbound = hasOutboundEdges(graph, id, "table");
               const hasInbound = hasInboundEdges(graph, id, "table");
               if (hasOutbound || hasInbound) {
-                alert("Cannot delete table because it has relationships with other tables. Please remove the relationships first.");
+                toast.error("Cannot delete table because it has relationships with other tables. Please remove the relationships first.");
                 return;
               }
               dispatch(removeNodeGroup({ groupID: id }));
@@ -899,14 +900,17 @@ export const DesignCanvas: React.FC<{
               !isNaN(position.y)
             )
           ) {
-            console.warn("Invalid position in onNodesChange:", {
-              id,
-              position,
-            });
+            // toast.error("Invalid node position detected during sync");
+            // console.warn("Invalid position in onNodesChange:", {
+            //   id,
+            //   position,
+            // });
             return;
           }
           // yjs_sync_point:6
-          dispatch(setNodePosition({ id, position }));
+          if (id && position) {
+            dispatch(setNodePosition({ id, position }));
+          }
         }
       });
     };
@@ -946,9 +950,10 @@ export const DesignCanvas: React.FC<{
                 equivTargetNode.data?.column?.id
               )
             ) {
-              console.error(
-                `one of source: ${equivSourceNode.data?.column?.id} and target: ${equivTargetNode.data.column?.id} ID doesn't exist`
-              );
+              toast.error("Connection failed: Missing node identifiers");
+              // console.error(
+              //   `one of source: ${equivSourceNode.data?.column?.id} and target: ${equivTargetNode.data.column?.id} ID doesn't exist`
+              // );
               return eds;
             }
 
@@ -1076,7 +1081,8 @@ export const DesignCanvas: React.FC<{
       const sourceTable = updateFormState[syncTableID];
 
       if (!sourceTable) {
-        console.error("could not upload table to nodes, table doesn't exist");
+        toast.error("Sync failed: Table source not found");
+        // console.error("could not upload table to nodes, table doesn't exist");
       }
 
       // yjs_sync_point:3

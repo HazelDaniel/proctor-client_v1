@@ -5,6 +5,7 @@ import {
   typeDefaultMappings,
 } from "~/data/table-form";
 import { v7 as UUIDv7 } from "uuid";
+import { toast } from "sonner";
 import {
   TableFormUpdatePayloadType,
   NodeCompositeID,
@@ -802,7 +803,8 @@ export const tableUpdateFormReducer: (
       }
 
       if (!mappings) {
-        console.warn("global mappings not provided!");
+        toast.error("Global type mappings missing. Cannot set type.");
+        // console.warn("global mappings not provided!");
         return state;
       }
 

@@ -1,5 +1,8 @@
-import { Await, ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect, useLoaderData, useFetcher } from "@remix-run/react";
+import { Await, ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect, useLoaderData, useFetcher, useNavigation } from "@remix-run/react";
 import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import { toast } from "sonner";
+import { Skeleton } from "~/components/ui/skeleton";
+import { Loader2 } from "lucide-react";
 import type { MetaFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { FilesHeader } from "~/components/files-header";
 import {
@@ -60,6 +63,7 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
       const newId = result.createToolInstance.instance.id;
       return redirect(`/files/${newId}`);
     } catch (err) {
+      toast.error("Failed to create project");
       console.error("Failed to create tool instance:", err);
       return json({ error: "Failed to create project" }, { status: 500 });
     }
@@ -430,7 +434,12 @@ export const ArchivedProjectsArea: React.FC = () => {
       <h2 className="w-full my-6 capitalize text-fg">archived projects</h2>
 
       <ul className="flex flex-col items-start justify-start flex-1 w-full list-none border-l-8 border-l-accent h-max min-h-[5rem]">
-        <Suspense fallback={<p className="text-secondaryText px-4 py-2">Loading archived...</p>}>
+        <Suspense fallback={
+          <>
+            <Skeleton className="h-12 w-[95%] mb-2 rounded-sm mx-auto" />
+            <Skeleton className="h-12 w-[95%] mb-2 rounded-sm mx-auto" />
+          </>
+        }>
           <Await resolve={useLoaderData<typeof clientLoader>().archivedProjects} errorElement={<p className="text-red-500 px-4">Failed to load archived projects.</p>}>
             {(archived: ToolInstanceType[]) => (
               archived.length === 0 ? (
@@ -524,6 +533,7 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
                 }
               })
               .catch((err) => {
+                toast.error("Failed to fetch user avatar");
                 console.warn("[ToolInstanceFile] Failed to fetch avatar:", err);
               });
           }
@@ -698,7 +708,13 @@ export const FileListView: React.FC = () => {
 
   return (
     <ul className="flex md:grid flex-col md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(25rem,1fr))] justify-start md:justify-normal items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw] mb-20">
-      <Suspense fallback={<p className="text-secondaryText px-8">Loading your projects...</p>}>
+      <Suspense fallback={
+        <>
+          <Skeleton className="h-48 md:h-[20rem] w-full md:w-[22rem] xl:w-[25rem] rounded-md m-2" />
+          <Skeleton className="h-48 md:h-[20rem] w-full md:w-[22rem] xl:w-[25rem] rounded-md m-2 hidden md:block" />
+          <Skeleton className="h-48 md:h-[20rem] w-full md:w-[22rem] xl:w-[25rem] rounded-md m-2 hidden lg:block" />
+        </>
+      }>
         <Await 
           resolve={toolInstances} 
           errorElement={<p className="text-red-500 px-8">Error loading projects. Check console for details.</p>}
@@ -737,25 +753,33 @@ export const ProjectTabLinks: React.FC = () => {
 };
 
 export const DBSchemaDesignButton: React.FC = () => {
+  const navigation = useNavigation();
+  const isCreating = navigation.formData?.get("intent") === "CREATE_SCHEMA_DESIGN";
+
   return (
     <li className="group/opt-area-1 flex justify-start items-center even:justify-end h-[8rem] md:h-1/2 overflow-hidden max-w-[25rem] md:max-w-[22rem] md:mx-0 mx-auto mb-16 md:mb-0 rounded-lg ring-1 ring-outline1 bg-[#f8f8f8]/90 hover:bg-[#D70DB6] transition-all duration-200">
       <Form method="post" className="w-full h-full">
         <input type="hidden" name="intent" value="CREATE_SCHEMA_DESIGN" />
         <button
           type="submit"
-          className="flex items-center justify-start w-full h-full p-4 px-8 focus:outline-none"
+          disabled={isCreating}
+          className="flex items-center justify-start w-full h-full p-4 px-8 focus:outline-none disabled:opacity-70"
         >
           <div className="h-14 w-14 min-h-14 min-w-14 bg-[#D70DB6] rounded-[50%] mr-4 group-hover/opt-area-1:bg-canvas flex items-center justify-center">
-            <svg className="w-1/2 stroke-canvas h-1/2 group-hover/opt-area-1:stroke-[#D70DB6]">
-              <use xlinkHref="#design"></use>
-            </svg>
+            {isCreating ? (
+              <Loader2 className="w-1/2 h-1/2 stroke-canvas animate-spin group-hover/opt-area-1:stroke-[#D70DB6]" />
+            ) : (
+              <svg className="w-1/2 stroke-canvas h-1/2 group-hover/opt-area-1:stroke-[#D70DB6]">
+                <use xlinkHref="#design"></use>
+              </svg>
+            )}
           </div>
           <div className="select-none text-left">
             <h2 className="text-lg font-medium group-hover/opt-area-1:text-canvas">
               DB Schema Design
             </h2>
             <p className="text-sm group-hover/opt-area-1:text-canvas opacity-80">
-              forward engineer a new db schema
+              {isCreating ? "creating..." : "forward engineer a new db schema"}
             </p>
           </div>
         </button>

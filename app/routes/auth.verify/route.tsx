@@ -5,7 +5,9 @@ import {
   useLoaderData,
   useNavigate,
 } from "@remix-run/react";
+import { useEffect } from "react";
 import type { LoaderFunctionArgs } from "@remix-run/node";
+import { toast } from "sonner";
 import { setUser } from "~/reducers/auth.reducer";
 import { gqlRequest, api } from "~/utils/api";
 import { Logo } from "~/components/logo";
@@ -149,6 +151,12 @@ export default function VerifyPage() {
   // If we have an error, show it. Otherwise, we're loading (since clientLoader handles redirect on success)
   const errorMessage =
     loaderData && typeof loaderData === 'object' && "error" in loaderData ? loaderData.error : null;
+
+  useEffect(() => {
+    if (errorMessage) {
+      toast.error(errorMessage);
+    }
+  }, [errorMessage]);
 
 
   return (

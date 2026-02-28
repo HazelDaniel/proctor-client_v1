@@ -5,9 +5,12 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLoaderData,
 } from "@remix-run/react";
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import "./tailwind.css";
+import { getToastSession } from "./utils/toast.server";
 
 import { Provider } from "react-redux";
 import { persistor, store } from "./store";
@@ -32,9 +35,16 @@ export const links: LinksFunction = () => [
   },
 ];
 
-export const clientLoader = (args: ClientLoaderFunctionArgs) => {
-  return {};
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const { toast, headers } = await getToastSession(request);
+  return json({ toastMessage: toast }, { headers: headers || undefined });
 };
+
+export const clientLoader = async ({ serverLoader }: ClientLoaderFunctionArgs) => {
+  const serverData = await serverLoader();
+  return serverData as any;
+};
+clientLoader.hydrate = true;
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -751,9 +761,30 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 
+import { Toaster, toast } from "sonner";
+import { PageLoader } from "./components/ui/page-loader";
+
 export default function App() {
+  const { toastMessage } = useLoaderData<typeof loader>();
+
+  useEffect(() => {
+    if (toastMessage) {
+      if (toastMessage.type === "error") {
+        toast.error(toastMessage.message);
+      } else if (toastMessage.type === "success") {
+        toast.success(toastMessage.message);
+      } else if (toastMessage.type === "warning") {
+        toast.warning(toastMessage.message);
+      } else {
+        toast(toastMessage.message);
+      }
+    }
+  }, [toastMessage]);
+
   return (
     <>
+      <Toaster position="bottom-right" richColors />
+      <PageLoader />
       <Provider store={store}>
         <PersistGate persistor={persistor}>
           <Outlet />
@@ -762,4 +793,3 @@ export default function App() {
     </>
   );
 }
-
