@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import * as Y from 'yjs';
 import {
@@ -18,7 +18,7 @@ import { setGraphState } from '~/reducers/graph.reducer';
 import { setCompositionState } from '~/reducers/composition.reducer';
 import { syncGroupNodes } from '~/reducers/table-to-node.reducer';
 import { setTypeMappings } from '~/reducers/global-types.reducer';
-import { StatefulGroupNodeType, TableGraphStateType, CompositionStateType } from '~/types';
+import { StatefulGroupNodeType, TableGraphStateType, CompositionStateType, NodeCompositeID } from '~/types';
 
 // Origin tag for transactions initiated by the local Redux→Yjs push.
 // Yjs observers that see this origin will skip dispatching back to Redux.
@@ -51,6 +51,12 @@ export const useYjsSync = (
 
   // Debounce timer for node position sync (high-frequency during drag)
   const positionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Tracks whether the initial Yjs→Redux hydration has been dispatched.
+  // Using useState (not useRef) so that setting it triggers a NEW render,
+  // giving Redux selectors time to reflect the hydrated data before
+  // Redux→Yjs push effects run.
+  const [hydrated, setHydrated] = useState(false);
 
   // ──────────────────────────────────────────────────────────
   //  Yjs → Redux  (observe remote changes, dispatch to Redux)
@@ -174,16 +180,27 @@ export const useYjsSync = (
       dispatch(setTypeMappings(initialTypeMappings));
     }
 
+    // Signal that Yjs→Redux hydration is done. This triggers a new
+    // render cycle so Redux→Yjs effects see the freshly-populated selectors.
+    setHydrated(true);
+
     return () => {
       doc.off('afterTransaction', handleTransaction);
     };
   }, [doc, synced, dispatch, setEdges]);
 
+  // Track latest groupNodes in a ref so the setTimeout closure never deletes
+  // newly arrived nodes just because it captured an old empty state.
+  const latestGroupNodes = useRef(groupNodes);
+  useEffect(() => {
+    latestGroupNodes.current = groupNodes;
+  }, [groupNodes]);
+
   // ──────────────────────────────────────────────────────────
   //  Redux → Yjs: Sync groupNodes
   // ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!doc || !connected) return;
+    if (!doc || !connected || !hydrated) return;
 
     const yGroupNodes = doc.getMap<any>('groupNodes');
 
@@ -194,10 +211,11 @@ export const useYjsSync = (
 
     positionTimerRef.current = setTimeout(() => {
       doc.transact(() => {
-        const reduxKeys = new Set(Object.keys(groupNodes));
+        const currentReduxNodes = latestGroupNodes.current;
+        const reduxKeys = new Set(Object.keys(currentReduxNodes));
 
         // Add/update entries
-        for (const [key, value] of Object.entries(groupNodes)) {
+        for (const [key, value] of Object.entries(currentReduxNodes)) {
           const current = yGroupNodes.get(key);
           if (!isEqual(current, value)) {
             // Store as a plain JSON value — not a nested Y.Map —
@@ -222,13 +240,13 @@ export const useYjsSync = (
         clearTimeout(positionTimerRef.current);
       }
     };
-  }, [doc, connected, groupNodes]);
+  }, [doc, connected, hydrated, groupNodes]);
 
   // ──────────────────────────────────────────────────────────
   //  Redux → Yjs: Sync edges
   // ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!doc || !connected) return;
+    if (!doc || !connected || !hydrated) return;
 
     const yEdges = doc.getMap<any>('edges');
 
@@ -250,13 +268,13 @@ export const useYjsSync = (
         }
       }
     }, ORIGIN_LOCAL);
-  }, [doc, connected, edges]);
+  }, [doc, connected, hydrated, edges]);
 
   // ──────────────────────────────────────────────────────────
   //  Redux → Yjs: Sync graph state
   // ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!doc || !connected) return;
+    if (!doc || !connected || !hydrated) return;
 
     const yGraphs = doc.getMap<any>('graphs');
 
@@ -267,13 +285,13 @@ export const useYjsSync = (
         yGraphs.set('current', graphData);
       }
     }, ORIGIN_LOCAL);
-  }, [doc, connected, graph]);
+  }, [doc, connected, hydrated, graph]);
 
   // ──────────────────────────────────────────────────────────
   //  Redux → Yjs: Sync composition state
   // ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!doc || !connected) return;
+    if (!doc || !connected || !hydrated) return;
 
     const yComposition = doc.getMap<any>('composition');
 
@@ -296,13 +314,13 @@ export const useYjsSync = (
         }
       }
     }, ORIGIN_LOCAL);
-  }, [doc, connected, composition]);
+  }, [doc, connected, hydrated, composition]);
 
   // ──────────────────────────────────────────────────────────
   //  Redux → Yjs: Sync typeMappings (Enums)
   // ──────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!doc || !connected || !typeMappings) return;
+    if (!doc || !connected || !hydrated || !typeMappings) return;
 
     const yTypeMappings = doc.getMap<any>('typeMappings');
 
@@ -324,5 +342,5 @@ export const useYjsSync = (
         }
       }
     }, ORIGIN_LOCAL);
-  }, [doc, connected, typeMappings]);
+  }, [doc, connected, hydrated, typeMappings]);
 };

@@ -53,7 +53,7 @@ const persistConfig: PersistConfig<{
 }> = {
   key: "root",
   // whitelist: ["workspace", "types"],
-  whitelist: ["workspace", "auth", "notification", "graphs"],
+  whitelist: ["workspace", "auth", "notification"],
   storage: new PersistoreStore(),
 };
 

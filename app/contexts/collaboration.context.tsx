@@ -132,7 +132,7 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
         const encoder = createEncoder();
         writeVarUint(encoder, 0);
 
-        readSyncMessage(decoder, encoder, doc, newSocket);
+        const syncMessageType = readSyncMessage(decoder, encoder, doc, newSocket);
 
         // If there's a reply, send it back
         const reply = toUint8Array(encoder);
@@ -140,11 +140,13 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
           newSocket.emit('yjs:sync', reply);
         }
 
-        // Mark as synced after the first sync round-trip completes
-        if (!syncedRef.current) {
+        // Mark as synced only after receiving SyncStep2 (type 1) which
+        // contains the actual document data. SyncStep1 (type 0) is just
+        // a state-vector exchange and the Y.Doc is still empty at that point.
+        if (!syncedRef.current && syncMessageType === 1) {
           syncedRef.current = true;
           setSynced(true);
-          console.log('[Collaboration] Initial Yjs sync complete');
+          console.log('[Collaboration] Initial Yjs sync complete (SyncStep2 received)');
         }
       }
     });
@@ -183,8 +185,8 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
     };
     doc.on('update', handleDocUpdate);
 
-    // Send initial sync and local awareness when connected
-    newSocket.on('connect', () => {
+    // Send initial sync and local awareness when server is ready (docId bound)
+    const handleReady = () => {
       // 1. Send Sync Step 1
       const syncEncoder = createEncoder();
       writeVarUint(syncEncoder, 0); // MSG_SYNC
@@ -197,9 +199,11 @@ export const CollaborationProvider: React.FC<CollaborationProviderProps> = ({
       const update = encodeAwarenessUpdate(awareness, [awareness.clientID]);
       writeVarUint8Array(awarenessEncoder, update);
       newSocket.emit('yjs:awareness', toUint8Array(awarenessEncoder));
-    });
+    };
+    newSocket.on('yjs:ready', handleReady);
 
     return () => {
+      newSocket.off('yjs:ready', handleReady);
       doc.off('update', handleDocUpdate);
       awareness.off('update', handleAwarenessUpdate);
       newSocket.disconnect();
