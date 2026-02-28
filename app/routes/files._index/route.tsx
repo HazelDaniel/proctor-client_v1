@@ -742,10 +742,7 @@ export const ProjectTabLinks: React.FC = () => {
           </Link>
         </li>
         <li className="w-[10rem] p-2 px-4 rounded-md bg-outline1/20 text-center hover:bg-outline1/50 transition-colors duration-500 cursor-pointer">
-          <Link to={""}>shared</Link>
-        </li>
-        <li className="w-[10rem] p-2 px-4 rounded-md bg-outline1/20 text-center hover:bg-outline1/50 transition-colors duration-500 cursor-pointer">
-          <Link to={""}>all files</Link>
+          <Link to={""}>Popular</Link>
         </li>
       </ul>
     </nav>
