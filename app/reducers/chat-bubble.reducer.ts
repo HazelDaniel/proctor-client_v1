@@ -16,7 +16,7 @@ export interface ChatBubbleActionType<T> {
 }
 
 export interface ChatBubbleAdditionActionType
-  extends ChatBubbleActionType<{ pos: { x: number; y: number } }> {}
+  extends ChatBubbleActionType<{ pos: { x: number; y: number }; id?: string }> {}
 
 export interface ChatBubbleRemovalActionType
   extends ChatBubbleActionType<{ id: string }> {}
@@ -77,7 +77,7 @@ export const chatBubbleReducer: (
     case "add": {
       newState = { ...state };
       const { payload } = action as ChatBubbleAdditionActionType;
-      const id = `${
+      const id = payload.id || `${
         Object.keys(newState.bubbles).length
       }-${new Date().getTime()}`;
       newState.bubbles[id] = {
@@ -110,12 +110,13 @@ export const chatBubbleReducer: (
 };
 
 // ACTION PRODUCERS
-export const __addBubble: (pos: XYPosition) => ChatBubbleAdditionActionType = (
-  pos
+export const __addBubble: (pos: XYPosition, id?: string) => ChatBubbleAdditionActionType = (
+  pos,
+  id
 ) => {
   return {
     type: "add",
-    payload: { pos },
+    payload: { pos, id },
   };
 };
 

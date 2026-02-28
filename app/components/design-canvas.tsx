@@ -733,6 +733,7 @@ export const DesignCanvas: React.FC<{
   function CanvasInner({ instance, setInstance }) {
     // GLOBAL STATE
     const dispatch = useDispatch();
+    const { file_id } = useParams();
     const nodes = useSelector(nodesSelector, isEqual);
     const edges = useSelector(edgesSelector, isEqual);
     const graph = useSelector(graphSelector, isEqual);
@@ -761,7 +762,7 @@ export const DesignCanvas: React.FC<{
     );
 
     // CONTEXT STATE
-    const { chatBubbleDispatch } = useContext(
+    const { chatBubbleState, chatBubbleDispatch } = useContext(
       chatBubbleContext
     ) as ChatBubbleContextValueType;
 
@@ -1094,6 +1095,36 @@ export const DesignCanvas: React.FC<{
     console.log("update table state is ", updateFormState);
     console.log("nodes are", nodes);
     console.log("edges are", edges_);
+
+    // Bridge Redux Chat Messages to Local Chat Bubbles
+    const chatMessages = useSelector(
+      (state: any) =>
+        state.chat.messagesByInstance[file_id || ""] || []
+    );
+
+    useEffect(() => {
+      chatMessages.forEach((msg: any) => {
+        if (msg.type === "bubble" && msg.metadata?.bubbleId) {
+          const exists = chatBubbleState.bubbles[msg.metadata.bubbleId];
+          if (!exists) {
+            console.log("[ChatSync] Adding remote bubble:", msg.metadata.bubbleId);
+            chatBubbleDispatch(
+              __addBubble(
+                { x: msg.metadata.x, y: msg.metadata.y },
+                msg.metadata.bubbleId
+              )
+            );
+            chatBubbleDispatch(
+              __updateBubble(msg.metadata.bubbleId, { hasComments: true })
+            );
+          } else if (!exists.hasComments) {
+            chatBubbleDispatch(
+              __updateBubble(msg.metadata.bubbleId, { hasComments: true })
+            );
+          }
+        }
+      });
+    }, [chatMessages, chatBubbleDispatch, chatBubbleState.bubbles]);
 
     return (
       <>

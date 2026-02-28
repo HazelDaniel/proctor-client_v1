@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { addMessage, ChatMessage } from '../reducers/chat.reducer';
 import { RootState } from '../store';
 import { gqlRequest } from '../utils/api';
+import { API_BASE_URL } from '~/utils/config';
 
 const FETCH_MESSAGES_QUERY = `
   query GetChatMessages($instanceId: String!, $limit: Int) {
@@ -32,7 +33,8 @@ export function useChatSocket(instanceId: string) {
   useEffect(() => {
     if (!isAuthenticated || !instanceId) return;
 
-    const socket = io('http://localhost:3000/chat', {
+    console.log('[useChatSocket] Connecting to chat socket at:', `${API_BASE_URL}/chat`);
+    const socket = io(`${API_BASE_URL}/chat`, {
       query: { instanceId },
       withCredentials: true,
       transports: ['websocket'],
