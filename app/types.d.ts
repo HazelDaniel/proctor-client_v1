@@ -118,7 +118,8 @@ export interface StatefulNodeType extends Node {
       | "secondary"
       | "composite"
       | "ordinary"
-      | "composite-primary";
+      | "composite-primary"
+      | "composite-foreign";
     column?: {
       oldName?: string;
       name: string;

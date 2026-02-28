@@ -232,7 +232,9 @@ export const childNodePositionSelector =
     if (!parentID) return -1;
     const gNode = state.nodes.groupNodes[parentID];
     if (!gNode) return -1;
-    const gNodeKeys = Object.keys(gNode.nodes).sort((a, b) => +a - +b);
+    const gNodeKeys = Object.entries(gNode.nodes)
+      .sort(([, a], [, b]) => (a.data.column?.createdAt || 0) - (b.data.column?.createdAt || 0))
+      .map(([id]) => id);
 
     return gNodeKeys.indexOf(id);
   };

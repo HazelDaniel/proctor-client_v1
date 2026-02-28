@@ -490,6 +490,7 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
         ordinary: "bg",
         "composite-primary": "accentLight",
         composite: "bg",
+        "composite-foreign": "bg",
       } as statefulNodeColorType),
     []
   );
@@ -539,7 +540,7 @@ const TableNode: React.FC<NodeProps<StatefulNodeType>> = ({
               xlinkHref={
                 data.type === "primary"
                   ? "#key"
-                  : data.type === "secondary"
+                  : data.type === "secondary" || data.type === "composite-foreign"
                   ? "#link-icon"
                   : ""
               }

@@ -202,7 +202,9 @@ const nodesSlice = createSlice({
       } as StatefulGroupNodeType[string];
 
       resultNodes = Object.fromEntries(
-        Object.entries(resGroup.nodes).map(([key, value], index) => {
+        Object.entries(resGroup.nodes)
+          .sort(([, a], [, b]) => (a.data.column?.createdAt || 0) - (b.data.column?.createdAt || 0))
+          .map(([key, value], index) => {
           const {
             data: { isSurrogate, surrogationTimestamp },
           } = value;
