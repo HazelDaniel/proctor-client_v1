@@ -1,4 +1,4 @@
-import { Await, ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect, useLoaderData, useFetcher, useNavigation } from "@remix-run/react";
+import { Await, ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect, useLoaderData, useFetcher, useNavigation, useSearchParams } from "@remix-run/react";
 import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "~/components/ui/skeleton";
@@ -171,14 +171,33 @@ export const clientAction = async ({ request }: ClientActionFunctionArgs) => {
     }
   }
 
+  if (intent === "RECORD_TOOL_ACCESS") {
+    const instanceId = formData.get("instanceId");
+    try {
+      await gqlRequest(`
+        mutation RecordToolAccess($instanceId: String!) {
+          recordToolAccess(instanceId: $instanceId)
+        }
+      `, { instanceId });
+      return json({ success: true });
+    } catch (err) {
+      return json({ error: "Failed to record access" }, { status: 500 });
+    }
+  }
+
   return json({ error: "Invalid intent" }, { status: 400 });
 };
 
 
 import { setUser, logout } from "~/reducers/auth.reducer";
+import { AxiosError } from "axios";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const cookieHeader = request.headers.get("Cookie");
+  const url = new URL(request.url);
+  const sortBy = url.searchParams.get("sortBy") || "recent";
+  const page = parseInt(url.searchParams.get("page") || "1", 10);
+  
   let headers: Record<string, string> | undefined = undefined;
   
   if (cookieHeader) {
@@ -257,31 +276,51 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 
   const toolInstances = gqlRequest(`
-    query ListMyTools {
-      toolInstances {
-        id
-        toolType
-        createdAt
-        ownerId
-        name
+    query ListMyTools($sortBy: String, $page: Int, $limit: Int) {
+      toolInstances(sortBy: $sortBy, page: $page, limit: $limit) {
+        items {
+          id
+          toolType
+          createdAt
+          ownerId
+          name
+          lastAccessedAt
+          accessCount
+        }
+        totalCount
+        totalPages
+        currentPage
       }
     }
-  `, undefined, headers).then(res => {
-    if (!res?.toolInstances || !Array.isArray(res.toolInstances)) {
-      return [];
+  `, { sortBy, page, limit: 10 }, headers).then(res => {
+    // console.log("response result was ", res);
+    if (!res?.toolInstances) {
+      return { items: [], totalCount: 0, totalPages: 0, currentPage: 1 };
     }
-    return res.toolInstances.map((t: any) => ({
-      id: t.id || "unknown",
-      toolType: t.toolType || "unknown",
-      createdAt: t.createdAt ? new Date(isNaN(+t.createdAt) ? t.createdAt : +t.createdAt) : new Date(),
-      ownerID: t.ownerId || "unknown",
-      name: t.name || "Untitled Project",
-    }));
+    console.log("the items are: ");
+    console.log(res.toolInstances.items);
+    return {
+      items: res.toolInstances.items.map((t: any) => ({
+        id: t.id || "unknown",
+        toolType: t.toolType || "unknown",
+        createdAt: t.createdAt ? new Date(isNaN(+t.createdAt) ? t.createdAt : +t.createdAt) : new Date(),
+        ownerID: t.ownerId || "unknown",
+        name: t.name || "Untitled Project",
+        lastAccessedAt: t.lastAccessedAt ? new Date(isNaN(+t.lastAccessedAt) ? t.lastAccessedAt : +t.lastAccessedAt) : undefined,
+        accessCount: t.accessCount || 0,
+      })),
+      totalCount: res.toolInstances.totalCount || 0,
+      totalPages: res.toolInstances.totalPages || 0,
+      currentPage: res.toolInstances.currentPage || 1,
+    };
   }).catch(err => {
+    if (err instanceof AxiosError) {
+      // console.error("\n---------------------error happened fetching tool instance", JSON.stringify(err.response?.data.errors));
+    }
     if (err.message?.includes('Unauthorized') || err.message?.includes('Forbidden')) {
       return redirect("/auth");
     }
-    return []; // Return empty array or handle error properly instead of just throwing
+    return { items: [], totalCount: 0, totalPages: 0, currentPage: 1 };
   });
 
   /* Fetch archived projects */
@@ -322,7 +361,9 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const clientLoader = async ({ serverLoader }: ClientLoaderFunctionArgs) => {
-  const data = await serverLoader();
+
+  console.log("calling files index client loader");
+  const data = await serverLoader<{user: any}>();
   if (data.user) {
     store.dispatch(setUser(data.user));
   } else {
@@ -499,6 +540,13 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
   
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const handleRecordAccess = () => {
+    fetcher.submit(
+      { intent: "RECORD_TOOL_ACCESS", instanceId: id },
+      { method: "post" }
+    );
+  };
+
   useEffect(() => {
     if (isEditing && inputRef.current) {
       // Timeout to ensure focus is set after Radix UI restores focus
@@ -556,7 +604,7 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
               alt="the icon image representing a big uncolored innner folder"
               className="w-[60%] h-[80%] drop-shadow-lg absolute top-[0.5rem] group-hover/toolinstance-folder:top-[0rem] left-[15%] ease-out duration-200 delay-150"
             />
-            <Link to={`/files/${id}`} className="w-[80%] h-[80%] aspect-square drop-shadow-lg relative">
+            <Link to={`/files/${id}`} onClick={handleRecordAccess} className="w-[80%] h-[80%] aspect-square drop-shadow-lg relative">
               <img
                 src="/public/icons/big-colored-folder.png"
                 alt="the icon image representing a big colored folder"
@@ -705,44 +753,104 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
 
 export const FileListView: React.FC = () => {
   const { toolInstances } = useLoaderData<typeof clientLoader>();
+  const [searchParams] = useSearchParams();
+  const currentSort = searchParams.get("sortBy") || "recent";
 
   return (
-    <ul className="flex md:grid flex-col md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(25rem,1fr))] justify-start md:justify-normal items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw] mb-20">
-      <Suspense fallback={
-        <>
-          <Skeleton className="h-48 md:h-[20rem] w-full md:w-[22rem] xl:w-[25rem] rounded-md m-2" />
-          <Skeleton className="h-48 md:h-[20rem] w-full md:w-[22rem] xl:w-[25rem] rounded-md m-2 hidden md:block" />
-          <Skeleton className="h-48 md:h-[20rem] w-full md:w-[22rem] xl:w-[25rem] rounded-md m-2 hidden lg:block" />
-        </>
-      }>
-        <Await 
-          resolve={toolInstances} 
-          errorElement={<p className="text-red-500 px-8">Error loading projects. Check console for details.</p>}
-        >
-          {(resolvedTools: ToolInstanceType[]) => (
-            <>
-              {resolvedTools.map((tool) => (
-                <ToolInstanceFile key={tool.id} {...tool} />
-              ))}
-            </>
+    <>
+      <ul className="flex md:grid flex-col md:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(25rem,1fr))] justify-start md:justify-normal items-center w-[95%] md:w-[98%] mx-auto mt-20  min-w-[80vw] md:min-w-[70vw] mb-20">
+        <Suspense fallback={
+          <>
+            <Skeleton className="h-48 md:h-[20rem] w-full md:w-[22rem] xl:w-[25rem] rounded-md m-2" />
+            <Skeleton className="h-48 md:h-[20rem] w-full md:w-[22rem] xl:w-[25rem] rounded-md m-2 hidden md:block" />
+            <Skeleton className="h-48 md:h-[20rem] w-full md:w-[22rem] xl:w-[25rem] rounded-md m-2 hidden lg:block" />
+          </>
+        }>
+          <Await 
+            resolve={toolInstances} 
+            errorElement={<p className="text-red-500 px-8">Error loading projects. Check console for details.</p>}
+          >
+            {(resolvedTools: { items: ToolInstanceType[], totalCount: number, totalPages: number, currentPage: number }) => (
+              <>
+                {resolvedTools.items.map((tool) => (
+                  <ToolInstanceFile key={tool.id} {...tool} />
+                ))}
+              </>
+            )}
+          </Await>
+        </Suspense>
+      </ul>
+      <Suspense fallback={null}>
+        <Await resolve={toolInstances}>
+          {(resolvedTools: { items: ToolInstanceType[], totalCount: number, totalPages: number, currentPage: number }) => (
+            resolvedTools.totalPages > 1 ? (
+              <Pagination 
+                currentPage={resolvedTools.currentPage} 
+                totalPages={resolvedTools.totalPages} 
+                sortBy={currentSort}
+              />
+            ) : null
           )}
         </Await>
       </Suspense>
-    </ul>
+    </>
+  );
+};
+
+const Pagination: React.FC<{ currentPage: number; totalPages: number; sortBy: string }> = ({ currentPage, totalPages, sortBy }) => {
+  const getPageUrl = (page: number) => `?sortBy=${sortBy}&page=${page}`;
+  
+  return (
+    <nav className="flex items-center justify-center gap-2 mt-4 mb-8">
+      {currentPage > 1 && (
+        <Link 
+          to={getPageUrl(currentPage - 1)} 
+          className="px-3 py-1 rounded-md bg-outline1/20 hover:bg-outline1/40 transition-colors"
+        >
+          Previous
+        </Link>
+      )}
+      
+      {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+        <Link
+          key={page}
+          to={getPageUrl(page)}
+          className={`px-3 py-1 rounded-md transition-colors ${
+            page === currentPage 
+              ? "bg-[conic-gradient(at_center,purple_30%,rgb(var(--accent-color)),purple)] text-canvas" 
+              : "bg-outline1/20 hover:bg-outline1/40"
+          }`}
+        >
+          {page}
+        </Link>
+      ))}
+      
+      {currentPage < totalPages && (
+        <Link 
+          to={getPageUrl(currentPage + 1)} 
+          className="px-3 py-1 rounded-md bg-outline1/20 hover:bg-outline1/40 transition-colors"
+        >
+          Next
+        </Link>
+      )}
+    </nav>
   );
 };
 
 export const ProjectTabLinks: React.FC = () => {
+  const [searchParams] = useSearchParams();
+  const currentSort = searchParams.get("sortBy") || "recent";
+
   return (
     <nav className="w-full h-12 mt-20">
       <ul className="flex items-center justify-center h-full gap-4 mx-auto w-max basis-16">
-        <li className="w-[10rem] p-2 px-4 rounded-md hover:bg-[conic-gradient(at_20%_30%,purple_20%,rgb(var(--accent-color))_60%,rgb(var(--accent-color)))] bg-[conic-gradient(at_center,purple_30%,rgb(var(--accent-color)),purple)] text-center ring-2 ring-offset-2 cursor-pointer transition-colors duration-700 ease-linear">
-          <Link to={""} className="text-canvas">
+        <li className={`w-[10rem] p-2 px-4 rounded-md text-center ring-2 ring-offset-2 cursor-pointer transition-colors duration-700 ease-linear ${currentSort === "recent" ? "bg-[conic-gradient(at_center,purple_30%,rgb(var(--accent-color)),purple)] text-canvas" : "bg-outline1/20 hover:bg-outline1/50"}`}>
+          <Link to="?sortBy=recent" preventScrollReset>
             recently viewed
           </Link>
         </li>
-        <li className="w-[10rem] p-2 px-4 rounded-md bg-outline1/20 text-center hover:bg-outline1/50 transition-colors duration-500 cursor-pointer">
-          <Link to={""}>Popular</Link>
+        <li className={`w-[10rem] p-2 px-4 rounded-md text-center ring-2 ring-offset-2 cursor-pointer transition-colors duration-700 ease-linear ${currentSort === "popular" ? "bg-[conic-gradient(at_center,purple_30%,rgb(var(--accent-color)),purple)] text-canvas" : "bg-outline1/20 hover:bg-outline1/50"}`}>
+          <Link to="?sortBy=popular" preventScrollReset>Popular</Link>
         </li>
       </ul>
     </nav>

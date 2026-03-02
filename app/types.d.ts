@@ -195,4 +195,5 @@ export interface ToolInstanceType {
   archivedAt?: Date;
   lastModified?: Date;
   accessCount?: number;
+  lastAccessedAt?: Date;
 }

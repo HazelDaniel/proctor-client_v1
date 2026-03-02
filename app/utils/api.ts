@@ -28,7 +28,7 @@ function redirectToAuth() {
 }
 
 async function handleUnauthorized(originalRequest: any) {
-  console.log("[Auth Flow] handleUnauthorized started for: ", originalRequest || '(base GQL URL)');
+  // console.log("[Auth Flow] handleUnauthorized started for: ", originalRequest || '(base GQL URL)');
   // Already retried once — don't loop, just redirect silently
   if (originalRequest._retry) {
     console.log("[Auth Flow] Request already retried, redirecting to auth...");
@@ -37,7 +37,7 @@ async function handleUnauthorized(originalRequest: any) {
   originalRequest._retry = true;
 
   try {
-    console.log("[Auth Flow] Attempting silent refresh via mutation...");
+    // console.log("[Auth Flow] Attempting silent refresh via mutation...");
     
     // FOR SERVER-SIDE (SSR): We must forward the original cookies manually
     const headers: Record<string, string> = {};
@@ -71,7 +71,7 @@ async function handleUnauthorized(originalRequest: any) {
     );
 
     const refreshData = response.data?.data?.refreshToken;
-    console.log("[API Interceptor] Refresh response data:", JSON.stringify(response.data, null, 2));
+    // console.log("[API Interceptor] Refresh response data:", JSON.stringify(response.data, null, 2));
     
     if (refreshData?.user) {
       // Sync Redux state (client-side only)
@@ -131,7 +131,7 @@ api.interceptors.response.use(
     console.log("[API DEBUG] Recieived response from:", response.config.url);
     // Check for GraphQL errors that should trigger a refresh
     if (response.data?.errors) {
-      console.log("[API Interceptor] Errors detected in response:", JSON.stringify(response.data.errors, null, 2));
+      // console.log("[API Interceptor] Errors detected in response:", JSON.stringify(response.data.errors, null, 2));
       
       const isUnauthenticated = response.data.errors.some(
         (err: any) => 
@@ -142,21 +142,21 @@ api.interceptors.response.use(
       );
 
       if (isUnauthenticated) {
-        console.log("[API Interceptor] Unauthenticated state detected, proceeding to refresh...");
+        // console.log("[API Interceptor] Unauthenticated state detected, proceeding to refresh...");
         return handleUnauthorized(response.config);
       }
     }
 
     // Special case for getCurrentUser returning null unexpectedly
     if (response.data?.data && 'getCurrentUser' in response.data.data && response.data.data.getCurrentUser === null) {
-       console.log("[API Interceptor] getCurrentUser returned null. Checking if we should refresh...");
+      //  console.log("[API Interceptor] getCurrentUser returned null. Checking if we should refresh...");
        
        // On client, don't refresh if we are already on auth page
        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/auth')) {
           return response;
        }
        
-       console.log("[API Interceptor] Triggering silent refresh for null user...");
+      //  console.log("[API Interceptor] Triggering silent refresh for null user...");
        return handleUnauthorized(response.config);
     }
 
