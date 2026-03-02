@@ -67,12 +67,13 @@ export const AuthPage: React.FC = () => {
     <section className="flex flex-col items-center justify-center lg:flex-row w-[100vw] h-[68rem] min-h-[100vh] relative overflow-hidden">
       <div className="bg-auth-bg-mobile lg:bg-auth-bg-desktop absolute lg:relative w-full h-full md:h-full left-0 bg-[cover] z-2 block lg:mt-0"></div>
       <div className="z-5 w-full h-[65rem] bg-canvas rounded-2xl relative p-8 flex flex-col justify-start items-center max-w-[70rem] md:max-w-[100vw]">
-        <div
+        <Link
+          to={'/'}
           className="w-16 h-16 md:h-[3rem] self-start md:self-center md:scale-90 mb-8"
           style={{ "--logo-box-here": "100%" } as any}
         >
           <Logo />
-        </div>
+        </Link>
 
         <h2 className="mb-[60px] text-2xl font-semibold text-secondaryText">
           {isSignUp ? "Sign up for Proctor" : "Sign in to Proctor"}

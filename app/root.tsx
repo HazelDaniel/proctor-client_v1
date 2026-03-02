@@ -6,6 +6,7 @@ import {
   Scripts,
   ScrollRestoration,
   useLoaderData,
+  useLocation,
 } from "@remix-run/react";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
@@ -766,6 +767,7 @@ import { PageLoader } from "./components/ui/page-loader";
 
 export default function App() {
   const { toastMessage } = useLoaderData<typeof loader>();
+  const location = useLocation();
 
   useEffect(() => {
     if (toastMessage) {
@@ -784,7 +786,7 @@ export default function App() {
   return (
     <>
       <Toaster position="bottom-right" richColors />
-      <PageLoader />
+      {location.pathname !== "/" && <PageLoader />}
       <Provider store={store}>
         <PersistGate persistor={persistor}>
           <Outlet />
