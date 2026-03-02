@@ -1,5 +1,5 @@
 import { Await, ClientActionFunctionArgs, ClientLoaderFunctionArgs, Form, defer, json, redirect, useLoaderData, useFetcher, useNavigation, useSearchParams } from "@remix-run/react";
-import { Suspense, useCallback, useEffect, useMemo, useRef } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Skeleton } from "~/components/ui/skeleton";
 import { Loader2 } from "lucide-react";
@@ -11,7 +11,7 @@ import {
   ResizablePanelGroup,
 } from "~/components/ui/resizable";
 import { FilesSearchBox } from "~/components/files-search-box";
-import { useState } from "react";
+import { FilesSearchProvider, useFilesSearch } from "~/contexts/files-search.context";
 import useEventListener from "~/hooks/useevent";
 import { Link } from "@remix-run/react";
 import {
@@ -973,7 +973,7 @@ export const FilesPage: React.FC = () => {
   useEventListener("resize", handleResize, window as HTMLElement | any);
 
   return (
-    <>
+    <FilesSearchProvider>
       <FilesHeader />
       <section className="files-section flex-1 w-full basis-auto min-h-[100vh] h-[max-content] md:mt-20 mt-32">
         <ResizablePanelGroup
@@ -999,7 +999,7 @@ export const FilesPage: React.FC = () => {
           </ResizablePanel>
         </ResizablePanelGroup>
       </section>
-    </>
+    </FilesSearchProvider>
   );
 };
 
