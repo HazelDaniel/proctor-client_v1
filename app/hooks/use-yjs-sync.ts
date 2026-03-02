@@ -13,11 +13,11 @@ import { addEdge, createGraph } from '~/utils/graph.utils';
 import { parseNodeID } from '~/utils/node.utils';
 
 import { Edge } from '@xyflow/react';
-import { setNodesState } from '~/reducers/nodes.reducer';
-import { setGraphState } from '~/reducers/graph.reducer';
-import { setCompositionState } from '~/reducers/composition.reducer';
-import { syncGroupNodes } from '~/reducers/table-to-node.reducer';
-import { setTypeMappings } from '~/reducers/global-types.reducer';
+import { setNodesState, resetNodesState } from '~/reducers/nodes.reducer';
+import { setGraphState, resetGraphState } from '~/reducers/graph.reducer';
+import { setCompositionState, resetCompositionState } from '~/reducers/composition.reducer';
+import { syncGroupNodes, resetTableToNodeState } from '~/reducers/table-to-node.reducer';
+import { setTypeMappings, resetTypeMappings } from '~/reducers/global-types.reducer';
 import { StatefulGroupNodeType, TableGraphStateType, CompositionStateType, NodeCompositeID } from '~/types';
 
 // Origin tag for transactions initiated by the local Redux→Yjs push.
@@ -57,6 +57,18 @@ export const useYjsSync = (
   // giving Redux selectors time to reflect the hydrated data before
   // Redux→Yjs push effects run.
   const [hydrated, setHydrated] = useState(false);
+
+  // ──────────────────────────────────────────────────────────
+  //  Reset stale Redux when Y.Doc changes (new tool instance)
+  // ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    console.log('[DIAG:CLIENT] Resetting Redux slices for new doc');
+    dispatch(resetNodesState());
+    dispatch(resetGraphState());
+    dispatch(resetCompositionState());
+    dispatch(resetTypeMappings());
+    dispatch(resetTableToNodeState());
+  }, [doc, dispatch]);
 
   // ──────────────────────────────────────────────────────────
   //  Yjs → Redux  (observe remote changes, dispatch to Redux)
@@ -133,6 +145,20 @@ export const useYjsSync = (
     // The initial server sync may have already been applied to the Y.Doc
     // before this observer was registered, so we read the current state now.
     const initialGroupNodes = yGroupNodes.toJSON() as StatefulGroupNodeType;
+    const initialEdgesRaw = Array.from(yEdges.values()) as Edge[];
+    const initialCompositionRaw = yComposition.toJSON() as CompositionStateType;
+    const initialTypeMappingsRaw = yTypeMappings.toJSON() as Record<string, string[]>;
+    const initialGraphMapRaw = yGraphs.get('current');
+
+    console.log('[DIAG:SYNCED] Yjs doc state after sync:', {
+      groupNodeKeys: Object.keys(initialGroupNodes),
+      groupNodeCount: Object.keys(initialGroupNodes).length,
+      edgeCount: initialEdgesRaw.length,
+      compositionKeys: Object.keys(initialCompositionRaw),
+      typeMappingKeys: Object.keys(initialTypeMappingsRaw),
+      hasGraph: !!initialGraphMapRaw,
+    });
+
     if (Object.keys(initialGroupNodes).length > 0) {
       dispatch(setNodesState({ groupNodes: initialGroupNodes }));
       dispatch(syncGroupNodes(initialGroupNodes));
@@ -183,6 +209,11 @@ export const useYjsSync = (
     // Signal that Yjs→Redux hydration is done. This triggers a new
     // render cycle so Redux→Yjs effects see the freshly-populated selectors.
     setHydrated(true);
+
+    console.log('[DIAG:CLIENT] Redux state after hydration:', {
+      groupNodeKeys: Object.keys(initialGroupNodes),
+      groupNodeCount: Object.keys(initialGroupNodes).length,
+    });
 
     return () => {
       doc.off('afterTransaction', handleTransaction);

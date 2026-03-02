@@ -69,13 +69,14 @@ export const tableGraphSlice = createSlice({
     },
     setGraphState: (state, action: PayloadAction<TableGraphStateType>) => {
       return action.payload;
-    }
+    },
+    resetGraphState: () => initialTableGraphState,
   },
 });
 
 export const graphReducer = tableGraphSlice.reducer;
 
-export const { addConnection, removeConnection, addTableNode, setGraphState } = tableGraphSlice.actions;
+export const { addConnection, removeConnection, addTableNode, setGraphState, resetGraphState } = tableGraphSlice.actions;
 
 // UTILS
 export const hasOutboundEdges = (

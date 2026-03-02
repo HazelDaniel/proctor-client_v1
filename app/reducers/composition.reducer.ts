@@ -63,6 +63,7 @@ export const compositionSlice = createSlice({
     setCompositionState: (state, action: PayloadAction<CompositionStateType>) => {
       return action.payload;
     },
+    resetCompositionState: () => initialCompositionState,
   },
 });
 
@@ -72,6 +73,7 @@ export const {
   addCompositions,
   removeCompositionParent,
   setCompositionState,
+  resetCompositionState,
 } = compositionSlice.actions;
 
 export const compositionReducer = compositionSlice.reducer;

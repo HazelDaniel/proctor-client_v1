@@ -250,6 +250,7 @@ export const tableToNodesSlice = createSlice({
         }
       }
     },
+    resetTableToNodeState: () => initialTableToNodeState,
     removeGroupNode: (state, action: PayloadAction<{ groupID: string }>) => {
       const { groupID } = action.payload;
       if (state.groupNodes[groupID]) {
@@ -265,7 +266,7 @@ export const tableToNodesSlice = createSlice({
   },
 });
 
-export const { upload, updatePosition, setCurrentGroupID, download, syncGroupNodes, removeGroupNode } =
+export const { upload, updatePosition, setCurrentGroupID, download, syncGroupNodes, resetTableToNodeState, removeGroupNode } =
   tableToNodesSlice.actions;
 const tableToNodesReducer = tableToNodesSlice.reducer;
 

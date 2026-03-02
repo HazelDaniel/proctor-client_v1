@@ -32,10 +32,12 @@ interface ChatPanelProps {
   instanceId: string;
 }
 
+const EMPTY_MESSAGES: never[] = [];
+
 export function ChatPanel({ instanceId }: ChatPanelProps) {
   const dispatch = useDispatch();
   const isOpen = useSelector((state: RootState) => state.chat.isOpen);
-  const messages = useSelector((state: RootState) => state.chat.messagesByInstance[instanceId] || []);
+  const messages = useSelector((state: RootState) => state.chat.messagesByInstance[instanceId] || EMPTY_MESSAGES);
   const currentUser = useSelector((state: RootState) => state.auth.user);
   
   const { sendMessage } = useChatSocket(instanceId);

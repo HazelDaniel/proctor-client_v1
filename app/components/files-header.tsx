@@ -70,7 +70,7 @@ export const FilesHeader: React.FC = () => {
                 )}
               </div>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56 mt-2">
+            <DropdownMenuContent align="start" className="w-56 mt-2 ml-[-5%]">
               <DropdownMenuLabel>Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem 

@@ -255,6 +255,7 @@ const nodesSlice = createSlice({
     ) => {
       state.groupNodes = action.payload.groupNodes;
     },
+    resetNodesState: () => initialNodesState,
     removeNodeGroup: (state, action: PayloadAction<{ groupID: string }>) => {
       const { groupID } = action.payload;
       if (state.groupNodes[groupID]) {
@@ -267,7 +268,7 @@ const nodesSlice = createSlice({
   },
 });
 
-export const { setNodePosition, setActiveNode, addNodeGroup, updateNodeGroup, setNodesState, removeNodeGroup } =
+export const { setNodePosition, setActiveNode, addNodeGroup, updateNodeGroup, setNodesState, resetNodesState, removeNodeGroup } =
   nodesSlice.actions;
 
 const nodesReducer = nodesSlice.reducer;
