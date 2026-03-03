@@ -7,6 +7,8 @@ import "aos/dist/aos.css";
 import { motion } from "framer-motion";
 import { Logo } from "~/components/logo";
 
+import { InteractiveParticles } from "~/components/interactive-particles";
+
 export const meta: MetaFunction = () => {
   return [
     { title: "proctor | Plan Infra Better" },
@@ -99,6 +101,7 @@ const Header = () => {
 
 const Hero = () => (
   <section className="pt-40 pb-20 px-6 flex flex-col items-center text-center overflow-hidden relative">
+    <InteractiveParticles />
     <div className="text-accent absolute top-0 left-0 size-full opacity-20">
       <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xlinkHref="http://www.w3.org/1999/xlink" width="1440" height="560" preserveAspectRatio="none" viewBox="0 0 1440 560">
         <g mask="url(&quot;#SvgjsMask1001&quot;)" fill="none">
