@@ -10,7 +10,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "~/store";
 import { logout } from "~/reducers/auth.reducer";
-import { useNavigate } from "@remix-run/react";
+import { Link, useNavigate } from "@remix-run/react";
 import { gqlRequest } from "~/utils/api";
 import { LogOut, Trash2 } from "lucide-react";
 import { NotificationBell } from "./notification-bell";
@@ -101,7 +101,9 @@ export const FilesHeader: React.FC = () => {
         style={{ "--logo-box-here": "3rem" } as any}
       >
         <h2>All Projects</h2>
-        <Logo />
+        <Link to="/">
+          <Logo />
+        </Link>
       </div>
     </header>
   );
