@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Logo } from "~/components/logo";
 
 import { InteractiveParticles } from "~/components/interactive-particles";
+import { PixieDust } from "~/components/pixie-dust";
 
 export const meta: MetaFunction = () => {
   return [
@@ -247,7 +248,7 @@ const Testimonials = () => (
   <section className="py-24 px-6">
     <div className="max-w-6xl mx-auto">
       <div className="text-center mb-16" data-aos="fade-up">
-        <h2 className="text-3xl font-bold tracking-tight mb-4">Loved by builders</h2>
+        <h2 className="text-5xl font-bold tracking-tight mb-4">Loved by builders</h2>
       </div>
 
       <div className="grid md:grid-cols-3 gap-6">
@@ -261,7 +262,7 @@ const Testimonials = () => (
             whileHover={{ y: -5 }}
             data-aos="fade-up" 
             data-aos-delay={i * 100} 
-            className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-300 cursor-default"
+            className="p-6 rounded-2xl bg-white border border-gray-200 shadow-sm hover:shadow-lg transition-all duration-150 cursor-default  ring-muted ring-2"
           >
             <div className="flex items-center gap-3 mb-4">
               <img src={t.imageUrl} alt={t.name} className="w-10 h-10 rounded-full bg-gradient-to-br from-gray-200 to-gray-300 shadow-inner" />
@@ -279,10 +280,11 @@ const Testimonials = () => (
 );
 
 const Footer = () => (
-  <footer className="bg-primary border-t border-gray-200 py-12 px-6">
-    <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
+  <footer className="bg-primary border-t border-gray-200 py-12 px-6 relative">
+    <PixieDust />
+    <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 mb-12 relative z-10">
       <div>
-        <h4 className="font-regular mb-4 text-lg text-accent/50">Resources</h4>
+        <h4 className="font-regular mb-4 text-lg clip-text text-transparent" style={{backgroundImage: "linear-gradient(to right, #6336f2,  #d563f1ff, #8b5cf6)", backgroundClip: "text"}}>Resources</h4>
         <ul className="space-y-2 text-sm text-white ml-2">
           <li><Link to="#" className="hover:text-black transition-colors">Docs</Link></li>
           <li><Link to="#" className="hover:text-black transition-colors">Pricing</Link></li>
@@ -290,7 +292,7 @@ const Footer = () => (
         </ul>
       </div>
       <div>
-        <h4 className="font-regular mb-4 text-lg text-accent/50">Company</h4>
+        <h4 className="font-regular mb-4 text-lg clip-text text-transparent" style={{backgroundImage: "linear-gradient(to right, #6336f2,  #d563f1ff, #8b5cf6)", backgroundClip: "text"}}>Company</h4>
         <ul className="space-y-2 text-sm text-white ml-2">
           <li><Link to="#" className="hover:text-black transition-colors">About</Link></li>
           <li><Link to="#" className="hover:text-black transition-colors">Careers</Link></li>
@@ -298,7 +300,7 @@ const Footer = () => (
         </ul>
       </div>
       <div>
-        <h4 className="font-regular mb-4 text-lg text-accent/50">Legal</h4>
+        <h4 className="font-regular mb-4 text-lg clip-text text-transparent" style={{backgroundImage: "linear-gradient(to right, #6336f2,  #d563f1ff, #8b5cf6)", backgroundClip: "text"}}>Legal</h4>
         <ul className="space-y-2 text-sm text-white ml-2">
           <li><Link to="#" className="hover:text-black transition-colors">Privacy Policy</Link></li>
           <li><Link to="#" className="hover:text-black transition-colors">Terms of Service</Link></li>
