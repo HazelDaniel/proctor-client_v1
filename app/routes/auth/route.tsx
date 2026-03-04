@@ -1,9 +1,51 @@
 import { Link, useSearchParams } from "@remix-run/react";
+import { redirect, type LoaderFunctionArgs } from "@remix-run/node";
 
 import { Logo } from "~/components/logo";
 import { useState } from "react";
 import { gqlRequest } from "~/utils/api";
 import { Checkbox } from "~/components/ui/checkbox";
+
+export const loader = async ({ request }: LoaderFunctionArgs) => {
+  const cookieHeader = request.headers.get("Cookie");
+  let headers: Record<string, string> | undefined = undefined;
+
+  if (cookieHeader) {
+    const cookies = Object.fromEntries(
+      cookieHeader.split('; ').map(c => {
+        const [key, ...v] = c.split('=');
+        if (!v.length) return [key, ""];
+        return [key, decodeURIComponent(v.join('='))];
+      })
+    );
+    if (cookies.access_token) {
+      headers = {
+        Authorization: `Bearer ${cookies.access_token}`,
+        Cookie: cookieHeader
+      };
+    } else {
+      headers = { Cookie: cookieHeader };
+    }
+  }
+
+  try {
+    const data = await gqlRequest(`
+      query GetCurrentUser {
+        getCurrentUser {
+          id
+        }
+      }
+    `, undefined, headers);
+
+    if (data?.getCurrentUser) {
+      return redirect("/files");
+    }
+  } catch (err) {
+    // Ignore error and allow rendering the auth page
+  }
+
+  return null;
+};
 
 export const AuthPage: React.FC = () => {
   const [searchParams] = useSearchParams();

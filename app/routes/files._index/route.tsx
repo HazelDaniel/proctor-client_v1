@@ -620,16 +620,16 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({createdAt, id, own
                   </svg>
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="z-10 h-max w-max rounded-sm p-4 ring-1 ring-outline1 bg-canvas">
+              <DropdownMenuContent className="z-10 h-max w-max rounded-sm p-4 ring-1 ring-accent bg-primary/20 backdrop-blur-[10px]">
                 <DropdownMenuItem 
-                  className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer"
+                  className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer text-primary hover:text-canvas"
                   onSelect={() => setIsEditing(true)}
                 >
                   rename file
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
-                  className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer"
+                  className="focus:bg-none text-sm focus:outline-none capitalize h-8 cursor-pointer text-primary hover:text-canvas"
                   onSelect={() => {
                     const formData = new FormData();
                     formData.set("intent", "ARCHIVE_TOOL_INSTANCE");
