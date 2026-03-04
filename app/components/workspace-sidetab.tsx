@@ -165,22 +165,6 @@ export const WorkspaceSidetab: React.FC = () => {
           </div>
         </div>
 
-        {/* settings pane */}
-        <div className="w-[99%] h-max group/settings-pane overflow-visible flex relative mb-20 mt-auto">
-          <div className="w-full peer/settings-bar p-2 px-4 rounded-md bg-transparent h-[3rem] ring-outline1 ring-1 flex items-center justify-evenly mt-4 ring-offset-2 group-has-[button:focus]/settings-pane:border-2">
-            <button className="show flex items-center justify-center w-4 h-4 focus:outline-none">
-              <svg className="w-full scale-75 md:scale-50">
-                <use xlinkHref="#double-caret"></use>
-              </svg>
-            </button>
-            <p className="flex-1 mx-8 text-center"> General settings </p>
-            <button className="flex items-center justify-center w-4 h-4">
-              <svg className="w-full">
-                <use xlinkHref="#moon"></use>
-              </svg>
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );

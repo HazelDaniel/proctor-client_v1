@@ -740,6 +740,7 @@ export const DesignCanvas: React.FC<{
     const { user } = store.getState().auth;
 
     const savedTable = useSelector(savedTableSelector);
+    const theme = useSelector((state: RootState) => state.workspace.theme);
 
     const [updateFormState, updateFormDispatch] = useReducer(
       tableUpdateFormReducer,
@@ -1133,6 +1134,7 @@ export const DesignCanvas: React.FC<{
             <DesignPaneProvider value={designPaneValue}>
               <ReactFlow
               nodes={nodes}
+              colorMode={theme}
               nodeTypes={
                 tableNodeTypes as unknown as {
                   [prop: string]: React.FC<NodeProps>;

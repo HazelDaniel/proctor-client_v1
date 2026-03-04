@@ -19,6 +19,7 @@ export interface WorkspaceStateType {
     sidePane: boolean;
     designPane: boolean;
   };
+  theme: "light" | "dark";
 }
 
 const initialWorkspaceState: WorkspaceStateType = {
@@ -39,6 +40,7 @@ const initialWorkspaceState: WorkspaceStateType = {
     sidePane: false,
     designPane: false,
   },
+  theme: "light",
 };
 
 const workspaceSlice = createSlice({
@@ -108,6 +110,9 @@ const workspaceSlice = createSlice({
       state.panes.designPane = false;
       state.settings.designPane = false;
     },
+    toggleTheme: (state) => {
+      state.theme = state.theme === "light" ? "dark" : "light";
+    },
   },
 });
 
@@ -129,7 +134,8 @@ export const {
   setOpenOutputPane,
   setCloseOutputPane,
   setOpenDesignPane,
-  setCloseDesignPane
+  setCloseDesignPane,
+  toggleTheme,
 } = workspaceSlice.actions;
 
 const workspaceReducer = workspaceSlice.reducer;

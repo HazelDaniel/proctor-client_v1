@@ -105,6 +105,15 @@ script {
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 340 75% 55%;
+
+    /* DESIGN OVERRIDES */
+    --bg-color: 10 10 10;
+    --canvas-color: 20 20 20;
+    --outline-1: 67 69 64;
+    --outline-1d: 217 217 217;
+    --secondary-text-color: 200 200 200;
+    --icon-tab-bg: 15 15 15;
+    --active-tab-color: 40 40 40;
   }
 }
 
