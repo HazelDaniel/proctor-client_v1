@@ -62,8 +62,11 @@ export const clientAction = async ({ params, request }: ClientActionFunctionArgs
 
       return json({ success: true, message: `Invitation sent to ${email}` });
     } catch (err: any) {
-      toast.error("Failed to send invitation");
-      // console.error("Failed to create invite:", err);
+      if (err.message?.includes('invite failed')) {
+        toast.error(err.message);
+      } else {
+        toast.error("Failed to send invitation");
+      }
       return json({ error: err.message || "Failed to send invitation" }, { status: 500 });
     }
   }
