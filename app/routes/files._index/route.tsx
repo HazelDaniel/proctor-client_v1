@@ -297,8 +297,8 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
     if (!res?.toolInstances) {
       return { items: [], totalCount: 0, totalPages: 0, currentPage: 1 };
     }
-    console.log("the items are: ");
-    console.log(res.toolInstances.items);
+    // console.log("the items are: ");
+    // console.log(res.toolInstances.items);
     return {
       items: res.toolInstances.items.map((t: any) => ({
         id: t.id || "unknown",

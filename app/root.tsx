@@ -764,6 +764,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 import { Toaster, toast } from "sonner";
 import { PageLoader } from "./components/ui/page-loader";
+import { useNotificationSocket } from "./hooks/use-notification-socket";
+
+function SocketInitializer() {
+  useNotificationSocket();
+  return null;
+}
 
 export default function App() {
   const { toastMessage } = useLoaderData<typeof loader>();
@@ -789,6 +795,7 @@ export default function App() {
       {location.pathname !== "/" && <PageLoader />}
       <Provider store={store}>
         <PersistGate persistor={persistor}>
+          <SocketInitializer />
           <Outlet />
         </PersistGate>
       </Provider>

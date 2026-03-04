@@ -5,7 +5,7 @@ const toastSessionStorage = createCookieSessionStorage({
     name: "toast_session",
     sameSite: "lax",
     path: "/",
-    httpOnly: true,
+    httpOnly: false,
     secrets: ["my-super-secret-toast-key"], // In production, use an environment variable
     secure: process.env.NODE_ENV === "production",
   },
@@ -26,9 +26,11 @@ export async function setToastMessage(request: Request, toastMessage: ToastMessa
 
 export async function getToastSession(request: Request) {
   const session = await getSession(request.headers.get("Cookie"));
+  const toast = session.get("toast") as ToastMessage | undefined;
+  
   return {
-    toast: session.get("toast") as ToastMessage | undefined,
-    headers: session.has("toast")
+    toast,
+    headers: toast
       ? new Headers({ "Set-Cookie": await commitSession(session) })
       : null,
   };

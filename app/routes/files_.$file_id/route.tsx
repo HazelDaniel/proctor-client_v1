@@ -152,10 +152,12 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
     `, { instanceId: file_id }, headers);
     toolInstance = res.toolInstance;
   } catch (err) {
-    console.error("Access denied:", err);
+    // console.error("'instance access error is", err);
+    // console.error("Access denied:", err);
     return redirect("/auth", {
       headers: {
         "Set-Cookie": await setToastMessage(request, { message: "Access denied or project not found", type: "error" })
+
       }
     });
   }
