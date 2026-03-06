@@ -1,55 +1,101 @@
 # Proctor
 
-Proctor is a node-based visual editor for **emitting database schema definitions from UI interactions**. It is designed to speed up **forward-engineering of relational data models** by allowing developers to create tables, fields, and relationships visually, then generate schema output directly from those interactions.
-
-Proctor is built with **Remix.js** and is **directly portable to React**, making it suitable both as a standalone tool and as an embeddable component in existing applications.
-
----
-
-## Core Idea
-
-Traditional schema design tools separate **modeling** from **implementation**. Proctor collapses that gap.
-
-Instead of:
-- Designing ER diagrams in one tool
-- Translating them manually into SQL / ORM schemas
-- Keeping diagrams and schemas in sync
-
-Proctor:
-- Treats UI interactions as the **source of truth**
-- Emits schema definitions directly from the graph state
-- Keeps visual representation and generated output tightly coupled
-
-This reduces drift, duplication, and translation errors.
+<div align="center">
+  <img src="public/logo.svg" alt="Proctor Logo" width="120" />
+  <h3>A Collaborative Visual Schema Designer</h3>
+  <p>Emit production-ready database schemas directly from UI interactions.</p>
+</div>
 
 ---
 
-## Features
+## 🎯 Overall Goal
 
-- **Node-based editor**
-  - Tables, models, or entities represented as nodes
-  - Fields and constraints defined per node
-- **Visual relationship modeling**
-  - One-to-one, one-to-many, many-to-many
-  - Foreign keys inferred from connections
-- **Schema emission**
-  - Generate database schema definitions from the graph
-  - Designed for forward-engineering workflows
-- **Remix-first architecture**
-  - Runs as a Remix app
-  - UI and logic portable to React without framework lock-in
-- **Deterministic output**
-  - Same graph state always produces the same schema
+Proctor is a node-based visual editor designed to collapse the gap between **data modeling** and **implementation**. Instead of treating ER diagrams as static documentation, Proctor treats UI interactions as the **source of truth**.
+
+The tool allows developers to visually define tables, fields, and relationships, and immediately emit **Drizzle ORM** or **SQL** schema definitions. This ensures that your model and your code are always in sync.
 
 ---
 
-## What Proctor Is (and Isn’t)
+## 📽️ Visual Demos
 
-**Proctor is:**
-- A forward-engineering tool
-- A schema generator driven by UI state
-- A productivity tool for early and iterative data modeling
+### Collaborative Modeling
+![Landing Page Demo](public/images/landing.gif)
+*Real-time collaboration and workspace setup.*
 
-**Proctor is not:**
-- A database migration engine
-- A live database intros
+### Schema Design in Action
+![Feature Demo](public/images/demo-2.gif)
+*Building tables and defining relationships visually.*
+
+---
+
+## 🚀 Key Features (Client v1)
+
+- **Node-Based Editor**: Powered by **XYFlow (React Flow)** for a smooth, interactive graphing experience.
+- **Real-Time Collaboration**: Built on **Yjs** and **WebSockets** for seamless multi-player editing. See markers and updates from teammates instantly.
+- **Smart Schema Emission**: A dedicated output pane that generates schema definitions (Drizzle/SQL) on the fly as you modify the graph.
+- **Relationship Modeling**: Support for One-to-One, One-to-Many, and Many-to-Many relationships with automatic foreign key inference.
+- **Integrated Chat**: Direct communication within the workspace to discuss architectural decisions.
+- **Workspace Management**: Auth-protected workspaces and documents with persistence.
+- **Premium UI/UX**: Dark-themed, high-contrast design using **Tailwind CSS**, **Radix UI**, and smooth animations via **Framer Motion** and **AOS**.
+
+---
+
+## 🛠️ Tech Stack
+
+- **Framework**: [Remix.js](https://remix.run/) (Vite-based)
+- **Graphing Engine**: [XYFlow](https://reactflow.dev/)
+- **State Management**: [Redux Toolkit](https://redux-toolkit.js.org/) & [Redux Persist](https://github.com/rt2zz/redux-persist)
+- **Connectivity**: [Socket.io](https://socket.io/)
+- **Collaboration**: [Yjs CRDTs](https://yjs.dev/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
+- **UI Components**: [Radix UI](https://www.radix-ui.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/) & [AOS](https://michalsnik.github.io/aos/)
+
+---
+
+## 📁 Project Structure
+
+```text
+client/v1/
+├── app/
+│   ├── components/       # Core UI components (Canvas, Header, Forms)
+│   ├── contexts/         # React Contexts (Collaboration, Auth)
+│   ├── hooks/            # Custom React hooks (Sockets, Events)
+│   ├── reducers/         # Redux slices (Workspace, Chat, Auth)
+│   ├── routes/           # Remix routes (Landing, Auth, Workspace)
+│   └── store.ts          # Redux store configuration
+├── public/
+│   ├── images/           # GIFs and static assets
+│   └── icons/            # App icons
+└── tailwind.config.ts    # Design tokens and theme
+```
+
+---
+
+## 🛠️ Getting Started
+
+### Prerequisites
+- Node.js >= 20.0.0
+- Yarn or NPM
+
+### Installation
+```bash
+cd client/v1
+yarn install
+```
+
+### Development
+```bash
+yarn dev
+```
+
+### Build
+```bash
+yarn build
+yarn start
+```
+
+---
+
+## 📝 License
+Proctor is private software. All rights reserved.
