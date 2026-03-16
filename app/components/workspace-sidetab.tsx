@@ -1,7 +1,6 @@
-import { UnknownAction } from "@reduxjs/toolkit";
 import { Link } from "@remix-run/react";
-import React, { useMemo, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import React from "react";
+import { useSelector } from "react-redux";
 import {
   setCloseCommentsPane,
   setCloseDesignPane,
@@ -10,57 +9,8 @@ import {
   setOpenDesignPane,
   setOpenOutputPane,
 } from "~/reducers/workspace.reducer";
-import { settingsSelector, sidePaneSelector } from "~/store";
-
-const PaneSettingsFlag: React.FC<{
-  command: string;
-  text: string;
-  checkAction: UnknownAction;
-  uncheckAction: UnknownAction;
-  matchingActionText: string;
-}> = ({ checkAction, command, text, uncheckAction, matchingActionText }) => {
-  const dispatch = useDispatch();
-  const [isChecked, setChecked] = useState<boolean>(false);
-  const settings = useSelector(settingsSelector);
-  const id = text.replaceAll(" ", "-");
-
-  return (
-    <li className="w-full flex justify-between items-center h-8 overflow-hidden capitalize my-2">
-      <input
-        type="checkbox"
-        name=""
-        id={id}
-        className="inline accent-accent mr-4"
-        checked={
-          isChecked ||
-          settings[matchingActionText as unknown as keyof typeof settings]
-        }
-        onChange={(e) => {
-          let target: HTMLInputElement = e.target as HTMLInputElement;
-          if (target.checked) {
-            setChecked(true);
-            dispatch(checkAction);
-          } else {
-            setChecked(false);
-            dispatch(uncheckAction);
-          }
-        }}
-      />
-      <label htmlFor={id} className="mr-auto">
-        {text}
-      </label>
-      <span className="w-8 h-8 mr-2 flex items-center">
-        <svg className="w-4 h-4 mr-1">
-          <use xlinkHref="#command"></use>
-        </svg>
-
-        <span className="text-lg text-outline1d text-opacity-50 opacity-60">
-          {command}
-        </span>
-      </span>
-    </li>
-  );
-};
+import { sidePaneSelector } from "~/store";
+import { PaneSettingsFlag } from "~/components/pane-settings-flag";
 
 export const WorkspaceSidetab: React.FC = () => {
   const sidePaneOpened = useSelector(sidePaneSelector);
