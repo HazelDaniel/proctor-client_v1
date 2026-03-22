@@ -5,6 +5,7 @@ import { Logo } from "~/components/logo";
 import { useState } from "react";
 import { gqlRequest } from "~/utils/api";
 import { Checkbox } from "~/components/ui/checkbox";
+import { AxiosError } from "axios";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
   const cookieHeader = request.headers.get("Cookie");
@@ -41,6 +42,11 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
       return redirect("/files");
     }
   } catch (err) {
+    if (err instanceof AxiosError) {
+      if (err.response?.status != 302) {
+        console.error("auth route error when trying to get currentUser: ", err)
+      } else console.log("random route error when trying to get currentUser: ", err);
+    }
     // Ignore error and allow rendering the auth page
   }
 
