@@ -78,12 +78,12 @@ export const ToolInstanceFile: React.FC<ToolInstanceType> = ({ createdAt, id, ow
       <div className="flex-1 flex md:flex-col py-4 h-max md:w-max md:flex-[unset]">
         <div className="w-[5rem] mr-[10%] md:w-[14rem] md:h-full h-[5rem] flex md:mb-4 relative group/toolinstance-folder">
           <img
-            src="/public/icons/inner-file.svg"
+            src="/icons/inner-file.svg"
             alt="the icon image representing a big uncolored innner folder"
             className="w-[60%] h-[80%] drop-shadow-lg absolute top-[0.5rem] group-hover/toolinstance-folder:top-[0rem] left-[15%] ease-out duration-200 delay-150"
           />
           <Link to={`/files/${id}`} onClick={handleRecordAccess} className="w-[80%] h-[80%] aspect-square drop-shadow-lg relative">
-            <img src="/public/icons/big-colored-folder.png" alt="the icon image representing a big colored folder" className="size-full" />
+            <img src="/icons/big-colored-folder.png" alt="the icon image representing a big colored folder" className="size-full" />
           </Link>
 
           <DropdownMenu>
